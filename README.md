@@ -1,5 +1,12 @@
+
+
+
+https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
+
+
+
 # React Native Case
-Write a basic chat app using the latest version of Expo.
+A basic chat app using the latest version of Expo.
 
 - 🧠 React Native frontend (Expo + NativeWind)
 - 🛰️ Express.js backend with simulated delay
