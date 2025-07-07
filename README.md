@@ -34,7 +34,7 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 │
 ├── .gitignore
 └── README.md
-</pre>>
+</pre>
 ## 🚀 Quick Start
 ### 1. Clone and install
 ```bash
