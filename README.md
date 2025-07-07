@@ -8,6 +8,7 @@ Write a basic chat app using the latest version of Expo.
 - ⚡ Fast local development without a database or Firebase
 
 ## 🗂️ Monorepo Structure
+<pre>
 /chat-app
 │
 ├── /chat-types ✅ Shared TS types (Message, Conversation)
@@ -29,7 +30,7 @@ Write a basic chat app using the latest version of Expo.
 │
 ├── .gitignore
 └── README.md
----
+</pre>>
 ## 🚀 Quick Start
 ### 1. Clone and install
 ```bash
