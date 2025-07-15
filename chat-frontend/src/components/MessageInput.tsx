@@ -1,6 +1,9 @@
 import React, { useRef } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Button } from './Button';
+import { FilePicker } from './FilePicker';
+import { VoiceRecorder } from './VoiceRecorder';
+import { FileAttachment } from '../../../chat-types/src';
 
 interface MessageInputProps {
   value: string;
@@ -13,6 +16,12 @@ interface MessageInputProps {
   onTypingStop?: (userId: string) => void;
   userId?: string;
   userName?: string;
+  // File sharing props
+  onFileSelected?: (fileData: FileAttachment) => void;
+  showFilePicker?: boolean;
+  // Voice recording props
+  onVoiceRecorded?: (fileData: FileAttachment) => void;
+  showVoiceRecorder?: boolean;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -25,6 +34,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onTypingStop,
   userId,
   userName,
+  onFileSelected,
+  showFilePicker = false,
+  onVoiceRecorded,
+  showVoiceRecorder = false,
 }) => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const canSend = value.trim().length > 0 && !disabled;
@@ -68,6 +81,22 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <View style={styles.container}>
+      <View style={styles.attachmentButtons}>
+        {showFilePicker && onFileSelected && (
+          <FilePicker
+            onFileSelected={onFileSelected}
+            disabled={disabled}
+            onError={(error) => console.error('File picker error:', error)}
+          />
+        )}
+        {showVoiceRecorder && onVoiceRecorded && (
+          <VoiceRecorder
+            onVoiceRecorded={onVoiceRecorded}
+            disabled={disabled}
+            onError={(error) => console.error('Voice recorder error:', error)}
+          />
+        )}
+      </View>
       <TextInput
         style={styles.input}
         value={value}
@@ -95,6 +124,10 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
     alignItems: 'flex-end',
     backgroundColor: '#fff',
+  },
+  attachmentButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   input: {
     flex: 1,

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Socket } from 'socket.io-client';
 import { socketService } from '../services/socketService';
+import { getSocketUrl } from '../config/env';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -28,7 +29,7 @@ interface SocketProviderProps {
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ 
   children, 
-  serverUrl = 'http://localhost:3000',
+  serverUrl = getSocketUrl(),
   autoConnect = true 
 }) => {
   const [socket, setSocket] = useState<Socket | null>(null);

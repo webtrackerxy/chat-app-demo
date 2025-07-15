@@ -22,11 +22,13 @@ export const useMessageReactions = ({
     if (!isEnabled) return;
     
     const handleReactionAdded = (data: { messageId: string; reaction: MessageReaction }) => {
-      console.log('Reaction added:', data);
+      console.log('FRONTEND: Reaction added event received:', data);
       
       setReactions(prev => {
         const newMap = new Map(prev);
         const messageReactions = newMap.get(data.messageId) || [];
+        
+        console.log('FRONTEND: Current reactions for message', data.messageId, ':', messageReactions);
         
         // Check if user already reacted with this emoji
         const existingReaction = messageReactions.find(
@@ -34,7 +36,11 @@ export const useMessageReactions = ({
         );
         
         if (!existingReaction) {
-          newMap.set(data.messageId, [...messageReactions, data.reaction]);
+          const updatedReactions = [...messageReactions, data.reaction];
+          newMap.set(data.messageId, updatedReactions);
+          console.log('FRONTEND: Updated reactions for message', data.messageId, ':', updatedReactions);
+        } else {
+          console.log('FRONTEND: Reaction already exists, not adding');
         }
         
         return newMap;
