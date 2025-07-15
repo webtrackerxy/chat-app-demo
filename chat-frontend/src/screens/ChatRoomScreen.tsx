@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Alert, RefreshControl, SafeAreaView } from 'react-native';
+import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Alert, RefreshControl, SafeAreaView, Text } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { useChat } from '../hooks/useChat';
-import { useMessagePolling } from '../hooks/useMessagePolling';
+import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
+import { useTypingIndicator } from '../hooks/useTypingIndicator';
 import { Message } from '../../../chat-types/src';
 import { Header, MessageItem, MessageInput, EmptyState } from '../components';
 import { RootStackParamList } from '../../App';
@@ -20,27 +21,59 @@ export const ChatRoomScreen: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  // Set up message polling for real-time updates
-  useMessagePolling({
-    storageMode,
-    loadMessages,
+  // Generate a simple userId from userName for demo purposes
+  const userId = `user_${userName.toLowerCase().replace(/\s+/g, '_')}`;
+
+  // Set up real-time messaging
+  const { 
+    messages: realtimeMessages, 
+    isConnected, 
+    error: realtimeError, 
+    sendMessage: sendRealtimeMessage,
+    setInitialMessages 
+  } = useRealtimeMessages({
     conversationId,
-    isEnabled: !!conversationId
+    isEnabled: storageMode === 'backend' && !!conversationId
   });
 
-  // Load messages when conversation changes
+  // Set up typing indicators
+  const { 
+    startTyping, 
+    stopTyping, 
+    getTypingText, 
+    isAnyoneTyping 
+  } = useTypingIndicator({
+    conversationId,
+    currentUserId: userId,
+    isEnabled: storageMode === 'backend' && !!conversationId
+  });
+
+  // Load initial messages when conversation changes
   useEffect(() => {
     if (conversationId && currentConversation?.id === conversationId) {
       loadMessages(conversationId);
     }
   }, [conversationId, currentConversation?.id, loadMessages]);
 
-  // Get messages from current conversation
-  const messages = currentConversation?.messages || [];
+  // Set initial messages for real-time hook when messages are loaded
+  useEffect(() => {
+    if (storageMode === 'backend' && currentConversation?.messages) {
+      setInitialMessages(currentConversation.messages);
+    }
+  }, [currentConversation?.messages, storageMode, setInitialMessages]);
+
+  // Get messages based on storage mode
+  const messages = storageMode === 'backend' ? realtimeMessages : (currentConversation?.messages || []);
 
   const handleSendMessage = async () => {
     if (inputText.trim()) {
-      await sendMessage(inputText.trim(), conversationId);
+      if (storageMode === 'backend' && isConnected) {
+        // Use real-time messaging for backend mode
+        sendRealtimeMessage(inputText.trim(), userId, userName);
+      } else {
+        // Fall back to traditional API call for local mode or when not connected
+        await sendMessage(inputText.trim(), conversationId);
+      }
       setInputText('');
     }
   };
@@ -106,7 +139,11 @@ export const ChatRoomScreen: React.FC = () => {
       >
       <Header
         title={currentConversation?.title || "Chat Room"}
-        subtitle={`${userName} - Long press your messages to delete`}
+        subtitle={
+          storageMode === 'backend' 
+            ? `${userName} - ${isConnected ? '🟢 Connected' : '🔴 Disconnected'} - Long press to delete`
+            : `${userName} - Long press your messages to delete`
+        }
         onBack={() => navigation.goBack()}
       />
       
@@ -126,11 +163,22 @@ export const ChatRoomScreen: React.FC = () => {
         }
       />
       
+      {/* Typing indicator */}
+      {isAnyoneTyping && (
+        <View style={styles.typingIndicator}>
+          <Text style={styles.typingText}>{getTypingText()}</Text>
+        </View>
+      )}
+      
       <MessageInput
         value={inputText}
         onChangeText={setInputText}
         onSend={handleSendMessage}
         disabled={isLoading}
+        onTypingStart={startTyping}
+        onTypingStop={stopTyping}
+        userId={userId}
+        userName={userName}
       />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -150,5 +198,17 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     padding: 16,
+  },
+  typingIndicator: {
+    padding: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#f8f9fa',
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  typingText: {
+    fontSize: 12,
+    color: '#6c757d',
+    fontStyle: 'italic',
   },
 });

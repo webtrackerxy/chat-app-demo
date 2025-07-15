@@ -1,0 +1,122 @@
+import { useEffect, useState, useCallback } from 'react';
+import { socketService, Message } from '../services/socketService';
+
+export interface UseRealtimeMessagesProps {
+  conversationId: string;
+  isEnabled?: boolean;
+}
+
+export const useRealtimeMessages = ({
+  conversationId,
+  isEnabled = true,
+}: UseRealtimeMessagesProps) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Initialize connection and join conversation
+  useEffect(() => {
+    if (!isEnabled) return;
+    
+    const handleConnect = () => {
+      setIsConnected(true);
+      setError(null);
+      console.log('Socket connected for conversation:', conversationId);
+    };
+    
+    const handleDisconnect = () => {
+      setIsConnected(false);
+      console.log('Socket disconnected');
+    };
+    
+    const handleError = (error: any) => {
+      console.error('Socket error:', error);
+      setError(error.message || 'Connection error');
+    };
+    
+    // Connect to socket if not already connected
+    if (!socketService.isConnected()) {
+      socketService.connect();
+    }
+    
+    // Set up connection listeners
+    socketService.onConnect(handleConnect);
+    socketService.onDisconnect(handleDisconnect);
+    socketService.onError(handleError);
+    
+    // Join conversation room
+    socketService.joinConversation(conversationId);
+    
+    // If already connected, update state
+    if (socketService.isConnected()) {
+      setIsConnected(true);
+    }
+    
+    return () => {
+      socketService.offConnect(handleConnect);
+      socketService.offDisconnect(handleDisconnect);
+      socketService.offError(handleError);
+    };
+  }, [conversationId, isEnabled]);
+  
+  // Listen for new messages
+  useEffect(() => {
+    if (!isEnabled) return;
+    
+    const handleNewMessage = (message: Message) => {
+      console.log('Received new message:', message);
+      setMessages(prev => {
+        // Check if message already exists to avoid duplicates
+        const exists = prev.some(m => m.id === message.id);
+        if (exists) {
+          return prev;
+        }
+        return [...prev, message];
+      });
+    };
+    
+    socketService.onNewMessage(handleNewMessage);
+    
+    return () => {
+      socketService.offNewMessage(handleNewMessage);
+    };
+  }, [isEnabled]);
+  
+  // Send message function
+  const sendMessage = useCallback((
+    text: string,
+    senderId: string,
+    senderName: string
+  ) => {
+    if (!isConnected) {
+      setError('Not connected to server');
+      return;
+    }
+    
+    socketService.sendMessage({
+      text,
+      senderId,
+      senderName,
+      conversationId
+    });
+  }, [conversationId, isConnected]);
+  
+  // Clear messages (useful for conversation switches)
+  const clearMessages = useCallback(() => {
+    setMessages([]);
+  }, []);
+  
+  // Manually set messages (for initial load from API)
+  const setInitialMessages = useCallback((initialMessages: Message[]) => {
+    setMessages(initialMessages);
+  }, []);
+  
+  return {
+    messages,
+    isConnected,
+    error,
+    sendMessage,
+    clearMessages,
+    setInitialMessages,
+  };
+};
