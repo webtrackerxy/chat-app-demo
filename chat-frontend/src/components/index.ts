@@ -10,3 +10,8 @@ export { StorageModeSelector } from './StorageModeSelector';
 export { MessageItem } from './MessageItem';
 export { MessageInput } from './MessageInput';
 export { ConversationItem } from './ConversationItem';
+export { FilePicker } from './FilePicker';
+export { FileMessage } from './FileMessage';
+export { VoiceRecorder } from './VoiceRecorder';
+export { VoiceMessagePlayer } from './VoiceMessagePlayer';
+export { VideoMessagePlayer } from './VideoMessagePlayer';

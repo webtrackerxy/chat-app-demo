@@ -7,8 +7,11 @@ import {
   MarkMessageReadRequest,
   AddReactionRequest,
   RemoveReactionRequest,
-  UserPresenceUpdate
+  UserPresenceUpdate,
+  FileAttachment,
+  CreateFileMessageRequest
 } from '../../../chat-types/src';
+import { getSocketUrl } from '../config/env';
 
 export interface TypingData {
   conversationId: string;
@@ -18,7 +21,7 @@ export interface TypingData {
 
 class SocketService {
   private socket: Socket | null = null;
-  private serverUrl: string = 'http://localhost:3000';
+  private serverUrl: string = getSocketUrl();
   
   connect(serverUrl?: string): Socket {
     if (serverUrl) {
@@ -60,6 +63,18 @@ class SocketService {
   }): void {
     if (this.socket) {
       this.socket.emit('send_message', message);
+    }
+  }
+
+  // File message handling
+  sendFileMessage(data: {
+    senderId: string;
+    senderName: string;
+    conversationId: string;
+    fileData: FileAttachment;
+  }): void {
+    if (this.socket) {
+      this.socket.emit('send_file_message', data);
     }
   }
   
@@ -203,6 +218,30 @@ class SocketService {
   offReactionRemoved(callback?: (data: { messageId: string; reactionId: string; userId: string }) => void): void {
     if (this.socket) {
       this.socket.off('reaction_removed', callback);
+    }
+  }
+  
+  // Message deletion methods
+  deleteMessage(messageId: string, conversationId: string, userId: string): void {
+    console.log('SocketService.deleteMessage called:', { messageId, conversationId, userId });
+    console.log('Socket connected:', !!this.socket);
+    if (this.socket) {
+      console.log('Emitting delete_message event');
+      this.socket.emit('delete_message', { messageId, conversationId, userId });
+    } else {
+      console.error('Socket not connected, cannot delete message');
+    }
+  }
+  
+  onMessageDeleted(callback: (data: { messageId: string; conversationId: string }) => void): void {
+    if (this.socket) {
+      this.socket.on('message_deleted', callback);
+    }
+  }
+  
+  offMessageDeleted(callback?: (data: { messageId: string; conversationId: string }) => void): void {
+    if (this.socket) {
+      this.socket.off('message_deleted', callback);
     }
   }
   

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Message } from '../../../chat-types/src';
+import { FileMessage } from './FileMessage';
 
 interface MessageItemProps {
   message: Message;
@@ -94,14 +95,19 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       >
         <View style={styles.content}>
           <Text style={styles.senderName}>{message.senderName}</Text>
-          <Text
-            style={[
-              styles.messageText,
-              isMyMessage ? styles.ownMessageText : styles.otherMessageText,
-            ]}
-          >
-            {message.text}
-          </Text>
+          {/* Render file content or text message */}
+          {message.file ? (
+            <FileMessage file={message.file} isMyMessage={isMyMessage} />
+          ) : (
+            <Text
+              style={[
+                styles.messageText,
+                isMyMessage ? styles.ownMessageText : styles.otherMessageText,
+              ]}
+            >
+              {message.text}
+            </Text>
+          )}
           <Text style={styles.messageTime}>
             {new Date(message.timestamp).toLocaleTimeString()}
           </Text>
@@ -242,6 +248,8 @@ const styles = StyleSheet.create({
   reactionsContainer: {
     marginTop: 4,
     maxWidth: '80%',
+    maxHeight: 80,
+    overflow: 'hidden',
   },
   reactionsRight: {
     alignSelf: 'flex-end',
@@ -253,6 +261,7 @@ const styles = StyleSheet.create({
   },
   existingReactions: {
     marginBottom: 4,
+    maxHeight: 32,
   },
   reactionBubble: {
     flexDirection: 'row',
@@ -260,10 +269,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.1)',
     borderRadius: 12,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 2,
     marginRight: 6,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.2)',
+    minHeight: 24,
   },
   reactionBubbleActive: {
     backgroundColor: '#007AFF',
@@ -271,6 +281,7 @@ const styles = StyleSheet.create({
   },
   reactionEmoji: {
     fontSize: 14,
+    lineHeight: 16,
     marginRight: 4,
   },
   reactionCount: {
@@ -280,9 +291,15 @@ const styles = StyleSheet.create({
   },
   quickReactions: {
     opacity: 0.7,
+    height: 32,
+    maxHeight: 32,
+    flex: 0,
   },
   quickReactionButton: {
-    padding: 6,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 4,
     borderRadius: 16,
     backgroundColor: 'rgba(0,0,0,0.05)',
@@ -294,7 +311,8 @@ const styles = StyleSheet.create({
     borderColor: '#0051CC',
   },
   quickReactionEmoji: {
-    fontSize: 16,
+    fontSize: 18,
+    lineHeight: 20,
   },
   quickReactionEmojiSelected: {
     // Emoji remains the same, just the background changes

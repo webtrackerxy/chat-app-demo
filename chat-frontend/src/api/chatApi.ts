@@ -1,6 +1,7 @@
 import { Message, Conversation, CreateMessageRequest, CreateConversationRequest, ApiResponse } from '../../../chat-types/src';
+import { getApiUrl } from '../config/env';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = `${getApiUrl()}/api`;
 
 class ChatApi {
   private getDeviceHeaders() {

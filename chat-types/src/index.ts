@@ -1,3 +1,17 @@
+// Represents a file attachment in a message
+export interface FileAttachment {
+  id: string;
+  originalName: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  type: 'image' | 'audio' | 'document';
+  url: string;
+  uploadedAt: Date;
+  duration?: number; // Optional: For audio files
+  thumbnail?: string; // Optional: For videos/images
+}
+
 // Represents a single chat message exchanged within a conversation
 export interface Message {
   id: string;
@@ -5,6 +19,8 @@ export interface Message {
   senderId: string;
   senderName: string;
   timestamp: Date;
+  type: 'text' | 'image' | 'audio' | 'document'; // Message type
+  file?: FileAttachment; // Optional: File attachment
   readBy?: ReadReceipt[]; // Optional: Array of read receipts
   reactions?: MessageReaction[]; // Optional: Array of reactions
 }
@@ -35,6 +51,14 @@ export interface CreateMessageRequest {
   conversationId: string;
   senderId: string;
   senderName: string;
+}
+
+// Payload structure to create a file message
+export interface CreateFileMessageRequest {
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  fileData: FileAttachment;
 }
 
 // Payload structure to create a new conversation with selected participants

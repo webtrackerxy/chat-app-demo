@@ -1,3 +1,6 @@
+// Load environment variables
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
@@ -5,9 +8,15 @@ const fs = require('fs');
 const path = require('path');
 const { Server } = require('socket.io');
 const http = require('http');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || 'localhost';
+const BASE_URL = process.env.BASE_URL || `http://${HOST}:${PORT}`;
+const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE) || (10 * 1024 * 1024);
+const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 const server = http.createServer(app);
 
 // Setup log file - clear on server start
@@ -20,8 +29,77 @@ const logToFile = (message) => {
   fs.appendFileSync(logFile, logEntry);
 };
 
-app.use(cors());
+app.use(cors({
+  origin: CORS_ORIGIN
+}));
 app.use(express.json());
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, UPLOAD_DIR);
+    // Create uploads directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    // Generate unique filename with timestamp and original extension
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const fileExtension = path.extname(file.originalname);
+    cb(null, `${file.fieldname}-${uniqueSuffix}${fileExtension}`);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  // Define allowed file types
+  const allowedTypes = {
+    'image/jpeg': true,
+    'image/jpg': true,
+    'image/png': true,
+    'image/gif': true,
+    'image/webp': true,
+    'audio/mpeg': true,
+    'audio/wav': true,
+    'audio/ogg': true,
+    'audio/webm': true,
+    'audio/m4a': true,
+    'video/mp4': true,
+    'video/quicktime': true,
+    'video/mpeg': true,
+    'video/webm': true,
+    'video/avi': true,
+    'video/mov': true,
+    'video/x-msvideo': true,
+    'application/pdf': true,
+    'text/plain': true,
+    'text/markdown': true,
+    'application/octet-stream': true,
+    'application/msword': true,
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': true,
+    'application/vnd.ms-excel': true,
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': true
+  };
+  
+  if (allowedTypes[file.mimetype]) {
+    cb(null, true);
+  } else {
+    cb(new Error(`File type ${file.mimetype} is not allowed`), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: MAX_FILE_SIZE,
+    files: 1 // Maximum 1 file per request
+  }
+});
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, UPLOAD_DIR)));
 
 // Simple request logging middleware - runs after route matching
 app.use((req, res, next) => {
@@ -229,7 +307,9 @@ app.post('/api/messages', (req, res) => {
       text,
       senderId,
       senderName,
-      timestamp: new Date()
+      timestamp: new Date(),
+      type: 'text', // Default message type
+      file: null // File attachment (if any)
     };
     
     // Add message to conversation's messages array
@@ -279,6 +359,15 @@ app.delete('/api/messages/:messageId', (req, res) => {
     // Remove message from conversation's messages array
     const deletedMessage = foundConversation.messages.splice(messageIndex, 1)[0];
     
+    // Broadcast message deletion to all clients in the conversation room
+    io.to(foundConversation.id).emit('message_deleted', {
+      messageId: deletedMessage.id,
+      conversationId: foundConversation.id
+    });
+    
+    console.log(`Message ${deletedMessage.id} deleted from conversation ${foundConversation.id}`);
+    logToFile(`Message ${deletedMessage.id} deleted from conversation ${foundConversation.id}`);
+    
     res.json({
       success: true,
       data: { id: deletedMessage.id }
@@ -288,6 +377,95 @@ app.delete('/api/messages/:messageId', (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete message'
+    });
+  }
+});
+
+// File upload endpoint
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  try {
+    console.log('Upload request received:');
+    console.log('req.file:', req.file);
+    console.log('req.body:', req.body);
+    console.log('req.headers:', req.headers);
+    
+    if (!req.file) {
+      console.log('No file in request');
+      return res.status(400).json({
+        success: false,
+        error: 'No file uploaded'
+      });
+    }
+    
+    // Get file metadata
+    const fileMetadata = {
+      id: uuidv4(),
+      originalName: req.file.originalname,
+      filename: req.file.filename,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+      uploadedAt: new Date(),
+      url: `/uploads/${req.file.filename}`
+    };
+    
+    // Determine file type category
+    if (req.file.mimetype.startsWith('image/')) {
+      fileMetadata.type = 'image';
+    } else if (req.file.mimetype.startsWith('audio/')) {
+      fileMetadata.type = 'audio';
+    } else if (req.file.mimetype.startsWith('video/')) {
+      fileMetadata.type = 'video';
+    } else {
+      fileMetadata.type = 'document';
+    }
+    
+    console.log('File uploaded:', fileMetadata);
+    logToFile(`File uploaded: ${JSON.stringify(fileMetadata)}`);
+    
+    res.json({
+      success: true,
+      data: fileMetadata
+    });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to upload file'
+    });
+  }
+});
+
+// File download endpoint
+app.get('/api/files/:filename', (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(__dirname, UPLOAD_DIR, filename);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'File not found'
+      });
+    }
+    
+    // Get file stats
+    const stats = fs.statSync(filePath);
+    const fileSize = stats.size;
+    
+    // Set appropriate headers
+    res.setHeader('Content-Length', fileSize);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    // Stream the file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+    
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to download file'
     });
   }
 });
@@ -369,7 +547,7 @@ app.use((error, req, res, next) => {
 // Initialize Socket.IO server
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: CORS_ORIGIN,
     methods: ["GET", "POST"]
   }
 });
@@ -386,6 +564,49 @@ io.on('connection', (socket) => {
     logToFile(`Socket ${socket.id} joined conversation ${conversationId}`);
   });
   
+  // Handle file messages
+  socket.on('send_file_message', async (data) => {
+    try {
+      const { senderId, senderName, conversationId, fileData } = data;
+      
+      // Find the conversation
+      const conversation = conversations.find(conv => conv.id === conversationId);
+      
+      if (!conversation) {
+        socket.emit('error', { message: 'Conversation not found' });
+        return;
+      }
+      
+      const newMessage = {
+        id: uuidv4(),
+        text: fileData.type === 'image' ? 'Image' : fileData.type === 'audio' ? 'Voice message' : fileData.type === 'video' ? 'Video' : fileData.originalName,
+        senderId,
+        senderName,
+        timestamp: new Date(),
+        type: fileData.type, // 'image', 'audio', or 'document'
+        file: fileData, // File metadata
+        readBy: [],
+        reactions: []
+      };
+      
+      // Add message to conversation's messages array
+      conversation.messages.push(newMessage);
+      
+      // Update conversation's updatedAt timestamp
+      conversation.updatedAt = new Date();
+      
+      // Broadcast to conversation room
+      io.to(conversationId).emit('new_message', newMessage);
+      
+      console.log(`File message sent to conversation ${conversationId}:`, newMessage);
+      logToFile(`File message sent to conversation ${conversationId}: ${JSON.stringify(newMessage)}`);
+      
+    } catch (error) {
+      console.error('Error sending file message via socket:', error);
+      socket.emit('error', { message: 'Failed to send file message' });
+    }
+  });
+
   // Handle new messages
   socket.on('send_message', async (data) => {
     try {
@@ -405,6 +626,8 @@ io.on('connection', (socket) => {
         senderId,
         senderName,
         timestamp: new Date(),
+        type: 'text', // Default message type
+        file: null, // File attachment (if any)
         readBy: [],
         reactions: []
       };
@@ -634,6 +857,66 @@ io.on('connection', (socket) => {
     } catch (error) {
       console.error('Error removing reaction:', error);
       socket.emit('error', { message: 'Failed to remove reaction' });
+    }
+  });
+  
+  // Handle message deletion via WebSocket
+  socket.on('delete_message', async (data) => {
+    console.log('WebSocket delete_message received:', data);
+    console.log('Socket ID:', socket.id);
+    
+    try {
+      const { messageId, conversationId, userId } = data;
+      console.log('Attempting to delete message:', { messageId, conversationId, userId });
+      
+      // Find the conversation
+      const conversation = conversations.find(conv => conv.id === conversationId);
+      if (!conversation) {
+        console.log('Conversation not found:', conversationId);
+        socket.emit('error', { message: 'Conversation not found' });
+        return;
+      }
+      console.log('Found conversation:', conversation.id);
+      
+      // Find the message
+      const messageIndex = conversation.messages.findIndex(msg => msg.id === messageId);
+      if (messageIndex === -1) {
+        console.log('Message not found:', messageId);
+        console.log('Available messages:', conversation.messages.map(m => m.id));
+        socket.emit('error', { message: 'Message not found' });
+        return;
+      }
+      console.log('Found message at index:', messageIndex);
+      
+      const message = conversation.messages[messageIndex];
+      console.log('Message details:', { id: message.id, senderId: message.senderId, text: message.text });
+      
+      // Check if user has permission to delete (only sender can delete their own messages)
+      if (message.senderId !== userId) {
+        console.log('Permission denied - message senderId:', message.senderId, 'requesting userId:', userId);
+        socket.emit('error', { message: 'You can only delete your own messages' });
+        return;
+      }
+      console.log('Permission granted - user can delete message');
+      
+      // Remove message from conversation
+      const deletedMessage = conversation.messages.splice(messageIndex, 1)[0];
+      console.log('Message removed from conversation. Remaining messages:', conversation.messages.length);
+      
+      // Broadcast deletion to all clients in the conversation room
+      const broadcastData = {
+        messageId: deletedMessage.id,
+        conversationId: conversationId
+      };
+      console.log('Broadcasting message_deleted event:', broadcastData);
+      io.to(conversationId).emit('message_deleted', broadcastData);
+      
+      console.log(`Message ${messageId} deleted via WebSocket by user ${userId} in conversation ${conversationId}`);
+      logToFile(`Message ${messageId} deleted via WebSocket by user ${userId} in conversation ${conversationId}`);
+      
+    } catch (error) {
+      console.error('Error deleting message via WebSocket:', error);
+      socket.emit('error', { message: 'Failed to delete message' });
     }
   });
   

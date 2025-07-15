@@ -9,8 +9,9 @@ import { useTypingIndicator } from '../hooks/useTypingIndicator';
 import { useReadReceipts } from '../hooks/useReadReceipts';
 import { useUserPresence } from '../hooks/useUserPresence';
 import { useMessageReactions } from '../hooks/useMessageReactions';
-import { Message } from '../../../chat-types/src';
+import { Message, FileAttachment } from '../../../chat-types/src';
 import { Header, MessageItem, MessageInput, EmptyState } from '../components';
+import { socketService } from '../services/socketService';
 import { RootStackParamList } from '../../App';
 
 type ChatRoomScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ChatRoom'>;
@@ -33,6 +34,7 @@ export const ChatRoomScreen: React.FC = () => {
     isConnected, 
     error: realtimeError, 
     sendMessage: sendRealtimeMessage,
+    deleteMessage: deleteRealtimeMessage,
     setInitialMessages 
   } = useRealtimeMessages({
     conversationId,
@@ -135,7 +137,27 @@ export const ChatRoomScreen: React.FC = () => {
     }
   };
 
+  const handleFileSelected = (fileData: FileAttachment) => {
+    if (storageMode === 'backend' && isConnected) {
+      // Send file message via WebSocket
+      socketService.sendFileMessage({
+        senderId: userId,
+        senderName: userName,
+        conversationId,
+        fileData
+      });
+    } else {
+      // For local mode, we could implement a fallback API call
+      Alert.alert('File Sharing', 'File sharing requires backend mode');
+    }
+  };
+
   const handleDeleteMessage = (message: Message) => {
+    console.log('handleDeleteMessage called for message:', message.id);
+    console.log('Storage mode:', storageMode);
+    console.log('deleteRealtimeMessage available:', !!deleteRealtimeMessage);
+    console.log('isConnected:', isConnected);
+    
     Alert.alert(
       'Delete Message',
       `Delete "${message.text.length > 50 ? message.text.substring(0, 50) + '...' : message.text}"?`,
@@ -145,8 +167,19 @@ export const ChatRoomScreen: React.FC = () => {
           text: 'Delete', 
           style: 'destructive',
           onPress: async () => {
-            await deleteMessage(message.id);
-            // Message deletion is handled automatically by the store
+            console.log('Delete confirmed for message:', message.id);
+            try {
+              if (storageMode === 'backend' && deleteRealtimeMessage) {
+                console.log('Using real-time WebSocket deletion');
+                deleteRealtimeMessage(message.id, userId);
+              } else {
+                console.log('Using API deletion');
+                await deleteMessage(message.id);
+              }
+              console.log('Delete operation completed');
+            } catch (error) {
+              console.error('Delete operation failed:', error);
+            }
           }
         }
       ]
@@ -207,6 +240,7 @@ export const ChatRoomScreen: React.FC = () => {
       <KeyboardAvoidingView 
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
       <Header
         title={currentConversation?.title || "Chat Room"}
@@ -244,6 +278,10 @@ export const ChatRoomScreen: React.FC = () => {
             colors={['#007AFF']}
           />
         }
+        showsVerticalScrollIndicator={true}
+        scrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       />
       
       {/* Typing indicator */}
@@ -262,6 +300,10 @@ export const ChatRoomScreen: React.FC = () => {
         onTypingStop={stopTyping}
         userId={userId}
         userName={userName}
+        onFileSelected={handleFileSelected}
+        showFilePicker={storageMode === 'backend' && isConnected}
+        onVoiceRecorded={handleFileSelected}
+        showVoiceRecorder={storageMode === 'backend' && isConnected}
       />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -281,6 +323,7 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     padding: 16,
+    flexGrow: 1,
   },
   typingIndicator: {
     padding: 8,

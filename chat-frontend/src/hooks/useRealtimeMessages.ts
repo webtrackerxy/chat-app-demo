@@ -96,12 +96,25 @@ export const useRealtimeMessages = ({
       });
     };
     
+    const handleMessageDeleted = (data: { messageId: string; conversationId: string }) => {
+      console.log('Message deleted received:', data);
+      console.log('Current messages count before deletion:', messages.length);
+      setMessages(prev => {
+        const filtered = prev.filter(message => message.id !== data.messageId);
+        console.log('Messages count after deletion:', filtered.length);
+        console.log('Deleted message found:', prev.length !== filtered.length);
+        return filtered;
+      });
+    };
+    
     socketService.onNewMessage(handleNewMessage);
     socketService.onMessageRead(handleMessageRead);
+    socketService.onMessageDeleted(handleMessageDeleted);
     
     return () => {
       socketService.offNewMessage(handleNewMessage);
       socketService.offMessageRead(handleMessageRead);
+      socketService.offMessageDeleted(handleMessageDeleted);
     };
   }, [isEnabled]);
   
@@ -124,6 +137,23 @@ export const useRealtimeMessages = ({
     });
   }, [conversationId, isConnected]);
   
+  // Delete message function
+  const deleteMessage = useCallback((
+    messageId: string,
+    userId: string
+  ) => {
+    console.log('useRealtimeMessages.deleteMessage called:', { messageId, userId, conversationId });
+    console.log('isConnected:', isConnected);
+    
+    if (!isConnected) {
+      console.error('Not connected to server');
+      setError('Not connected to server');
+      return;
+    }
+    
+    socketService.deleteMessage(messageId, conversationId, userId);
+  }, [conversationId, isConnected]);
+  
   // Clear messages (useful for conversation switches)
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -139,6 +169,7 @@ export const useRealtimeMessages = ({
     isConnected,
     error,
     sendMessage,
+    deleteMessage,
     clearMessages,
     setInitialMessages,
   };
