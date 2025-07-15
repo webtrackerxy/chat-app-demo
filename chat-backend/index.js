@@ -3,9 +3,12 @@ const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
+const { Server } = require('socket.io');
+const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
 
 // Setup log file - clear on server start
 const logFile = path.join(__dirname, 'server.log');
@@ -348,8 +351,92 @@ app.use((error, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  const startMessage = `Chat backend server running on port ${PORT}`;
+// Initialize Socket.IO server
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+// Socket event handlers
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+  logToFile(`User connected: ${socket.id}`);
+  
+  // Join conversation rooms
+  socket.on('join_conversation', (conversationId) => {
+    socket.join(conversationId);
+    console.log(`Socket ${socket.id} joined conversation ${conversationId}`);
+    logToFile(`Socket ${socket.id} joined conversation ${conversationId}`);
+  });
+  
+  // Handle new messages
+  socket.on('send_message', async (data) => {
+    try {
+      const { text, senderId, senderName, conversationId } = data;
+      
+      // Find the conversation
+      const conversation = conversations.find(conv => conv.id === conversationId);
+      
+      if (!conversation) {
+        socket.emit('error', { message: 'Conversation not found' });
+        return;
+      }
+      
+      const newMessage = {
+        id: uuidv4(),
+        text,
+        senderId,
+        senderName,
+        timestamp: new Date()
+      };
+      
+      // Add message to conversation's messages array
+      conversation.messages.push(newMessage);
+      
+      // Update conversation's updatedAt timestamp
+      conversation.updatedAt = new Date();
+      
+      // Broadcast to conversation room
+      io.to(conversationId).emit('new_message', newMessage);
+      
+      console.log(`Message sent to conversation ${conversationId}:`, newMessage);
+      logToFile(`Message sent to conversation ${conversationId}: ${JSON.stringify(newMessage)}`);
+      
+    } catch (error) {
+      console.error('Error sending message via socket:', error);
+      socket.emit('error', { message: 'Failed to send message' });
+    }
+  });
+  
+  // Handle typing indicators
+  socket.on('typing_start', (data) => {
+    const { conversationId, userId, userName } = data;
+    socket.to(conversationId).emit('user_typing', {
+      userId,
+      userName
+    });
+    console.log(`User ${userName} started typing in ${conversationId}`);
+  });
+  
+  socket.on('typing_stop', (data) => {
+    const { conversationId, userId } = data;
+    socket.to(conversationId).emit('user_stopped_typing', {
+      userId
+    });
+    console.log(`User ${userId} stopped typing in ${conversationId}`);
+  });
+  
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+    logToFile(`User disconnected: ${socket.id}`);
+  });
+});
+
+server.listen(PORT, () => {
+  const startMessage = `Chat backend server with WebSocket running on port ${PORT}`;
   console.log(startMessage);
   logToFile(startMessage);
   logToFile(`Log file: ${logFile}`);
