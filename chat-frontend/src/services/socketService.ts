@@ -1,12 +1,14 @@
 import io, { Socket } from 'socket.io-client';
-
-export interface Message {
-  id: string;
-  text: string;
-  senderId: string;
-  senderName: string;
-  timestamp: Date;
-}
+import { 
+  Message, 
+  ReadReceipt, 
+  MessageReaction, 
+  UserPresence,
+  MarkMessageReadRequest,
+  AddReactionRequest,
+  RemoveReactionRequest,
+  UserPresenceUpdate
+} from '../../../chat-types/src';
 
 export interface TypingData {
   conversationId: string;
@@ -126,6 +128,81 @@ class SocketService {
   onError(callback: (error: any) => void): void {
     if (this.socket) {
       this.socket.on('error', callback);
+    }
+  }
+  
+  // User presence
+  setUserOnline(userId: string, userName: string, conversationId?: string): void {
+    if (this.socket) {
+      this.socket.emit('user_online', { userId, userName, conversationId });
+    }
+  }
+  
+  onUserPresenceUpdate(callback: (data: UserPresenceUpdate) => void): void {
+    if (this.socket) {
+      this.socket.on('user_presence_update', callback);
+    }
+  }
+  
+  offUserPresenceUpdate(callback?: (data: UserPresenceUpdate) => void): void {
+    if (this.socket) {
+      this.socket.off('user_presence_update', callback);
+    }
+  }
+  
+  // Read receipts
+  markMessageAsRead(messageId: string, conversationId: string, userId: string, userName: string): void {
+    if (this.socket) {
+      this.socket.emit('mark_message_read', { messageId, conversationId, userId, userName });
+    }
+  }
+  
+  onMessageRead(callback: (data: { messageId: string; readReceipt: ReadReceipt }) => void): void {
+    if (this.socket) {
+      this.socket.on('message_read', callback);
+    }
+  }
+  
+  offMessageRead(callback?: (data: { messageId: string; readReceipt: ReadReceipt }) => void): void {
+    if (this.socket) {
+      this.socket.off('message_read', callback);
+    }
+  }
+  
+  // Message reactions
+  addReaction(messageId: string, conversationId: string, userId: string, userName: string, emoji: string): void {
+    if (this.socket) {
+      this.socket.emit('add_reaction', { messageId, conversationId, userId, userName, emoji });
+    }
+  }
+  
+  removeReaction(messageId: string, conversationId: string, userId: string, reactionId: string): void {
+    if (this.socket) {
+      this.socket.emit('remove_reaction', { messageId, conversationId, userId, reactionId });
+    }
+  }
+  
+  onReactionAdded(callback: (data: { messageId: string; reaction: MessageReaction }) => void): void {
+    if (this.socket) {
+      this.socket.on('reaction_added', callback);
+    }
+  }
+  
+  onReactionRemoved(callback: (data: { messageId: string; reactionId: string; userId: string }) => void): void {
+    if (this.socket) {
+      this.socket.on('reaction_removed', callback);
+    }
+  }
+  
+  offReactionAdded(callback?: (data: { messageId: string; reaction: MessageReaction }) => void): void {
+    if (this.socket) {
+      this.socket.off('reaction_added', callback);
+    }
+  }
+  
+  offReactionRemoved(callback?: (data: { messageId: string; reactionId: string; userId: string }) => void): void {
+    if (this.socket) {
+      this.socket.off('reaction_removed', callback);
     }
   }
   

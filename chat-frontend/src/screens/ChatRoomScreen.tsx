@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Alert, RefreshControl, SafeAreaView, Text } from 'react-native';
+import { View, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Alert, RefreshControl, SafeAreaView, Text, TouchableOpacity } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { useChat } from '../hooks/useChat';
 import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
 import { useTypingIndicator } from '../hooks/useTypingIndicator';
+import { useReadReceipts } from '../hooks/useReadReceipts';
+import { useUserPresence } from '../hooks/useUserPresence';
+import { useMessageReactions } from '../hooks/useMessageReactions';
 import { Message } from '../../../chat-types/src';
 import { Header, MessageItem, MessageInput, EmptyState } from '../components';
 import { RootStackParamList } from '../../App';
@@ -47,6 +50,49 @@ export const ChatRoomScreen: React.FC = () => {
     currentUserId: userId,
     isEnabled: storageMode === 'backend' && !!conversationId
   });
+  
+  // Set up read receipts
+  const { 
+    markAsRead, 
+    getReadStatusText, 
+    hasCurrentUserRead,
+    getMessageReadReceipts
+  } = useReadReceipts({
+    conversationId,
+    userId,
+    userName,
+    isEnabled: storageMode === 'backend' && !!conversationId
+  });
+  
+  // Set up user presence
+  const { 
+    onlineUsers, 
+    isCurrentUserOnline, 
+    getOnlineUsersText,
+    getPresenceText,
+    setUserOnline,
+    setUserOffline
+  } = useUserPresence({
+    conversationId,
+    userId,
+    userName,
+    isEnabled: storageMode === 'backend' && !!conversationId
+  });
+  
+  // Set up message reactions
+  const { 
+    toggleReaction, 
+    getReactionSummary, 
+    initializeReactions,
+    getMessageReactions,
+    hasUserReactedWithAny,
+    getUserReactionEmoji
+  } = useMessageReactions({
+    conversationId,
+    userId,
+    userName,
+    isEnabled: storageMode === 'backend' && !!conversationId
+  });
 
   // Load initial messages when conversation changes
   useEffect(() => {
@@ -64,6 +110,17 @@ export const ChatRoomScreen: React.FC = () => {
 
   // Get messages based on storage mode
   const messages = storageMode === 'backend' ? realtimeMessages : (currentConversation?.messages || []);
+  
+  // Initialize reactions for existing messages
+  useEffect(() => {
+    if (messages.length > 0) {
+      messages.forEach(message => {
+        if (message.reactions) {
+          initializeReactions(message.id, message.reactions);
+        }
+      });
+    }
+  }, [messages, initializeReactions]);
 
   const handleSendMessage = async () => {
     if (inputText.trim()) {
@@ -106,12 +163,26 @@ export const ChatRoomScreen: React.FC = () => {
   const renderMessage = ({ item }: { item: Message }) => {
     const isMyMessage = item.senderName === userName;
     
+    // Get current reactions from hook instead of message object
+    const currentReactions = getMessageReactions(item.id);
+    
+    // Create updated message with current reactions
+    const updatedMessage = {
+      ...item,
+      reactions: currentReactions
+    };
+    
     return (
       <MessageItem
-        message={item}
+        message={updatedMessage}
         isMyMessage={isMyMessage}
         onDelete={() => handleDeleteMessage(item)}
         showDeleteButton={isMyMessage}
+        onReaction={(emoji) => toggleReaction(item.id, emoji)}
+        onMarkAsRead={() => markAsRead(item.id)}
+        currentUserId={userId}
+        showReadReceipts={storageMode === 'backend'}
+        showReactions={storageMode === 'backend'}
       />
     );
   };
@@ -141,10 +212,22 @@ export const ChatRoomScreen: React.FC = () => {
         title={currentConversation?.title || "Chat Room"}
         subtitle={
           storageMode === 'backend' 
-            ? `${userName} - ${isConnected ? '🟢 Connected' : '🔴 Disconnected'} - Long press to delete`
+            ? `${userName} - ${isConnected ? '🟢 Connected' : '🔴 Disconnected'} - ${getOnlineUsersText()}`
             : `${userName} - Long press your messages to delete`
         }
         onBack={() => navigation.goBack()}
+        rightComponent={
+          storageMode === 'backend' && isConnected ? (
+            <TouchableOpacity
+              style={styles.presenceToggle}
+              onPress={isCurrentUserOnline ? setUserOffline : setUserOnline}
+            >
+              <Text style={styles.presenceToggleText}>
+                {isCurrentUserOnline ? '🟢 Online' : '🔴 Offline'}
+              </Text>
+            </TouchableOpacity>
+          ) : null
+        }
       />
       
       <FlatList
@@ -210,5 +293,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6c757d',
     fontStyle: 'italic',
+  },
+  presenceToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  presenceToggleText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
   },
 });

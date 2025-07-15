@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { socketService, Message } from '../services/socketService';
+import { socketService } from '../services/socketService';
+import { Message } from '../../../chat-types/src';
 
 export interface UseRealtimeMessagesProps {
   conversationId: string;
@@ -59,7 +60,7 @@ export const useRealtimeMessages = ({
     };
   }, [conversationId, isEnabled]);
   
-  // Listen for new messages
+  // Listen for new messages and read receipts
   useEffect(() => {
     if (!isEnabled) return;
     
@@ -75,10 +76,32 @@ export const useRealtimeMessages = ({
       });
     };
     
+    const handleMessageRead = (data: { messageId: string; readReceipt: any }) => {
+      console.log('Message read receipt received:', data);
+      setMessages(prev => {
+        return prev.map(message => {
+          if (message.id === data.messageId) {
+            const existingReadBy = message.readBy || [];
+            const hasReadReceipt = existingReadBy.some(receipt => receipt.userId === data.readReceipt.userId);
+            
+            if (!hasReadReceipt) {
+              return {
+                ...message,
+                readBy: [...existingReadBy, data.readReceipt]
+              };
+            }
+          }
+          return message;
+        });
+      });
+    };
+    
     socketService.onNewMessage(handleNewMessage);
+    socketService.onMessageRead(handleMessageRead);
     
     return () => {
       socketService.offNewMessage(handleNewMessage);
+      socketService.offMessageRead(handleMessageRead);
     };
   }, [isEnabled]);
   

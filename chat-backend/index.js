@@ -106,6 +106,21 @@ let conversations = [
   }
 ];
 
+// In-memory user presence tracking
+let userPresence = new Map(); // userId -> { userId, userName, isOnline, lastSeen, socketId }
+
+// Helper function to update message with read receipts and reactions
+const initializeMessageExtras = (message) => {
+  if (!message.readBy) message.readBy = [];
+  if (!message.reactions) message.reactions = [];
+  return message;
+};
+
+// Initialize existing messages with new structure
+conversations.forEach(conv => {
+  conv.messages.forEach(msg => initializeMessageExtras(msg));
+});
+
 // Routes
 // Conversation management routes
 app.get('/api/conversations', (req, res) => {
@@ -389,7 +404,9 @@ io.on('connection', (socket) => {
         text,
         senderId,
         senderName,
-        timestamp: new Date()
+        timestamp: new Date(),
+        readBy: [],
+        reactions: []
       };
       
       // Add message to conversation's messages array
@@ -428,10 +445,224 @@ io.on('connection', (socket) => {
     console.log(`User ${userId} stopped typing in ${conversationId}`);
   });
   
+  // Handle user presence
+  socket.on('user_online', (data) => {
+    const { userId, userName, conversationId } = data;
+    userPresence.set(userId, {
+      userId,
+      userName,
+      isOnline: true,
+      lastSeen: new Date(),
+      socketId: socket.id,
+      conversationId
+    });
+    
+    // Broadcast to all users in the conversation
+    if (conversationId) {
+      socket.to(conversationId).emit('user_presence_update', {
+        userId,
+        userName,
+        isOnline: true
+      });
+    }
+    
+    console.log(`User ${userName} is now online`);
+    logToFile(`User ${userName} is now online`);
+  });
+  
+  // Handle read receipts
+  socket.on('mark_message_read', (data) => {
+    try {
+      const { messageId, conversationId, userId, userName } = data;
+      
+      // Find the conversation and message
+      const conversation = conversations.find(conv => conv.id === conversationId);
+      if (!conversation) {
+        socket.emit('error', { message: 'Conversation not found' });
+        return;
+      }
+      
+      const message = conversation.messages.find(msg => msg.id === messageId);
+      if (!message) {
+        socket.emit('error', { message: 'Message not found' });
+        return;
+      }
+      
+      // Check if user already read this message
+      const existingReadReceipt = message.readBy.find(receipt => receipt.userId === userId);
+      if (existingReadReceipt) {
+        return; // User already read this message
+      }
+      
+      // Add read receipt
+      const readReceipt = {
+        userId,
+        userName,
+        readAt: new Date()
+      };
+      
+      message.readBy.push(readReceipt);
+      
+      // Broadcast read receipt to conversation room
+      io.to(conversationId).emit('message_read', {
+        messageId,
+        readReceipt
+      });
+      
+      console.log(`Message ${messageId} marked as read by ${userName}`);
+      logToFile(`Message ${messageId} marked as read by ${userName}`);
+      
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      socket.emit('error', { message: 'Failed to mark message as read' });
+    }
+  });
+  
+  // Handle message reactions
+  socket.on('add_reaction', (data) => {
+    try {
+      const { messageId, conversationId, userId, userName, emoji } = data;
+      
+      // Find the conversation and message
+      const conversation = conversations.find(conv => conv.id === conversationId);
+      if (!conversation) {
+        socket.emit('error', { message: 'Conversation not found' });
+        return;
+      }
+      
+      const message = conversation.messages.find(msg => msg.id === messageId);
+      if (!message) {
+        socket.emit('error', { message: 'Message not found' });
+        return;
+      }
+      
+      // Check if user already has any reaction (only one emoji allowed per user)
+      const existingUserReaction = message.reactions.find(
+        reaction => reaction.userId === userId
+      );
+      
+      if (existingUserReaction) {
+        // If user is trying to react with the same emoji, remove it (toggle)
+        if (existingUserReaction.emoji === emoji) {
+          message.reactions = message.reactions.filter(r => r.id !== existingUserReaction.id);
+          
+          // Broadcast reaction removal
+          io.to(conversationId).emit('reaction_removed', {
+            messageId,
+            reactionId: existingUserReaction.id,
+            userId
+          });
+          return;
+        } else {
+          // If user is trying to react with a different emoji, replace the existing one
+          message.reactions = message.reactions.filter(r => r.id !== existingUserReaction.id);
+          
+          // Broadcast old reaction removal
+          io.to(conversationId).emit('reaction_removed', {
+            messageId,
+            reactionId: existingUserReaction.id,
+            userId
+          });
+        }
+      }
+      
+      // Add reaction
+      const reaction = {
+        id: uuidv4(),
+        userId,
+        userName,
+        emoji,
+        timestamp: new Date()
+      };
+      
+      message.reactions.push(reaction);
+      
+      // Broadcast reaction to conversation room
+      io.to(conversationId).emit('reaction_added', {
+        messageId,
+        reaction
+      });
+      
+      console.log(`Reaction ${emoji} added to message ${messageId} by ${userName}`);
+      logToFile(`Reaction ${emoji} added to message ${messageId} by ${userName}`);
+      
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      socket.emit('error', { message: 'Failed to add reaction' });
+    }
+  });
+  
+  socket.on('remove_reaction', (data) => {
+    try {
+      const { messageId, conversationId, userId, reactionId } = data;
+      
+      // Find the conversation and message
+      const conversation = conversations.find(conv => conv.id === conversationId);
+      if (!conversation) {
+        socket.emit('error', { message: 'Conversation not found' });
+        return;
+      }
+      
+      const message = conversation.messages.find(msg => msg.id === messageId);
+      if (!message) {
+        socket.emit('error', { message: 'Message not found' });
+        return;
+      }
+      
+      // Find and remove the reaction
+      const reactionIndex = message.reactions.findIndex(
+        reaction => reaction.id === reactionId && reaction.userId === userId
+      );
+      
+      if (reactionIndex === -1) {
+        socket.emit('error', { message: 'Reaction not found' });
+        return;
+      }
+      
+      const removedReaction = message.reactions.splice(reactionIndex, 1)[0];
+      
+      // Broadcast reaction removal to conversation room
+      io.to(conversationId).emit('reaction_removed', {
+        messageId,
+        reactionId,
+        userId
+      });
+      
+      console.log(`Reaction ${removedReaction.emoji} removed from message ${messageId} by ${userId}`);
+      logToFile(`Reaction ${removedReaction.emoji} removed from message ${messageId} by ${userId}`);
+      
+    } catch (error) {
+      console.error('Error removing reaction:', error);
+      socket.emit('error', { message: 'Failed to remove reaction' });
+    }
+  });
+  
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     logToFile(`User disconnected: ${socket.id}`);
+    
+    // Update user presence on disconnect
+    for (const [userId, presence] of userPresence.entries()) {
+      if (presence.socketId === socket.id) {
+        presence.isOnline = false;
+        presence.lastSeen = new Date();
+        
+        // Broadcast offline status to conversation if user was in one
+        if (presence.conversationId) {
+          socket.to(presence.conversationId).emit('user_presence_update', {
+            userId,
+            userName: presence.userName,
+            isOnline: false,
+            lastSeen: presence.lastSeen
+          });
+        }
+        
+        console.log(`User ${presence.userName} is now offline`);
+        logToFile(`User ${presence.userName} is now offline`);
+        break;
+      }
+    }
   });
 });
 
