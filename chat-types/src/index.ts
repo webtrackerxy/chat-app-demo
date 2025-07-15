@@ -5,6 +5,8 @@ export interface Message {
   senderId: string;
   senderName: string;
   timestamp: Date;
+  readBy?: ReadReceipt[]; // Optional: Array of read receipts
+  reactions?: MessageReaction[]; // Optional: Array of reactions
 }
 
 // Represents a chat conversation between multiple participants
@@ -23,6 +25,8 @@ export interface User {
   id: string;
   name: string;
   avatar?: string; // Optional: User's profile image
+  isOnline?: boolean; // Optional: Online status
+  lastSeen?: Date; // Optional: Last seen timestamp
 }
 
 // Payload structure to create a new message within a conversation
@@ -37,6 +41,64 @@ export interface CreateMessageRequest {
 export interface CreateConversationRequest {
   title: string;
   participants: string[];
+}
+
+// Represents a read receipt for a message
+export interface ReadReceipt {
+  userId: string;
+  userName: string;
+  readAt: Date;
+}
+
+// Represents a reaction to a message
+export interface MessageReaction {
+  id: string;
+  userId: string;
+  userName: string;
+  emoji: string;
+  timestamp: Date;
+}
+
+// Represents user presence status
+export interface UserPresence {
+  userId: string;
+  userName: string;
+  isOnline: boolean;
+  lastSeen?: Date;
+  conversationId?: string; // Optional: Current conversation user is in
+}
+
+// Payload structure to mark a message as read
+export interface MarkMessageReadRequest {
+  messageId: string;
+  conversationId: string;
+  userId: string;
+  userName: string;
+}
+
+// Payload structure to add a reaction to a message
+export interface AddReactionRequest {
+  messageId: string;
+  conversationId: string;
+  userId: string;
+  userName: string;
+  emoji: string;
+}
+
+// Payload structure to remove a reaction from a message
+export interface RemoveReactionRequest {
+  messageId: string;
+  conversationId: string;
+  userId: string;
+  reactionId: string;
+}
+
+// Payload structure for user presence updates
+export interface UserPresenceUpdate {
+  userId: string;
+  userName: string;
+  isOnline: boolean;
+  conversationId?: string;
 }
 
 // Generic API response wrapper for client-server communication
