@@ -45,6 +45,8 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 - 🎣 **Advanced React hooks**: useUserPresence, useMessageReactions, useReadReceipts, useRealtimeMessages
 - 🌍 **Environment configuration** - Centralized .env configuration for all services
 - 📁 **File upload system** - Multer-based backend with real-time broadcasting
+- 🛣️ **Path mappings** - Clean import paths with TypeScript path resolution
+- 🔧 **Code quality tools** - ESLint, Prettier, TypeScript strict mode, circular dependency detection
 
 ### 📱 User Experience
 - **Instant messaging**: No more 3-5 second delays
@@ -68,8 +70,10 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 │
 ├── /chat-frontend ✅ Expo + NativeWind + Real-time hooks + Multimedia
 │ ├── .env ✅ Environment configuration
+│ ├── .prettierrc ✅ Code formatting configuration
+│ ├── eslint.config.js ✅ ESLint configuration
 │ ├── /src
-│ │ ├── /api ✅ REST client (uses chat-types)
+│ │ ├── /api ✅ REST client (uses chat-types via @chat-types)
 │ │ ├── /hooks ✅ useChat + useRealtimeMessages + useTypingIndicator + useUserPresence + useMessageReactions + useReadReceipts
 │ │ ├── /services ✅ WebSocket client (socketService) + fileUploadService
 │ │ ├── /context ✅ SocketContext for connection management
@@ -77,10 +81,12 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 │ │ ├── /config ✅ Environment variable management
 │ │ ├── /components ✅ MessageInput + MessageItem + FilePicker + VoiceRecorder + FileMessage + VideoPlayer
 │ │ ├── /screens ✅ ChatRoom with real-time features + presence controls + file sharing
+│ │ ├── /types ✅ Local type definitions with path mapping support
 │ │ ├── /__tests__ ✅ Component and integration tests
 │ │ └── App.tsx
 │ ├── package.json (+ expo-image-picker, expo-audio, expo-file-system)
-│ └── tsconfig.json
+│ ├── tsconfig.json ✅ TypeScript configuration with path mappings
+│ └── jest.config.js ✅ Jest configuration with module name mapping
 │
 ├── /chat-backend ✅ Express + Socket.IO WebSocket server + File Upload
 │ ├── .env ✅ Environment configuration
@@ -98,6 +104,61 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 ├── .gitignore
 └── README.md
 </pre>
+## 🛠️ Development Workflow
+
+### Code Quality Tools
+The frontend includes comprehensive code quality tools:
+
+```bash
+cd chat-frontend
+
+# Format code with Prettier
+npm run prettier-write
+
+# Check code formatting
+npm run prettier-check
+
+# Run ESLint
+npm run lint
+
+# Fix ESLint issues
+npm run lint:fix
+
+# Type checking
+npm run typecheck
+
+# Check for circular dependencies
+npm run circular-dependencies
+
+# Run all quality checks
+npm run check
+```
+
+### Path Mappings
+The project uses TypeScript path mappings for cleaner imports:
+
+```typescript
+// Instead of relative imports:
+import { useChat } from '../../../hooks/useChat'
+import { Message } from '../../../chat-types/src'
+
+// Use clean path mappings:
+import { useChat } from '@hooks/useChat'
+import { Message } from '@chat-types'
+```
+
+Available path mappings:
+- `@components` → `src/components`
+- `@hooks` → `src/hooks`
+- `@services` → `src/services`
+- `@screens` → `src/screens`
+- `@store` → `src/store`
+- `@api` → `src/api`
+- `@config` → `src/config`
+- `@context` → `src/context`
+- `@types` → `src/types`
+- `@chat-types` → `../chat-types/src`
+
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
@@ -157,7 +218,7 @@ cd chat-frontend && npm test
 
 ### Frontend  
 - **React Native** (via Expo) - Cross-platform mobile development
-- **TypeScript** - Type safety and better developer experience
+- **TypeScript** - Type safety and better developer experience with path mappings
 - **Socket.IO Client** - WebSocket client for real-time features
 - **Zustand** - Lightweight state management
 - **NativeWind** - Tailwind CSS for React Native
@@ -167,10 +228,18 @@ cd chat-frontend && npm test
 - **Expo Document Picker** - Document file selection
 - **Expo File System** - File upload and management
 
+### Code Quality & Development Tools
+- **ESLint** - JavaScript/TypeScript linting with strict rules
+- **Prettier** - Automated code formatting
+- **TypeScript Strict Mode** - Enhanced type checking and safety
+- **Path Mappings** - Clean import paths with @ aliases
+- **Circular Dependency Detection** - Prevents dependency cycles
+- **Jest** - Unit and integration testing framework
+- **React Testing Library** - Component testing utilities
+
 ### Shared
 - **TypeScript interfaces** - Shared types between frontend and backend
-- **Jest** - Testing framework
-- **ESLint/Prettier** - Code formatting and linting
+- **Monorepo structure** - Organized codebase with path mappings
 
 ## ⚡ Performance Improvements
 
@@ -202,6 +271,16 @@ cd chat-frontend && npm test
 - ✅ **Video sharing** with inline playback
 - ✅ **Message deletion** with real-time updates
 - ✅ **Compact UI design** optimized for mobile
+
+### Code Quality & Developer Experience
+- ✅ **TypeScript path mappings** for cleaner imports
+- ✅ **Automated code formatting** with Prettier
+- ✅ **ESLint integration** with strict rules
+- ✅ **Circular dependency detection** prevents architecture issues
+- ✅ **Type safety** with TypeScript strict mode
+- ✅ **Comprehensive testing** with Jest and React Testing Library
+- ✅ **Consistent code style** across the entire codebase
+- ✅ **Developer workflow** with npm scripts for all quality checks
 
 ## 🔧 Configuration
 
@@ -277,6 +356,10 @@ For detailed configuration instructions, see [ENV_CONFIG.md](./ENV_CONFIG.md).
 ```bash
 cd chat-frontend
 
+# Run all quality checks (recommended)
+npm run check
+
+# Individual commands:
 # Component tests
 npm test -- FilePicker.test.tsx
 npm test -- VoiceRecorder.test.tsx
@@ -286,6 +369,12 @@ npm test -- mediaUpload.test.ts
 
 # All tests
 npm test
+
+# Code quality checks
+npm run typecheck        # TypeScript compilation
+npm run lint            # ESLint checking
+npm run prettier-check  # Code formatting check
+npm run circular-dependencies  # Dependency cycle detection
 ```
 
 ### Backend Tests
