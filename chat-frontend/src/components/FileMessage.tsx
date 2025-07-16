@@ -1,34 +1,34 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Linking, Alert } from 'react-native';
-import { FileAttachment } from '../../../chat-types/src';
-import { FileUploadService } from '../services/fileUploadService';
-import { VoiceMessagePlayer } from './VoiceMessagePlayer';
-import { VideoMessagePlayer } from './VideoMessagePlayer';
+import React, { useState } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, Image, Linking, Alert } from 'react-native'
+import { FileAttachment } from '@chat-types'
+import { FileUploadService } from '@services/fileUploadService'
+import { VoiceMessagePlayer } from './VoiceMessagePlayer'
+import { VideoMessagePlayer } from './VideoMessagePlayer'
 
 interface FileMessageProps {
-  file: FileAttachment;
-  isMyMessage: boolean;
+  file: FileAttachment
+  isMyMessage: boolean
 }
 
 export const FileMessage: React.FC<FileMessageProps> = ({ file, isMyMessage }) => {
-  const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true)
+  const [imageError, setImageError] = useState(false)
 
   const handleDownload = async () => {
     try {
-      const downloadUrl = FileUploadService.getDownloadUrl(file.filename);
-      const supported = await Linking.canOpenURL(downloadUrl);
-      
+      const downloadUrl = FileUploadService.getDownloadUrl(file.filename)
+      const supported = await Linking.canOpenURL(downloadUrl)
+
       if (supported) {
-        await Linking.openURL(downloadUrl);
+        await Linking.openURL(downloadUrl)
       } else {
-        Alert.alert('Error', 'Cannot open this file');
+        Alert.alert('Error', 'Cannot open this file')
       }
     } catch (error) {
-      console.error('Download error:', error);
-      Alert.alert('Error', 'Failed to download file');
+      console.error('Download error:', error)
+      Alert.alert('Error', 'Failed to download file')
     }
-  };
+  }
 
   const renderImagePreview = () => {
     if (imageError) {
@@ -37,7 +37,7 @@ export const FileMessage: React.FC<FileMessageProps> = ({ file, isMyMessage }) =
           <Text style={styles.imageErrorText}>🖼️</Text>
           <Text style={styles.imageErrorText}>Failed to load image</Text>
         </View>
-      );
+      )
     }
 
     return (
@@ -46,29 +46,25 @@ export const FileMessage: React.FC<FileMessageProps> = ({ file, isMyMessage }) =
         style={styles.imagePreview}
         onLoad={() => setImageLoading(false)}
         onError={() => {
-          setImageLoading(false);
-          setImageError(true);
+          setImageLoading(false)
+          setImageError(true)
         }}
-        resizeMode="cover"
+        resizeMode='cover'
       />
-    );
-  };
+    )
+  }
 
   const renderFileInfo = () => (
     <View style={styles.fileInfo}>
-      <Text style={styles.fileIcon}>
-        {FileUploadService.getFileIcon(file.mimeType)}
-      </Text>
+      <Text style={styles.fileIcon}>{FileUploadService.getFileIcon(file.mimeType)}</Text>
       <View style={styles.fileDetails}>
         <Text style={styles.fileName} numberOfLines={1}>
           {file.originalName}
         </Text>
-        <Text style={styles.fileSize}>
-          {FileUploadService.formatFileSize(file.size)}
-        </Text>
+        <Text style={styles.fileSize}>{FileUploadService.formatFileSize(file.size)}</Text>
       </View>
     </View>
-  );
+  )
 
   const renderContent = () => {
     switch (file.type) {
@@ -76,48 +72,35 @@ export const FileMessage: React.FC<FileMessageProps> = ({ file, isMyMessage }) =
         return (
           <View style={styles.imageContainer}>
             {renderImagePreview()}
-            <TouchableOpacity
-              style={styles.downloadButton}
-              onPress={handleDownload}
-            >
+            <TouchableOpacity style={styles.downloadButton} onPress={handleDownload}>
               <Text style={styles.downloadButtonText}>View Full Size</Text>
             </TouchableOpacity>
           </View>
-        );
+        )
 
       case 'audio':
-        return (
-          <VoiceMessagePlayer file={file} isMyMessage={isMyMessage} />
-        );
+        return <VoiceMessagePlayer file={file} isMyMessage={isMyMessage} />
 
       case 'video':
-        return (
-          <VideoMessagePlayer file={file} isMyMessage={isMyMessage} />
-        );
+        return <VideoMessagePlayer file={file} isMyMessage={isMyMessage} />
 
       case 'document':
       default:
         return (
-          <TouchableOpacity
-            style={styles.documentContainer}
-            onPress={handleDownload}
-          >
+          <TouchableOpacity style={styles.documentContainer} onPress={handleDownload}>
             {renderFileInfo()}
             <Text style={styles.downloadText}>Tap to download</Text>
           </TouchableOpacity>
-        );
+        )
     }
-  };
+  }
 
   return (
-    <View style={[
-      styles.container,
-      isMyMessage ? styles.myMessage : styles.otherMessage
-    ]}>
+    <View style={[styles.container, isMyMessage ? styles.myMessage : styles.otherMessage]}>
       {renderContent()}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -134,7 +117,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     alignSelf: 'flex-start',
   },
-  
+
   // Image styles
   imageContainer: {
     minWidth: 120,
@@ -172,7 +155,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  
+
   // Audio styles
   audioContainer: {
     minWidth: 140,
@@ -212,7 +195,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  
+
   // Document styles
   documentContainer: {
     minWidth: 140,
@@ -247,4 +230,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
-});
+})

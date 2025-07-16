@@ -1,4 +1,4 @@
-import { useChatStore } from '../store/chatStore';
+import { useChatStore } from '@store/chatStore'
 
 export const useChat = () => {
   const {
@@ -19,7 +19,7 @@ export const useChat = () => {
     setCurrentUser,
     setStorageMode,
     clearError,
-  } = useChatStore();
+  } = useChatStore()
 
   return {
     // State
@@ -29,7 +29,7 @@ export const useChat = () => {
     isLoading,
     error,
     storageMode,
-    
+
     // Actions
     loadConversations,
     loadMessages,
@@ -42,5 +42,5 @@ export const useChat = () => {
     setCurrentUser,
     setStorageMode,
     clearError,
-  };
-};
+  }
+}

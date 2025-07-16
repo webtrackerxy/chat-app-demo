@@ -1,15 +1,15 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 
 interface HeaderProps {
-  title: string;
-  onBack?: () => void;
+  title: string
+  onBack?: () => void
   rightAction?: {
-    title: string;
-    onPress: () => void;
-  };
-  rightComponent?: React.ReactNode;
-  subtitle?: string;
+    title: string
+    onPress: () => void
+  }
+  rightComponent?: React.ReactNode
+  subtitle?: string
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,27 +27,23 @@ export const Header: React.FC<HeaderProps> = ({
             <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
         )}
-        
+
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{title}</Text>
           {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
         </View>
-        
+
         {rightAction && (
           <TouchableOpacity style={styles.rightAction} onPress={rightAction.onPress}>
             <Text style={styles.rightActionText}>{rightAction.title}</Text>
           </TouchableOpacity>
         )}
-        
-        {rightComponent && (
-          <View style={styles.rightAction}>
-            {rightComponent}
-          </View>
-        )}
+
+        {rightComponent && <View style={styles.rightAction}>{rightComponent}</View>}
       </View>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -89,4 +85,4 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '600',
   },
-});
+})

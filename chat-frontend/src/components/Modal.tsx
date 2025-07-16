@@ -1,18 +1,18 @@
-import React from 'react';
-import { Modal as RNModal, View, Text, StyleSheet, ModalProps } from 'react-native';
-import { Button } from './Button';
-import { Input } from './Input';
+import React from 'react'
+import { Modal as RNModal, View, Text, StyleSheet, ModalProps } from 'react-native'
+import { Button } from './Button'
+import { Input } from './Input'
 
 interface ActionModalProps extends Omit<ModalProps, 'children'> {
-  title: string;
-  inputValue?: string;
-  onInputChange?: (text: string) => void;
-  inputPlaceholder?: string;
-  onCancel: () => void;
-  onConfirm: () => void;
-  confirmText?: string;
-  cancelText?: string;
-  showInput?: boolean;
+  title: string
+  inputValue?: string
+  onInputChange?: (text: string) => void
+  inputPlaceholder?: string
+  onCancel: () => void
+  onConfirm: () => void
+  confirmText?: string
+  cancelText?: string
+  showInput?: boolean
 }
 
 export const ActionModal: React.FC<ActionModalProps> = ({
@@ -28,15 +28,11 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   ...modalProps
 }) => {
   return (
-    <RNModal
-      transparent
-      animationType="slide"
-      {...modalProps}
-    >
+    <RNModal transparent animationType='slide' {...modalProps}>
       <View style={styles.overlay}>
         <View style={styles.content}>
           <Text style={styles.title}>{title}</Text>
-          
+
           {showInput && (
             <Input
               style={styles.input}
@@ -46,25 +42,21 @@ export const ActionModal: React.FC<ActionModalProps> = ({
               autoFocus
             />
           )}
-          
+
           <View style={styles.buttons}>
             <Button
               title={cancelText}
               onPress={onCancel}
-              variant="secondary"
+              variant='secondary'
               style={styles.button}
             />
-            <Button
-              title={confirmText}
-              onPress={onConfirm}
-              style={styles.button}
-            />
+            <Button title={confirmText} onPress={onConfirm} style={styles.button} />
           </View>
         </View>
       </View>
     </RNModal>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   overlay: {
@@ -97,4 +89,4 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 4,
   },
-});
+})

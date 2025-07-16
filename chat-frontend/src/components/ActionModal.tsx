@@ -1,18 +1,25 @@
-import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
-import { Input } from './Input';
-import { Button } from './Button';
+import React from 'react'
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from 'react-native'
+import { Input } from './Input'
+import { Button } from './Button'
 
 interface ActionModalProps {
-  visible: boolean;
-  title: string;
-  placeholder: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-  confirmText?: string;
-  cancelText?: string;
+  visible: boolean
+  title: string
+  placeholder: string
+  value: string
+  onChangeText: (text: string) => void
+  onConfirm: () => void
+  onCancel: () => void
+  confirmText?: string
+  cancelText?: string
 }
 
 export const ActionModal: React.FC<ActionModalProps> = ({
@@ -27,18 +34,13 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   cancelText = 'Cancel',
 }) => {
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onCancel}
-    >
+    <Modal visible={visible} transparent={true} animationType='fade' onRequestClose={onCancel}>
       <TouchableWithoutFeedback onPress={onCancel}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={styles.container}>
               <Text style={styles.title}>{title}</Text>
-              
+
               <Input
                 placeholder={placeholder}
                 value={value}
@@ -46,18 +48,18 @@ export const ActionModal: React.FC<ActionModalProps> = ({
                 autoFocus={true}
                 style={styles.input}
               />
-              
+
               <View style={styles.buttonContainer}>
                 <Button
                   title={cancelText}
                   onPress={onCancel}
-                  variant="secondary"
+                  variant='secondary'
                   style={styles.button}
                 />
                 <Button
                   title={confirmText}
                   onPress={onConfirm}
-                  variant="primary"
+                  variant='primary'
                   style={styles.button}
                   disabled={!value.trim()}
                 />
@@ -67,8 +69,8 @@ export const ActionModal: React.FC<ActionModalProps> = ({
         </View>
       </TouchableWithoutFeedback>
     </Modal>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   overlay: {
@@ -110,4 +112,4 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 8,
   },
-});
+})

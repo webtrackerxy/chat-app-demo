@@ -5,7 +5,7 @@ export interface FileAttachment {
   filename: string;
   mimeType: string;
   size: number;
-  type: 'image' | 'audio' | 'document';
+  type: 'image' | 'audio' | 'video' | 'document';
   url: string;
   uploadedAt: Date;
   duration?: number; // Optional: For audio files
@@ -19,7 +19,7 @@ export interface Message {
   senderId: string;
   senderName: string;
   timestamp: Date;
-  type: 'text' | 'image' | 'audio' | 'document'; // Message type
+  type: 'text' | 'image' | 'audio' | 'video' | 'document'; // Message type
   file?: FileAttachment; // Optional: File attachment
   readBy?: ReadReceipt[]; // Optional: Array of read receipts
   reactions?: MessageReaction[]; // Optional: Array of reactions

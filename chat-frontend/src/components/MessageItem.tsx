@@ -1,19 +1,19 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { Message } from '../../../chat-types/src';
-import { FileMessage } from './FileMessage';
+import React from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { Message } from '@chat-types'
+import { FileMessage } from './FileMessage'
 
 interface MessageItemProps {
-  message: Message;
-  isMyMessage: boolean;
-  onDelete?: () => void;
-  showDeleteButton?: boolean;
+  message: Message
+  isMyMessage: boolean
+  onDelete?: () => void
+  showDeleteButton?: boolean
   // New props for enhanced features
-  onReaction?: (emoji: string) => void;
-  onMarkAsRead?: () => void;
-  currentUserId?: string;
-  showReadReceipts?: boolean;
-  showReactions?: boolean;
+  onReaction?: (emoji: string) => void
+  onMarkAsRead?: () => void
+  currentUserId?: string
+  showReadReceipts?: boolean
+  showReactions?: boolean
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -29,66 +29,63 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 }) => {
   // Helper function to get read receipts text
   const getReadReceiptsText = () => {
-    if (!message.readBy || message.readBy.length === 0) return '';
-    
-    const readByOthers = message.readBy.filter(receipt => receipt.userId !== currentUserId);
-    
-    if (readByOthers.length === 0) return '';
-    
+    if (!message.readBy || message.readBy.length === 0) return ''
+
+    const readByOthers = message.readBy.filter((receipt) => receipt.userId !== currentUserId)
+
+    if (readByOthers.length === 0) return ''
+
     if (readByOthers.length === 1) {
-      return `Read by ${readByOthers[0].userName}`;
+      return `Read by ${readByOthers[0].userName}`
     } else if (readByOthers.length === 2) {
-      return `Read by ${readByOthers[0].userName} and ${readByOthers[1].userName}`;
+      return `Read by ${readByOthers[0].userName} and ${readByOthers[1].userName}`
     } else {
-      return `Read by ${readByOthers[0].userName} and ${readByOthers.length - 1} others`;
+      return `Read by ${readByOthers[0].userName} and ${readByOthers.length - 1} others`
     }
-  };
-  
+  }
+
   // Helper function to group reactions by emoji
   const getGroupedReactions = () => {
-    if (!message.reactions || message.reactions.length === 0) return new Map();
-    
-    const grouped = new Map();
-    message.reactions.forEach(reaction => {
-      const existing = grouped.get(reaction.emoji) || [];
-      grouped.set(reaction.emoji, [...existing, reaction]);
-    });
-    
-    return grouped;
-  };
-  
+    if (!message.reactions || message.reactions.length === 0) return new Map()
+
+    const grouped = new Map()
+    message.reactions.forEach((reaction) => {
+      const existing = grouped.get(reaction.emoji) || []
+      grouped.set(reaction.emoji, [...existing, reaction])
+    })
+
+    return grouped
+  }
+
   // Get the current user's reaction emoji (if any)
   const getCurrentUserReactionEmoji = () => {
-    if (!message.reactions || !currentUserId) return null;
-    const userReaction = message.reactions.find(r => r.userId === currentUserId);
-    return userReaction?.emoji || null;
-  };
-  
+    if (!message.reactions || !currentUserId) return null
+    const userReaction = message.reactions.find((r) => r.userId === currentUserId)
+    return userReaction?.emoji || null
+  }
+
   // Common emoji reactions
-  const commonEmojis = ['👍', '❤️', '😂', '😮', '😢', '😡'];
-  
+  const commonEmojis = ['👍', '❤️', '😂', '😮', '😢', '😡']
+
   // Auto-mark as read when message is displayed
   React.useEffect(() => {
     if (onMarkAsRead && !isMyMessage) {
       // Mark as read after a short delay
       const timer = setTimeout(() => {
-        onMarkAsRead();
-      }, 1000);
-      
-      return () => clearTimeout(timer);
+        onMarkAsRead()
+      }, 1000)
+
+      return () => clearTimeout(timer)
     }
-  }, [message.id, onMarkAsRead, isMyMessage]);
-  const groupedReactions = getGroupedReactions();
-  const readReceiptsText = getReadReceiptsText();
-  const currentUserReactionEmoji = getCurrentUserReactionEmoji();
-  
+  }, [message.id, onMarkAsRead, isMyMessage])
+  const groupedReactions = getGroupedReactions()
+  const readReceiptsText = getReadReceiptsText()
+  const currentUserReactionEmoji = getCurrentUserReactionEmoji()
+
   return (
     <View style={styles.messageContainer}>
       <TouchableOpacity
-        style={[
-          styles.container,
-          isMyMessage ? styles.ownMessage : styles.otherMessage,
-        ]}
+        style={[styles.container, isMyMessage ? styles.ownMessage : styles.otherMessage]}
         onLongPress={showDeleteButton && onDelete ? onDelete : undefined}
         delayLongPress={500}
         activeOpacity={showDeleteButton ? 0.7 : 1}
@@ -108,14 +105,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               {message.text}
             </Text>
           )}
-          <Text style={styles.messageTime}>
-            {new Date(message.timestamp).toLocaleTimeString()}
-          </Text>
+          <Text style={styles.messageTime}>{new Date(message.timestamp).toLocaleTimeString()}</Text>
         </View>
-        
+
         {showDeleteButton && onDelete && (
-          <TouchableOpacity 
-            style={styles.deleteButton} 
+          <TouchableOpacity
+            style={styles.deleteButton}
             onPress={onDelete}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -123,67 +118,79 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           </TouchableOpacity>
         )}
       </TouchableOpacity>
-      
+
       {/* Message Reactions */}
       {showReactions && (
-        <View style={[styles.reactionsContainer, isMyMessage ? styles.reactionsRight : styles.reactionsLeft]}>
+        <View
+          style={[
+            styles.reactionsContainer,
+            isMyMessage ? styles.reactionsRight : styles.reactionsLeft,
+          ]}
+        >
           {/* Existing reactions */}
           {groupedReactions.size > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.existingReactions}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.existingReactions}
+            >
               {Array.from(groupedReactions.entries()).map(([emoji, reactions]) => {
-                const hasCurrentUser = reactions.some((r: any) => r.userId === currentUserId);
+                const hasCurrentUser = reactions.some((r: any) => r.userId === currentUserId)
                 return (
                   <TouchableOpacity
                     key={emoji}
-                    style={[
-                      styles.reactionBubble,
-                      hasCurrentUser && styles.reactionBubbleActive
-                    ]}
+                    style={[styles.reactionBubble, hasCurrentUser && styles.reactionBubbleActive]}
                     onPress={() => onReaction?.(emoji)}
                   >
                     <Text style={styles.reactionEmoji}>{emoji}</Text>
                     <Text style={styles.reactionCount}>{reactions.length}</Text>
                   </TouchableOpacity>
-                );
+                )
               })}
             </ScrollView>
           )}
-          
+
           {/* Quick reaction buttons */}
           {onReaction && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickReactions}>
-              {commonEmojis.map(emoji => {
-                const isSelected = currentUserReactionEmoji === emoji;
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.quickReactions}
+            >
+              {commonEmojis.map((emoji) => {
+                const isSelected = currentUserReactionEmoji === emoji
                 return (
                   <TouchableOpacity
                     key={emoji}
                     style={[
                       styles.quickReactionButton,
-                      isSelected && styles.quickReactionButtonSelected
+                      isSelected && styles.quickReactionButtonSelected,
                     ]}
                     onPress={() => onReaction(emoji)}
                   >
-                    <Text style={[
-                      styles.quickReactionEmoji,
-                      isSelected && styles.quickReactionEmojiSelected
-                    ]}>
+                    <Text
+                      style={[
+                        styles.quickReactionEmoji,
+                        isSelected && styles.quickReactionEmojiSelected,
+                      ]}
+                    >
                       {emoji}
                     </Text>
                   </TouchableOpacity>
-                );
+                )
               })}
             </ScrollView>
           )}
         </View>
       )}
-      
+
       {/* Read Receipts */}
       {showReadReceipts && readReceiptsText && isMyMessage && (
         <Text style={styles.readReceipts}>{readReceiptsText}</Text>
       )}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   messageContainer: {
@@ -326,4 +333,4 @@ const styles = StyleSheet.create({
     marginRight: 12,
     fontStyle: 'italic',
   },
-});
+})

@@ -1,27 +1,27 @@
-import React, { useRef } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Button } from './Button';
-import { FilePicker } from './FilePicker';
-import { VoiceRecorder } from './VoiceRecorder';
-import { FileAttachment } from '../../../chat-types/src';
+import React, { useRef } from 'react'
+import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import { Button } from './Button'
+import { FilePicker } from './FilePicker'
+import { VoiceRecorder } from './VoiceRecorder'
+import { FileAttachment } from '@chat-types'
 
 interface MessageInputProps {
-  value: string;
-  onChangeText: (text: string) => void;
-  onSend: () => void;
-  placeholder?: string;
-  disabled?: boolean;
+  value: string
+  onChangeText: (text: string) => void
+  onSend: () => void
+  placeholder?: string
+  disabled?: boolean
   // Typing indicator props
-  onTypingStart?: (userId: string, userName: string) => void;
-  onTypingStop?: (userId: string) => void;
-  userId?: string;
-  userName?: string;
+  onTypingStart?: (userId: string, userName: string) => void
+  onTypingStop?: (userId: string) => void
+  userId?: string
+  userName?: string
   // File sharing props
-  onFileSelected?: (fileData: FileAttachment) => void;
-  showFilePicker?: boolean;
+  onFileSelected?: (fileData: FileAttachment) => void
+  showFilePicker?: boolean
   // Voice recording props
-  onVoiceRecorded?: (fileData: FileAttachment) => void;
-  showVoiceRecorder?: boolean;
+  onVoiceRecorded?: (fileData: FileAttachment) => void
+  showVoiceRecorder?: boolean
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -39,45 +39,45 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onVoiceRecorded,
   showVoiceRecorder = false,
 }) => {
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const canSend = value.trim().length > 0 && !disabled;
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const canSend = value.trim().length > 0 && !disabled
 
   const handleTextChange = (text: string) => {
-    onChangeText(text);
-    
+    onChangeText(text)
+
     // Handle typing indicators if props are provided
     if (onTypingStart && onTypingStop && userId && userName) {
       // Start typing if text is being entered
       if (text.length > 0) {
-        onTypingStart(userId, userName);
+        onTypingStart(userId, userName)
       }
-      
+
       // Clear existing timeout
       if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
+        clearTimeout(typingTimeoutRef.current)
       }
-      
+
       // Set timeout to stop typing after 1 second of inactivity
       typingTimeoutRef.current = setTimeout(() => {
-        onTypingStop(userId);
-      }, 1000);
+        onTypingStop(userId)
+      }, 1000)
     }
-  };
+  }
 
   const handleSend = () => {
     // Stop typing when sending
     if (onTypingStop && userId) {
-      onTypingStop(userId);
+      onTypingStop(userId)
     }
-    
+
     // Clear timeout
     if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = null;
+      clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = null
     }
-    
-    onSend();
-  };
+
+    onSend()
+  }
 
   return (
     <View style={styles.container}>
@@ -106,15 +106,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         maxLength={500}
       />
       <Button
-        title="Send"
+        title='Send'
         onPress={handleSend}
         disabled={!canSend}
         style={styles.sendButton}
-        size="medium"
+        size='medium'
       />
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -144,4 +144,4 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     minWidth: 80,
   },
-});
+})

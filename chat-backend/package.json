@@ -12,7 +12,13 @@
     "logs:watch": "watch -n 5 'node analyze-logs.js'",
     "logs:tail": "tail -f logs/combined.log",
     "logs:messages": "tail -f logs/messages.log",
-    "logs:clear": "rm -f logs/*.log"
+    "logs:clear": "rm -f logs/*.log",
+    "prettier-write": "prettier --write '**/*.{js,jsx,json}' --config ./.prettierrc",
+    "prettier-check": "prettier --check '**/*.{js,jsx,json}' --config ./.prettierrc",
+    "lint": "eslint '**/*.{js,jsx}' --config ./eslint.config.js --max-warnings 0",
+    "lint:fix": "eslint --fix '**/*.{js,jsx}' --config ./eslint.config.js",
+    "circular-dependencies": "dpdm ./index.js --tree=false --warning=false",
+    "check": "npm run lint && npm run prettier-check && npm run circular-dependencies"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -28,8 +34,11 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/supertest": "^6.0.3",
+    "dpdm": "^3.14.0",
+    "eslint": "^9.31.0",
     "jest": "^30.0.3",
     "nodemon": "^3.0.0",
+    "prettier": "^3.6.2",
     "supertest": "^7.1.1"
   }
 }

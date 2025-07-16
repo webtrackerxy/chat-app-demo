@@ -1,190 +1,184 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
-import { useAudioRecorder, useAudioPlayer, RecordingPresets } from 'expo-audio';
-import * as FileSystem from 'expo-file-system';
-import { FileUploadService } from '../services/fileUploadService';
-import { FileAttachment } from '../../../chat-types/src';
-import { getUploadUrl } from '../config/env';
+import React, { useState, useRef } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native'
+import { useAudioRecorder, useAudioPlayer, RecordingPresets } from 'expo-audio'
+import * as FileSystem from 'expo-file-system'
+import { FileUploadService } from '@services/fileUploadService'
+import { FileAttachment } from '@chat-types'
+import { getUploadUrl } from '@config/env'
 
 interface VoiceRecorderProps {
-  onVoiceRecorded: (fileData: FileAttachment) => void;
-  onError?: (error: string) => void;
-  disabled?: boolean;
+  onVoiceRecorded: (fileData: FileAttachment) => void
+  onError?: (error: string) => void
+  disabled?: boolean
 }
 
 interface VoiceRecorderModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onVoiceRecorded: (fileData: FileAttachment) => void;
-  onError?: (error: string) => void;
+  visible: boolean
+  onClose: () => void
+  onVoiceRecorded: (fileData: FileAttachment) => void
+  onError?: (error: string) => void
 }
 
 export const VoiceRecorderModal: React.FC<VoiceRecorderModalProps> = ({
   visible,
   onClose,
   onVoiceRecorded,
-  onError
+  onError,
 }) => {
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const [uploading, setUploading] = useState(false);
-  const durationInterval = useRef<NodeJS.Timeout | null>(null);
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY)
+  const [recordingDuration, setRecordingDuration] = useState(0)
+  const [uploading, setUploading] = useState(false)
+  const durationInterval = useRef<NodeJS.Timeout | null>(null)
 
   const startRecording = async () => {
     try {
-      console.log('Starting recording...');
-      
+      console.log('Starting recording...')
+
       // Start recording with expo-audio
-      await audioRecorder.prepareToRecordAsync();
-      audioRecorder.record();
-      
-      setRecordingDuration(0);
-      console.log('Recording started');
+      await audioRecorder.prepareToRecordAsync()
+      audioRecorder.record()
+
+      setRecordingDuration(0)
+      console.log('Recording started')
 
       // Start duration timer
       durationInterval.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
-      }, 1000);
-
+        setRecordingDuration((prev) => prev + 1)
+      }, 1000)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to start recording';
-      console.error('Recording start error:', error);
-      onError?.(errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start recording'
+      console.error('Recording start error:', error)
+      onError?.(errorMessage)
     }
-  };
+  }
 
   const stopRecording = async () => {
     try {
-      console.log('Stopping recording...');
-      
+      console.log('Stopping recording...')
+
       // Clear duration timer
       if (durationInterval.current) {
-        clearInterval(durationInterval.current);
-        durationInterval.current = null;
+        clearInterval(durationInterval.current)
+        durationInterval.current = null
       }
 
       // Stop the recording
-      await audioRecorder.stop();
-      
-      // Get the URI from the recorder
-      const uri = audioRecorder.uri;
-      console.log('Recording stopped, URI:', uri);
-      
-      if (uri) {
-        await uploadVoiceMessage(uri);
-      }
+      await audioRecorder.stop()
 
+      // Get the URI from the recorder
+      const uri = audioRecorder.uri
+      console.log('Recording stopped, URI:', uri)
+
+      if (uri) {
+        await uploadVoiceMessage(uri)
+      }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to stop recording';
-      console.error('Recording stop error:', error);
-      onError?.(errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to stop recording'
+      console.error('Recording stop error:', error)
+      onError?.(errorMessage)
     }
-  };
+  }
 
   const cancelRecording = async () => {
     try {
-      console.log('Cancelling recording...');
-      
+      console.log('Cancelling recording...')
+
       // Clear duration timer
       if (durationInterval.current) {
-        clearInterval(durationInterval.current);
-        durationInterval.current = null;
+        clearInterval(durationInterval.current)
+        durationInterval.current = null
       }
 
       // Stop the recording (there's no separate cancel method)
-      await audioRecorder.stop();
-      setRecordingDuration(0);
-      
-      console.log('Recording cancelled');
+      await audioRecorder.stop()
+      setRecordingDuration(0)
+
+      console.log('Recording cancelled')
     } catch (error) {
-      console.error('Recording cancel error:', error);
+      console.error('Recording cancel error:', error)
     }
-  };
+  }
 
   const uploadVoiceMessage = async (uri: string) => {
     try {
-      setUploading(true);
+      setUploading(true)
 
       // Get file info
-      const fileInfo = await FileSystem.getInfoAsync(uri);
+      const fileInfo = await FileSystem.getInfoAsync(uri)
       if (!fileInfo.exists) {
-        throw new Error('Recording file not found');
+        throw new Error('Recording file not found')
       }
 
       // Create file name
-      const fileName = `voice-message-${Date.now()}.m4a`;
+      const fileName = `voice-message-${Date.now()}.m4a`
 
       // Log file info for debugging
-      console.log('File info:', fileInfo);
-      console.log('Recording URI:', uri);
+      console.log('File info:', fileInfo)
+      console.log('Recording URI:', uri)
 
-      console.log('Uploading voice message:', fileName);
+      console.log('Uploading voice message:', fileName)
 
       // Use FileSystem.uploadAsync for proper file upload
-      const uploadResponse = await FileSystem.uploadAsync(
-        getUploadUrl(),
-        uri,
-        {
-          fieldName: 'file',
-          httpMethod: 'POST',
-          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-          mimeType: 'audio/m4a',
-          parameters: {
-            originalname: fileName,
-          },
-        }
-      );
+      const uploadResponse = await FileSystem.uploadAsync(getUploadUrl(), uri, {
+        fieldName: 'file',
+        httpMethod: 'POST',
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        mimeType: 'audio/m4a',
+        parameters: {
+          originalname: fileName,
+        },
+      })
 
-      console.log('Upload response:', uploadResponse);
+      console.log('Upload response:', uploadResponse)
 
       if (uploadResponse.status !== 200) {
-        throw new Error(`Upload failed: ${uploadResponse.status} - ${uploadResponse.body}`);
+        throw new Error(`Upload failed: ${uploadResponse.status} - ${uploadResponse.body}`)
       }
 
-      const uploadResult = JSON.parse(uploadResponse.body);
-      console.log('Upload success:', uploadResult);
+      const uploadResult = JSON.parse(uploadResponse.body)
+      console.log('Upload success:', uploadResult)
 
       if (uploadResult && uploadResult.success && uploadResult.data) {
         // Add duration to file metadata
         const fileDataWithDuration = {
           ...uploadResult.data,
-          duration: recordingDuration
-        };
-        
-        onVoiceRecorded(fileDataWithDuration);
-        onClose();
+          duration: recordingDuration,
+        }
+
+        onVoiceRecorded(fileDataWithDuration)
+        onClose()
       } else {
-        Alert.alert('Upload Failed', uploadResult?.error || 'Failed to upload voice message');
+        Alert.alert('Upload Failed', uploadResult?.error || 'Failed to upload voice message')
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-      console.error('Voice upload error:', error);
-      Alert.alert('Upload Error', errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed'
+      console.error('Voice upload error:', error)
+      Alert.alert('Upload Error', errorMessage)
     } finally {
-      setUploading(false);
-      setRecordingDuration(0);
+      setUploading(false)
+      setRecordingDuration(0)
     }
-  };
+  }
 
   const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
 
   const handleClose = () => {
     if (audioRecorder.isRecording) {
-      cancelRecording();
+      cancelRecording()
     }
-    onClose();
-  };
+    onClose()
+  }
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType='slide'>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Voice Message</Text>
-          
+
           {uploading ? (
             <View style={styles.uploadingContainer}>
               <Text style={styles.uploadingText}>Uploading...</Text>
@@ -197,37 +191,24 @@ export const VoiceRecorderModal: React.FC<VoiceRecorderModalProps> = ({
                     <View style={styles.recordingDot} />
                     <Text style={styles.recordingText}>Recording...</Text>
                   </View>
-                  
-                  <Text style={styles.durationText}>
-                    {formatDuration(recordingDuration)}
-                  </Text>
-                  
+
+                  <Text style={styles.durationText}>{formatDuration(recordingDuration)}</Text>
+
                   <View style={styles.recordingControls}>
-                    <TouchableOpacity
-                      style={styles.cancelButton}
-                      onPress={cancelRecording}
-                    >
+                    <TouchableOpacity style={styles.cancelButton} onPress={cancelRecording}>
                       <Text style={styles.cancelButtonText}>✕</Text>
                     </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={styles.stopButton}
-                      onPress={stopRecording}
-                    >
+
+                    <TouchableOpacity style={styles.stopButton} onPress={stopRecording}>
                       <Text style={styles.stopButtonText}>⏹</Text>
                     </TouchableOpacity>
                   </View>
                 </>
               ) : (
                 <>
-                  <Text style={styles.instructionText}>
-                    Tap the microphone to start recording
-                  </Text>
-                  
-                  <TouchableOpacity
-                    style={styles.startButton}
-                    onPress={startRecording}
-                  >
+                  <Text style={styles.instructionText}>Tap the microphone to start recording</Text>
+
+                  <TouchableOpacity style={styles.startButton} onPress={startRecording}>
                     <Text style={styles.startButtonText}>🎤</Text>
                   </TouchableOpacity>
                 </>
@@ -236,31 +217,28 @@ export const VoiceRecorderModal: React.FC<VoiceRecorderModalProps> = ({
           )}
 
           {!audioRecorder.isRecording && !uploading && (
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={handleClose}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           )}
         </View>
       </View>
     </Modal>
-  );
-};
+  )
+}
 
 export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   onVoiceRecorded,
   onError,
-  disabled = false
+  disabled = false,
 }) => {
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false)
 
   const handlePress = () => {
     if (!disabled) {
-      setModalVisible(true);
+      setModalVisible(true)
     }
-  };
+  }
 
   return (
     <>
@@ -269,7 +247,12 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         onPress={handlePress}
         disabled={disabled}
       >
-        <Text style={[styles.voiceRecorderButtonText, disabled && styles.voiceRecorderButtonTextDisabled]}>
+        <Text
+          style={[
+            styles.voiceRecorderButtonText,
+            disabled && styles.voiceRecorderButtonTextDisabled,
+          ]}
+        >
           🎤
         </Text>
       </TouchableOpacity>
@@ -281,8 +264,8 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         onError={onError}
       />
     </>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   voiceRecorderButton: {
@@ -418,4 +401,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-});
+})
