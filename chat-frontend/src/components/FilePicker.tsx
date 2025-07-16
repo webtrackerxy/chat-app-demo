@@ -1,41 +1,41 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
-import { FileUploadService, FileUploadProgress } from '../services/fileUploadService';
-import { FileAttachment } from '../../../chat-types/src';
-import { getUploadUrl } from '../config/env';
+import React, { useState } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
+import * as DocumentPicker from 'expo-document-picker'
+import * as FileSystem from 'expo-file-system'
+import { FileUploadService, FileUploadProgress } from '@services/fileUploadService'
+import { FileAttachment } from '@chat-types'
+import { getUploadUrl } from '@config/env'
 
 interface FilePickerProps {
-  onFileSelected: (fileData: FileAttachment) => void;
-  onError?: (error: string) => void;
-  disabled?: boolean;
+  onFileSelected: (fileData: FileAttachment) => void
+  onError?: (error: string) => void
+  disabled?: boolean
 }
 
 interface FilePickerModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onFileSelected: (fileData: FileAttachment) => void;
-  onError?: (error: string) => void;
+  visible: boolean
+  onClose: () => void
+  onFileSelected: (fileData: FileAttachment) => void
+  onError?: (error: string) => void
 }
 
 export const FilePickerModal: React.FC<FilePickerModalProps> = ({
   visible,
   onClose,
   onFileSelected,
-  onError
+  onError,
 }) => {
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<FileUploadProgress | null>(null);
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<FileUploadProgress | null>(null)
 
   const handleImagePicker = async () => {
     try {
       // Request permissions
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Sorry, we need camera roll permissions to upload images.');
-        return;
+        Alert.alert('Permission denied', 'Sorry, we need camera roll permissions to upload images.')
+        return
       }
 
       // Launch image picker
@@ -44,26 +44,26 @@ export const FilePickerModal: React.FC<FilePickerModalProps> = ({
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
-      });
+      })
 
       if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        await uploadFile(asset.uri, asset.fileName || 'image.jpg', asset.type || 'image/jpeg');
+        const asset = result.assets[0]
+        await uploadFile(asset.uri, asset.fileName || 'image.jpg', asset.type || 'image/jpeg')
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to pick image';
-      console.error('Image picker error:', error);
-      onError?.(errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to pick image'
+      console.error('Image picker error:', error)
+      onError?.(errorMessage)
     }
-  };
+  }
 
   const handleVideoPicker = async () => {
     try {
       // Request permissions
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Sorry, we need camera roll permissions to upload videos.');
-        return;
+        Alert.alert('Permission denied', 'Sorry, we need camera roll permissions to upload videos.')
+        return
       }
 
       // Launch video picker
@@ -71,104 +71,102 @@ export const FilePickerModal: React.FC<FilePickerModalProps> = ({
         mediaTypes: ['videos'],
         allowsEditing: true,
         quality: 0.8,
-      });
+      })
 
       if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        await uploadFile(asset.uri, asset.fileName || 'video.mp4', asset.type || 'video/mp4');
+        const asset = result.assets[0]
+        await uploadFile(asset.uri, asset.fileName || 'video.mp4', asset.type || 'video/mp4')
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to pick video';
-      console.error('Video picker error:', error);
-      onError?.(errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to pick video'
+      console.error('Video picker error:', error)
+      onError?.(errorMessage)
     }
-  };
+  }
 
   const handleDocumentPicker = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: '*/*',
         copyToCacheDirectory: true,
-      });
+      })
 
       if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        await uploadFile(asset.uri, asset.name, asset.mimeType || 'application/octet-stream');
+        const asset = result.assets[0]
+        await uploadFile(asset.uri, asset.name, asset.mimeType || 'application/octet-stream')
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to pick document';
-      console.error('Document picker error:', error);
-      onError?.(errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to pick document'
+      console.error('Document picker error:', error)
+      onError?.(errorMessage)
     }
-  };
+  }
 
   const uploadFile = async (uri: string, filename: string, mimeType: string) => {
     try {
-      setUploading(true);
-      setUploadProgress(null);
+      setUploading(true)
+      setUploadProgress(null)
 
-      console.log('FilePicker: Uploading file:', { uri, filename, mimeType });
+      console.log('FilePicker: Uploading file:', { uri, filename, mimeType })
 
       // Get file info first
-      const fileInfo = await fetch(uri).catch(() => null);
+      const fileInfo = await fetch(uri).catch(() => null)
       if (!fileInfo) {
-        throw new Error('Could not access file');
+        throw new Error('Could not access file')
       }
 
-      console.log('FilePicker: File accessible, using FileSystem.uploadAsync');
+      console.log('FilePicker: File accessible, using FileSystem.uploadAsync')
 
       // Use FileSystem.uploadAsync directly like in VoiceRecorder
-      const uploadResponse = await FileSystem.uploadAsync(
-        getUploadUrl(),
-        uri,
-        {
-          fieldName: 'file',
-          httpMethod: 'POST',
-          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-          mimeType: mimeType,
-          parameters: {
-            originalname: filename,
-          },
-        }
-      );
+      const uploadResponse = await FileSystem.uploadAsync(getUploadUrl(), uri, {
+        fieldName: 'file',
+        httpMethod: 'POST',
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        mimeType: mimeType,
+        parameters: {
+          originalname: filename,
+        },
+      })
 
-      console.log('FilePicker: Upload response:', uploadResponse);
+      console.log('FilePicker: Upload response:', uploadResponse)
 
       if (uploadResponse.status !== 200) {
-        throw new Error(`Upload failed: ${uploadResponse.status} - ${uploadResponse.body}`);
+        throw new Error(`Upload failed: ${uploadResponse.status} - ${uploadResponse.body}`)
       }
 
-      const uploadResult = JSON.parse(uploadResponse.body);
-      console.log('FilePicker: Upload success:', uploadResult);
+      const uploadResult = JSON.parse(uploadResponse.body)
+      console.log('FilePicker: Upload success:', uploadResult)
 
       if (uploadResult && uploadResult.success && uploadResult.data) {
-        onFileSelected(uploadResult.data);
-        onClose();
+        onFileSelected(uploadResult.data)
+        onClose()
       } else {
-        Alert.alert('Upload Failed', uploadResult?.error || 'Failed to upload file');
+        Alert.alert('Upload Failed', uploadResult?.error || 'Failed to upload file')
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-      console.error('FilePicker upload error:', error);
-      Alert.alert('Upload Error', errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed'
+      console.error('FilePicker upload error:', error)
+      Alert.alert('Upload Error', errorMessage)
     } finally {
-      setUploading(false);
-      setUploadProgress(null);
+      setUploading(false)
+      setUploadProgress(null)
     }
-  };
+  }
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType='slide'>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Select File</Text>
-          
+
           {uploading && (
             <View style={styles.uploadingContainer}>
               <Text style={styles.uploadingText}>Uploading...</Text>
               {uploadProgress && (
                 <Text style={styles.progressText}>
-                  {uploadProgress.percentage}% ({FileUploadService.formatFileSize(uploadProgress.loaded)} / {FileUploadService.formatFileSize(uploadProgress.total)})
+                  {uploadProgress.percentage}% (
+                  {FileUploadService.formatFileSize(uploadProgress.loaded)} /{' '}
+                  {FileUploadService.formatFileSize(uploadProgress.total)})
                 </Text>
               )}
             </View>
@@ -176,26 +174,17 @@ export const FilePickerModal: React.FC<FilePickerModalProps> = ({
 
           {!uploading && (
             <View style={styles.optionsContainer}>
-              <TouchableOpacity
-                style={styles.option}
-                onPress={handleImagePicker}
-              >
+              <TouchableOpacity style={styles.option} onPress={handleImagePicker}>
                 <Text style={styles.optionIcon}>🖼️</Text>
                 <Text style={styles.optionText}>Photo</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.option}
-                onPress={handleVideoPicker}
-              >
+              <TouchableOpacity style={styles.option} onPress={handleVideoPicker}>
                 <Text style={styles.optionIcon}>🎥</Text>
                 <Text style={styles.optionText}>Video</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.option}
-                onPress={handleDocumentPicker}
-              >
+              <TouchableOpacity style={styles.option} onPress={handleDocumentPicker}>
                 <Text style={styles.optionIcon}>📄</Text>
                 <Text style={styles.optionText}>Document</Text>
               </TouchableOpacity>
@@ -212,21 +201,21 @@ export const FilePickerModal: React.FC<FilePickerModalProps> = ({
         </View>
       </View>
     </Modal>
-  );
-};
+  )
+}
 
 export const FilePicker: React.FC<FilePickerProps> = ({
   onFileSelected,
   onError,
-  disabled = false
+  disabled = false,
 }) => {
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false)
 
   const handlePress = () => {
     if (!disabled) {
-      setModalVisible(true);
+      setModalVisible(true)
     }
-  };
+  }
 
   return (
     <>
@@ -235,7 +224,9 @@ export const FilePicker: React.FC<FilePickerProps> = ({
         onPress={handlePress}
         disabled={disabled}
       >
-        <Text style={[styles.filePickerButtonText, disabled && styles.filePickerButtonTextDisabled]}>
+        <Text
+          style={[styles.filePickerButtonText, disabled && styles.filePickerButtonTextDisabled]}
+        >
           📎
         </Text>
       </TouchableOpacity>
@@ -247,8 +238,8 @@ export const FilePicker: React.FC<FilePickerProps> = ({
         onError={onError}
       />
     </>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   filePickerButton: {
@@ -337,4 +328,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-});
+})

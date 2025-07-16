@@ -1,25 +1,21 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from 'react'
+import { View, Text, StyleSheet } from 'react-native'
 
 interface EmptyStateProps {
-  title: string;
-  subtitle?: string;
-  icon?: string;
+  title: string
+  subtitle?: string
+  icon?: string
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({
-  title,
-  subtitle,
-  icon = '💬',
-}) => {
+export const EmptyState: React.FC<EmptyStateProps> = ({ title, subtitle, icon = '💬' }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.icon}>{icon}</Text>
       <Text style={styles.title}>{title}</Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -45,4 +41,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-});
+})

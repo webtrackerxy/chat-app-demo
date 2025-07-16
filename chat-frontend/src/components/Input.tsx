@@ -1,10 +1,10 @@
-import React from 'react';
-import { TextInput, StyleSheet, ViewStyle, TextInputProps } from 'react-native';
+import React from 'react'
+import { TextInput, StyleSheet, ViewStyle, TextInputProps } from 'react-native'
 
 interface InputProps extends TextInputProps {
-  variant?: 'default' | 'rounded' | 'centered';
-  size?: 'small' | 'medium' | 'large';
-  style?: ViewStyle;
+  variant?: 'default' | 'rounded' | 'centered'
+  size?: 'small' | 'medium' | 'large'
+  style?: ViewStyle
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -13,18 +13,8 @@ export const Input: React.FC<InputProps> = ({
   style,
   ...props
 }) => {
-  return (
-    <TextInput
-      style={[
-        styles.input,
-        styles[variant],
-        styles[size],
-        style,
-      ]}
-      {...props}
-    />
-  );
-};
+  return <TextInput style={[styles.input, styles[variant], styles[size], style]} {...props} />
+}
 
 const styles = StyleSheet.create({
   input: {
@@ -63,4 +53,4 @@ const styles = StyleSheet.create({
     height: 52,
     fontSize: 18,
   },
-});
+})

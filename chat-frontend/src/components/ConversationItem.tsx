@@ -1,12 +1,12 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Conversation } from '../../../chat-types/src';
+import React from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import { Conversation } from '@chat-types'
 
 interface ConversationItemProps {
-  conversation: Conversation;
-  onPress: () => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
+  conversation: Conversation
+  onPress: () => void
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
 export const ConversationItem: React.FC<ConversationItemProps> = ({
@@ -16,57 +16,52 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   onDelete,
 }) => {
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Conversation',
-      `Are you sure you want to delete "${conversation.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: onDelete
-        }
-      ]
-    );
-  };
+    Alert.alert('Delete Conversation', `Are you sure you want to delete "${conversation.title}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: onDelete,
+      },
+    ])
+  }
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+      minute: '2-digit',
+    })
+  }
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>{conversation.title}</Text>
-          <Text style={styles.date}>
-            {formatDate(conversation.updatedAt)}
-          </Text>
+          <Text style={styles.date}>{formatDate(conversation.updatedAt)}</Text>
         </View>
-        
+
         {conversation.lastMessage && (
           <Text style={styles.lastMessage} numberOfLines={2}>
             {conversation.lastMessage.senderName}: {conversation.lastMessage.text}
           </Text>
         )}
-        
+
         <View style={styles.footer}>
           <Text style={styles.participants}>
-            {conversation.participants.length} participant{conversation.participants.length !== 1 ? 's' : ''}
+            {conversation.participants.length} participant
+            {conversation.participants.length !== 1 ? 's' : ''}
           </Text>
         </View>
       </View>
-      
+
       {(onEdit || onDelete) && (
         <View style={styles.actions}>
           {onEdit && (
-            <TouchableOpacity 
-              style={styles.actionButton} 
+            <TouchableOpacity
+              style={styles.actionButton}
               onPress={onEdit}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
@@ -74,8 +69,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
             </TouchableOpacity>
           )}
           {onDelete && (
-            <TouchableOpacity 
-              style={styles.actionButton} 
+            <TouchableOpacity
+              style={styles.actionButton}
               onPress={handleDelete}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
@@ -85,8 +80,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         </View>
       )}
     </TouchableOpacity>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -156,4 +151,4 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 16,
   },
-});
+})

@@ -1,16 +1,16 @@
-import { FileAttachment } from '../../../chat-types/src';
-import { getApiUrl, getFileUrl, getUploadUrl, getMaxFileSize } from '../config/env';
+import { FileAttachment } from '@chat-types'
+import { getApiUrl, getFileUrl, getUploadUrl, getMaxFileSize } from '@config/env'
 
 export interface FileUploadProgress {
-  loaded: number;
-  total: number;
-  percentage: number;
+  loaded: number
+  total: number
+  percentage: number
 }
 
 export interface FileUploadResult {
-  success: boolean;
-  data?: FileAttachment;
-  error?: string;
+  success: boolean
+  data?: FileAttachment
+  error?: string
 }
 
 export class FileUploadService {
@@ -21,16 +21,16 @@ export class FileUploadService {
    * @returns Promise with upload result
    */
   static async uploadFile(
-    file: File | Blob, 
+    file: File | Blob,
     originalName: string,
-    onProgress?: (progress: FileUploadProgress) => void
+    onProgress?: (progress: FileUploadProgress) => void,
   ): Promise<FileUploadResult> {
     try {
-      const formData = new FormData();
-      formData.append('file', file, originalName);
+      const formData = new FormData()
+      formData.append('file', file, originalName)
 
-      const xhr = new XMLHttpRequest();
-      
+      const xhr = new XMLHttpRequest()
+
       return new Promise((resolve, reject) => {
         // Set up progress tracking
         if (onProgress) {
@@ -39,45 +39,45 @@ export class FileUploadService {
               const progress: FileUploadProgress = {
                 loaded: event.loaded,
                 total: event.total,
-                percentage: Math.round((event.loaded / event.total) * 100)
-              };
-              onProgress(progress);
+                percentage: Math.round((event.loaded / event.total) * 100),
+              }
+              onProgress(progress)
             }
-          });
+          })
         }
 
         // Handle response
         xhr.onload = () => {
           if (xhr.status === 200) {
             try {
-              const response = JSON.parse(xhr.responseText);
-              resolve(response);
+              const response = JSON.parse(xhr.responseText)
+              resolve(response)
             } catch (error) {
-              reject(new Error('Failed to parse server response'));
+              reject(new Error('Failed to parse server response'))
             }
           } else {
-            reject(new Error(`Upload failed with status: ${xhr.status}`));
+            reject(new Error(`Upload failed with status: ${xhr.status}`))
           }
-        };
+        }
 
         xhr.onerror = () => {
-          reject(new Error('Network error during upload'));
-        };
+          reject(new Error('Network error during upload'))
+        }
 
         xhr.ontimeout = () => {
-          reject(new Error('Upload timeout'));
-        };
+          reject(new Error('Upload timeout'))
+        }
 
         // Configure request
-        xhr.open('POST', getUploadUrl());
-        xhr.timeout = 30000; // 30 second timeout
-        xhr.send(formData);
-      });
+        xhr.open('POST', getUploadUrl())
+        xhr.timeout = 30000 // 30 second timeout
+        xhr.send(formData)
+      })
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }
     }
   }
 
@@ -87,7 +87,7 @@ export class FileUploadService {
    * @returns Full URL to the file
    */
   static getFileUrl(filename: string): string {
-    return getFileUrl(filename);
+    return getFileUrl(filename)
   }
 
   /**
@@ -96,7 +96,7 @@ export class FileUploadService {
    * @returns Full URL to download the file
    */
   static getDownloadUrl(filename: string): string {
-    return `${getApiUrl()}/api/files/${filename}`;
+    return `${getApiUrl()}/api/files/${filename}`
   }
 
   /**
@@ -105,13 +105,13 @@ export class FileUploadService {
    * @returns Formatted size string
    */
   static formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-    
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    if (bytes === 0) return '0 Bytes'
+
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
   /**
@@ -121,21 +121,21 @@ export class FileUploadService {
    */
   static getFileIcon(mimeType: string): string {
     if (mimeType.startsWith('image/')) {
-      return '🖼️';
+      return '🖼️'
     } else if (mimeType.startsWith('audio/')) {
-      return '🎵';
+      return '🎵'
     } else if (mimeType.startsWith('video/')) {
-      return '🎥';
+      return '🎥'
     } else if (mimeType.includes('pdf')) {
-      return '📄';
+      return '📄'
     } else if (mimeType.includes('word') || mimeType.includes('document')) {
-      return '📝';
+      return '📝'
     } else if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
-      return '📊';
+      return '📊'
     } else if (mimeType.includes('zip') || mimeType.includes('archive')) {
-      return '📦';
+      return '📦'
     } else {
-      return '📁';
+      return '📁'
     }
   }
 
@@ -149,14 +149,14 @@ export class FileUploadService {
     if (file.size > getMaxFileSize()) {
       return {
         valid: false,
-        error: 'File size must be less than 10MB'
-      };
+        error: 'File size must be less than 10MB',
+      }
     }
 
     // Check file type
     const allowedTypes = [
       'image/jpeg',
-      'image/jpg', 
+      'image/jpg',
       'image/png',
       'image/gif',
       'image/webp',
@@ -177,16 +177,16 @@ export class FileUploadService {
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ];
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ]
 
     if (!allowedTypes.includes(file.type)) {
       return {
         valid: false,
-        error: `File type ${file.type} is not supported`
-      };
+        error: `File type ${file.type} is not supported`,
+      }
     }
 
-    return { valid: true };
+    return { valid: true }
   }
 }

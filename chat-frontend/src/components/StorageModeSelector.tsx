@@ -1,17 +1,17 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { StorageMode } from '../screens/NameInputScreen';
+import React from 'react'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { StorageMode } from '@types'
 
 interface StorageModeOption {
-  mode: StorageMode;
-  icon: string;
-  title: string;
-  description: string;
+  mode: StorageMode
+  icon: string
+  title: string
+  description: string
 }
 
 interface StorageModeSelectorProps {
-  selectedMode: StorageMode | null;
-  onModeSelect: (mode: StorageMode) => void;
+  selectedMode: StorageMode | null
+  onModeSelect: (mode: StorageMode) => void
 }
 
 const STORAGE_OPTIONS: StorageModeOption[] = [
@@ -27,7 +27,7 @@ const STORAGE_OPTIONS: StorageModeOption[] = [
     title: 'Backend Connected',
     description: 'Connect to chat server. Sync chats across devices.',
   },
-];
+]
 
 export const StorageModeSelector: React.FC<StorageModeSelectorProps> = ({
   selectedMode,
@@ -36,14 +36,11 @@ export const StorageModeSelector: React.FC<StorageModeSelectorProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Storage Mode:</Text>
-      
+
       {STORAGE_OPTIONS.map((option) => (
         <TouchableOpacity
           key={option.mode}
-          style={[
-            styles.modeButton,
-            selectedMode === option.mode && styles.modeButtonSelected,
-          ]}
+          style={[styles.modeButton, selectedMode === option.mode && styles.modeButtonSelected]}
           onPress={() => onModeSelect(option.mode)}
         >
           <Text
@@ -58,8 +55,8 @@ export const StorageModeSelector: React.FC<StorageModeSelectorProps> = ({
         </TouchableOpacity>
       ))}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -98,4 +95,4 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 20,
   },
-});
+})

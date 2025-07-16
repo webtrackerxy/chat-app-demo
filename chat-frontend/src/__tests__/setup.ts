@@ -23,12 +23,12 @@ jest.mock('react-native', () => ({
     alert: jest.fn(),
   },
   RefreshControl: (props: any) => props,
-}));
+}))
 
 // Mock Expo modules
 jest.mock('expo-status-bar', () => ({
   StatusBar: () => null,
-}));
+}))
 
 // Mock React Navigation
 jest.mock('@react-navigation/native', () => ({
@@ -45,28 +45,28 @@ jest.mock('@react-navigation/native', () => ({
     },
   }),
   useFocusEffect: jest.fn(),
-}));
+}))
 
 jest.mock('@react-navigation/stack', () => ({
   createStackNavigator: () => ({
     Navigator: ({ children }: any) => children,
     Screen: ({ children }: any) => children,
   }),
-}));
+}))
 
 // Global test utils
-global.fetch = jest.fn();
+global.fetch = jest.fn()
 
 // Silence console warnings in tests
 global.console = {
   ...console,
   warn: jest.fn(),
   error: jest.fn(),
-};
+}
 
 // Dummy test to prevent "no tests found" error
 describe('Setup', () => {
   it('should setup test environment', () => {
-    expect(true).toBe(true);
-  });
-});
+    expect(true).toBe(true)
+  })
+})

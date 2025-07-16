@@ -1,13 +1,13 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import React from 'react'
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native'
 
 interface ButtonProps {
-  title: string;
-  onPress: () => void;
-  disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger' | 'text';
-  size?: 'small' | 'medium' | 'large';
-  style?: ViewStyle;
+  title: string
+  onPress: () => void
+  disabled?: boolean
+  variant?: 'primary' | 'secondary' | 'danger' | 'text'
+  size?: 'small' | 'medium' | 'large'
+  style?: ViewStyle
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -34,8 +34,8 @@ export const Button: React.FC<ButtonProps> = ({
         {title}
       </Text>
     </TouchableOpacity>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   button: {
@@ -99,4 +99,4 @@ const styles = StyleSheet.create({
   disabledText: {
     color: '#999',
   },
-});
+})

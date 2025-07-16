@@ -1,60 +1,59 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
-import { FileAttachment } from '../../../chat-types/src';
-import { FileUploadService } from '../services/fileUploadService';
+import React, { useState, useRef } from 'react'
+import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native'
+import { Video, ResizeMode } from 'expo-av'
+import { FileAttachment } from '@chat-types'
+import { FileUploadService } from '@services/fileUploadService'
 
 interface VideoMessagePlayerProps {
-  file: FileAttachment;
-  isMyMessage: boolean;
+  file: FileAttachment
+  isMyMessage: boolean
 }
 
-export const VideoMessagePlayer: React.FC<VideoMessagePlayerProps> = ({ 
-  file, 
-  isMyMessage 
-}) => {
-  const [status, setStatus] = useState<any>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const videoRef = useRef<Video>(null);
-  const videoUrl = FileUploadService.getFileUrl(file.filename);
+export const VideoMessagePlayer: React.FC<VideoMessagePlayerProps> = ({ file, isMyMessage }) => {
+  const [status, setStatus] = useState<any>({})
+  const [isLoading, setIsLoading] = useState(false)
+  const videoRef = useRef<Video>(null)
+  const videoUrl = FileUploadService.getFileUrl(file.filename)
 
   const handlePlayPause = async () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current) return
 
     try {
       if (status.isPlaying) {
-        await videoRef.current.pauseAsync();
+        await videoRef.current.pauseAsync()
       } else {
-        await videoRef.current.playAsync();
+        await videoRef.current.playAsync()
       }
     } catch (error) {
-      console.error('Error controlling video playback:', error);
-      Alert.alert('Playback Error', 'Failed to control video playback');
+      console.error('Error controlling video playback:', error)
+      Alert.alert('Playback Error', 'Failed to control video playback')
     }
-  };
+  }
 
   const handleVideoError = (error: any) => {
-    console.error('Video error:', error);
-    Alert.alert('Video Error', 'Failed to load video');
-  };
+    console.error('Video error:', error)
+    Alert.alert('Video Error', 'Failed to load video')
+  }
 
   const formatDuration = (milliseconds: number) => {
-    const seconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
+    const seconds = Math.floor(milliseconds / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
 
   const getProgressPercentage = () => {
-    if (!status.durationMillis || !status.positionMillis) return 0;
-    return (status.positionMillis / status.durationMillis) * 100;
-  };
+    if (!status.durationMillis || !status.positionMillis) return 0
+    return (status.positionMillis / status.durationMillis) * 100
+  }
 
   return (
-    <View style={[
-      styles.container,
-      isMyMessage ? styles.myMessageContainer : styles.otherMessageContainer
-    ]}>
+    <View
+      style={[
+        styles.container,
+        isMyMessage ? styles.myMessageContainer : styles.otherMessageContainer,
+      ]}
+    >
       <View style={styles.videoContainer}>
         <Video
           ref={videoRef}
@@ -68,7 +67,7 @@ export const VideoMessagePlayer: React.FC<VideoMessagePlayerProps> = ({
           onLoadStart={() => setIsLoading(true)}
           onLoad={() => setIsLoading(false)}
         />
-        
+
         {/* Play/Pause Overlay */}
         <TouchableOpacity
           style={styles.playPauseOverlay}
@@ -78,9 +77,7 @@ export const VideoMessagePlayer: React.FC<VideoMessagePlayerProps> = ({
           {isLoading ? (
             <Text style={styles.loadingText}>Loading...</Text>
           ) : (
-            <Text style={styles.playPauseIcon}>
-              {status.isPlaying ? '⏸️' : '▶️'}
-            </Text>
+            <Text style={styles.playPauseIcon}>{status.isPlaying ? '⏸️' : '▶️'}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -90,30 +87,24 @@ export const VideoMessagePlayer: React.FC<VideoMessagePlayerProps> = ({
         <Text style={styles.fileName} numberOfLines={1}>
           {file.originalName}
         </Text>
-        <Text style={styles.fileSize}>
-          {FileUploadService.formatFileSize(file.size)}
-        </Text>
+        <Text style={styles.fileSize}>{FileUploadService.formatFileSize(file.size)}</Text>
       </View>
 
       {/* Progress Bar */}
       {status.durationMillis && (
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View 
-              style={[
-                styles.progressFill,
-                { width: `${getProgressPercentage()}%` }
-              ]} 
-            />
+            <View style={[styles.progressFill, { width: `${getProgressPercentage()}%` }]} />
           </View>
           <Text style={styles.durationText}>
-            {status.positionMillis ? formatDuration(status.positionMillis) : '0:00'} / {formatDuration(status.durationMillis)}
+            {status.positionMillis ? formatDuration(status.positionMillis) : '0:00'} /{' '}
+            {formatDuration(status.durationMillis)}
           </Text>
         </View>
       )}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -198,4 +189,4 @@ const styles = StyleSheet.create({
     color: '#666',
     minWidth: 50,
   },
-});
+})
