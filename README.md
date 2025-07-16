@@ -38,14 +38,15 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 ### 🏗️ Architecture
 - 🧠 **React Native frontend** (Expo + NativeWind + TypeScript)
 - 🛰️ **Express.js backend** with WebSocket server and file upload support
+- 🗄️ **Database persistence** with Prisma ORM and SQLite
 - 🔁 **Shared TypeScript types** via chat-types package
 - 🧰 **Zustand state management** with unified useChat() hook
-- ⚡ **Fast local development** without external databases
-- 🔄 **Dual mode support**: Real-time (WebSocket) + Local (in-memory)
-- 🎣 **Advanced React hooks**: useUserPresence, useMessageReactions, useReadReceipts, useRealtimeMessages
+- ⚡ **Fast local development** with optional database persistence
+- 🔄 **Dual mode support**: Real-time (WebSocket + Database) + Local (in-memory)
+- 🎣 **Advanced React hooks**: useUserPresence, useMessageReactions, useReadReceipts, useRealtimeMessages, useMessageHistory
 - 🌍 **Environment configuration** - Centralized .env configuration for all services
 - 📁 **File upload system** - Multer-based backend with real-time broadcasting
-- 🛣️ **Path mappings** - Clean import paths with TypeScript path resolution
+- 🛣️ **Path mappings** - Clean import paths with TypeScript resolution
 - 🔧 **Code quality tools** - ESLint, Prettier, TypeScript strict mode, circular dependency detection
 
 ### 📱 User Experience
@@ -57,6 +58,9 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 - **Presence controls**: Manual online/offline toggle in header
 - **Multimedia sharing**: Drag-and-drop or click to share files, images, videos
 - **Voice messaging**: One-tap recording with visual feedback and playback controls
+- **Message persistence**: All messages stored in database with automatic syncing
+- **Message history**: Paginated loading of older messages with smooth scrolling
+- **User management**: Persistent user accounts with database backing
 - **Dark/Light theme**: Seamless theme switching with automatic component adaptation
 - **Design tokens**: Consistent styling system with semantic color mapping
 - **Compact design**: Optimized message sizes for mobile-first experience
@@ -75,8 +79,8 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 │ ├── .prettierrc ✅ Code formatting configuration
 │ ├── eslint.config.js ✅ ESLint configuration
 │ ├── /src
-│ │ ├── /api ✅ REST client (uses chat-types via @chat-types)
-│ │ ├── /hooks ✅ useChat + useRealtimeMessages + useTypingIndicator + useUserPresence + useMessageReactions + useReadReceipts
+│ │ ├── /api ✅ REST client (uses chat-types via @chat-types) + database API integration
+│ │ ├── /hooks ✅ useChat + useRealtimeMessages + useTypingIndicator + useUserPresence + useMessageReactions + useReadReceipts + useMessageHistory
 │ │ ├── /services ✅ WebSocket client (socketService) + fileUploadService
 │ │ ├── /context ✅ SocketContext for connection management
 │ │ ├── /store ✅ Zustand state management
@@ -91,12 +95,16 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 │ ├── tsconfig.json ✅ TypeScript configuration with path mappings
 │ └── jest.config.js ✅ Jest configuration with module name mapping
 │
-├── /chat-backend ✅ Express + Socket.IO WebSocket server + File Upload
+├── /chat-backend ✅ Express + Socket.IO WebSocket server + File Upload + Database
 │ ├── .env ✅ Environment configuration
-│ ├── index.js ✅ REST API + WebSocket handlers + file upload endpoints + real-time events
+│ ├── index.js ✅ REST API + WebSocket handlers + file upload endpoints + real-time events + database integration
+│ ├── /prisma ✅ Database schema and migrations
+│ │ └── schema.prisma ✅ Database models (Users, Conversations, Messages, Reactions, ReadReceipts)
+│ ├── /src/database ✅ Database service layer
+│ │ └── DatabaseService.js ✅ CRUD operations and data access layer
 │ ├── /uploads ✅ File storage directory
-│ ├── /__tests__ ✅ Backend API and upload tests
-│ └── package.json (+ socket.io, multer, dotenv)
+│ ├── /__tests__ ✅ Backend API, upload, and database tests
+│ └── package.json (+ socket.io, multer, prisma, @prisma/client, dotenv)
 │
 ├── REALTIME_IMPROVEMENTS.md ✅ Implementation suggestions
 ├── REALTIME_FLOW_SETUP_TEST.md ✅ Setup and testing guide
@@ -167,32 +175,39 @@ Available path mappings:
 
 ### 1. Install Dependencies
 ```bash
-# Backend (Express + Socket.IO server + File Upload)
+# Backend (Express + Socket.IO server + File Upload + Database)
 cd chat-backend
 npm install
+
+# Initialize database
+npx prisma db push    # Create SQLite database and tables
+npx prisma generate   # Generate Prisma client
+
 npm start
-# ✅ Server running on http://localhost:3000 with file upload support
+# ✅ Server running on http://localhost:3000 with database persistence
 
 # Frontend (React Native + Expo + Multimedia)
 cd chat-frontend  
 npm install
 npx expo start --localhost
-# ✅ Expo dev server running with multimedia capabilities
+# ✅ Expo dev server running with database integration
 ```
 
 ### 2. Test Real-time Features
 1. **Open multiple browser tabs** or devices
 2. **Set different usernames** for each session
 3. **Join the same conversation**
-4. **Send messages** → should appear instantly on all devices
+4. **Send messages** → should appear instantly on all devices and persist in database
 5. **Start typing** → others will see typing indicators
-6. **React to messages** → click emoji buttons to add reactions
+6. **React to messages** → click emoji buttons to add reactions (stored in database)
 7. **Toggle presence** → click online/offline button in header
-8. **Check read receipts** → see who has read your messages
+8. **Check read receipts** → see who has read your messages (persisted in database)
 9. **Share files** → click 📎 to upload images, videos, documents
 10. **Record voice** → click 🎤 to record and send voice messages
 11. **Toggle themes** → click 🌙/☀️ in header to switch between dark/light mode
 12. **Delete messages** → long press or click delete button for real-time removal
+13. **Test persistence** → refresh page and see messages reload from database
+14. **Load message history** → scroll up to load older paginated messages
 
 ### 3. Verify WebSocket Connection
 - Look for **🟢 Connected** in the chat header (backend mode)
@@ -215,6 +230,8 @@ cd chat-frontend && npm test
 ### Backend
 - **Express.js** - REST API server with file upload support
 - **Socket.IO** - WebSocket server for real-time communication
+- **Prisma ORM** - Type-safe database access with SQLite
+- **SQLite** - Lightweight file-based database for development
 - **Multer** - Multipart file upload handling
 - **dotenv** - Environment variable management
 - **CORS** - Cross-origin resource sharing
@@ -275,6 +292,10 @@ cd chat-frontend && npm test
 - ✅ **Voice message recording** with live audio controls
 - ✅ **Video sharing** with inline playback
 - ✅ **Message deletion** with real-time updates
+- ✅ **Database persistence** with Prisma ORM and SQLite
+- ✅ **Message history pagination** with smooth loading
+- ✅ **User management** with persistent accounts
+- ✅ **Data integrity** with foreign key relationships and constraints
 - ✅ **Dark/Light theme system** with automatic component adaptation
 - ✅ **Design tokens architecture** with semantic color mapping
 - ✅ **Theme persistence** with AsyncStorage
@@ -295,10 +316,13 @@ cd chat-frontend && npm test
 ### Storage Modes
 The app supports two storage modes:
 
-#### Backend Mode (Real-time)
+#### Backend Mode (Real-time + Database)
 - Uses WebSocket for instant messaging
+- **Database persistence** with SQLite and Prisma ORM
+- **Message history** with paginated loading
+- **User management** with persistent accounts
 - Features typing indicators and connection status
-- Includes user presence, reactions, and read receipts
+- Includes user presence, reactions, and read receipts (all persisted)
 - **Multimedia file sharing** with real-time broadcasting
 - **Voice message recording** and playback
 - **Message deletion** with live updates
@@ -316,6 +340,7 @@ The app supports two storage modes:
 PORT=3000                           # Server port
 HOST=localhost                      # Server host
 BASE_URL=http://localhost:3000      # API base URL
+DATABASE_URL=file:./dev.db          # SQLite database path
 MAX_FILE_SIZE=10485760             # File upload limit (10MB)
 UPLOAD_DIR=uploads                  # File storage directory
 CORS_ORIGIN=*                      # CORS allowed origins
@@ -327,6 +352,66 @@ REACT_APP_MAX_FILE_SIZE=10485760               # Client file size limit
 ```
 
 For detailed configuration instructions, see [ENV_CONFIG.md](./ENV_CONFIG.md).
+
+### Database Architecture
+
+The application uses a robust database architecture with Prisma ORM and SQLite:
+
+#### Database Schema
+```prisma
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  status    String   @default("online")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastSeen  DateTime @default(now())
+  
+  // Relations
+  sentMessages         Message[]
+  reactions           MessageReaction[]
+  readReceipts        ReadReceipt[]
+  participations      ConversationParticipant[]
+  createdConversations Conversation[]
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  text           String
+  senderId       String
+  conversationId String
+  timestamp      DateTime @default(now())
+  
+  // Threading support
+  threadId       String?
+  replyToId      String?
+  
+  // Relations
+  sender         User     @relation(fields: [senderId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  reactions      MessageReaction[]
+  readReceipts   ReadReceipt[]
+  files          MessageFile[]
+}
+```
+
+#### Key Features
+- **ACID Transactions** - Data consistency and integrity
+- **Foreign Key Constraints** - Referential integrity
+- **Cascading Deletes** - Automatic cleanup of related data
+- **Optimized Queries** - Efficient data retrieval with includes/selects
+- **Pagination Support** - Memory-efficient message loading
+- **Search Capabilities** - Full-text search across messages
+- **Threading Ready** - Schema supports message threading for Phase 3
+
+#### Database Operations
+- **User Management** - Create, retrieve, update user accounts
+- **Message Persistence** - Store and retrieve messages with metadata
+- **Reaction Storage** - Track emoji reactions per user per message
+- **Read Receipts** - Monitor message read status across users
+- **Conversation Management** - Handle group and direct conversations
+- **Search Functionality** - Find messages across conversations
+- **Statistics** - Generate conversation and user analytics
 
 ### Theme System & Design Tokens
 
@@ -394,19 +479,26 @@ Users can switch themes using the 🌙/☀️ button in the header. All componen
 
 ## 🔮 Future Enhancements
 
+### ✅ Completed (Phase 1)
+- **Message persistence** - Database storage for chat history ✅
+- **User management** - Persistent user accounts ✅ 
+- **Message history** - Paginated loading of older messages ✅
+
+### 🚧 Planned Implementation
+- **Private messaging** - Direct messages between users (Phase 2)
+- **Message threading** - Reply to specific messages (Phase 3)
+- **Message search** - Find messages across conversations (Phase 4)
+- **Message encryption** - End-to-end message security (Phase 5)
+
+### 🔮 Future Ideas
 - **Push notifications** - Background message alerts
-- **Private messaging** - Direct messages between users
-- **Message persistence** - Database storage for chat history
-- **Message threading** - Reply to specific messages
 - **Advanced reactions** - Custom emoji reactions
 - **User roles** - Admin/moderator permissions
-- **Message search** - Find messages across conversations
 - **File thumbnails** - Generate previews for images/videos
 - **Cloud storage** - Integration with AWS S3 or similar services
 - **Audio transcription** - Convert voice messages to text
 - **Video compression** - Optimize video files for web delivery
 - **Offline media caching** - Cache media for offline viewing
-- **Message encryption** - End-to-end message security
 
 ## 📚 Documentation
 
@@ -445,6 +537,15 @@ npm run circular-dependencies  # Dependency cycle detection
 ### Backend Tests
 ```bash
 cd chat-backend
+
+# Database service tests
+npm test -- DatabaseService.test.js
+
+# API integration tests
+npm test -- database-api.test.js
+
+# End-to-end database tests
+npm test -- e2e-database.test.js
 
 # API and upload tests
 npm test -- mediaUpload.test.js

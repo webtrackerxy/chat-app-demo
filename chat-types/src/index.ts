@@ -131,3 +131,87 @@ export interface ApiResponse<T> {
   success: boolean;
   error?: string; // Optional: Error message if request fails
 }
+
+// Database-specific types for persistence
+
+// Database user model
+export interface DbUser {
+  id: string;
+  username: string;
+  publicKey?: string;
+  lastSeen: Date;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Database conversation model
+export interface DbConversation {
+  id: string;
+  type: 'group' | 'direct';
+  name?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string;
+}
+
+// Enhanced message with database fields
+export interface DbMessage extends Message {
+  threadId?: string; // For threading support
+  replyToId?: string; // For threading support
+  encrypted?: boolean;
+  encryptionKey?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Pagination response
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    hasMore: boolean;
+    total?: number;
+  };
+}
+
+// User creation request
+export interface CreateUserRequest {
+  username: string;
+  publicKey?: string;
+}
+
+// Message history request
+export interface MessageHistoryRequest {
+  conversationId: string;
+  page?: number;
+  limit?: number;
+}
+
+// Search request
+export interface SearchMessagesRequest {
+  query: string;
+  conversationId?: string;
+  limit?: number;
+}
+
+// Search result
+export interface SearchResult {
+  message: Message;
+  conversation: Conversation;
+  highlightedText?: string;
+}
+
+// Thread-related types
+export interface Thread {
+  id: string;
+  parentMessageId: string;
+  messages: Message[];
+  createdAt: Date;
+}
+
+export interface CreateThreadRequest {
+  parentMessageId: string;
+  message: CreateMessageRequest;
+}

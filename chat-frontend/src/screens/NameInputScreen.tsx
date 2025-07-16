@@ -12,18 +12,29 @@ type NameInputScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Na
 
 export const NameInputScreen: React.FC = () => {
   const navigation = useNavigation<NameInputScreenNavigationProp>()
-  const { setStorageMode, setCurrentUser } = useChat()
+  const { setStorageMode, setCurrentUser, createUser, isLoading } = useChat()
   const [name, setName] = useState('')
   const [selectedMode, setSelectedMode] = useState<StorageMode | null>(null)
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (name.trim() && selectedMode) {
       setStorageMode(selectedMode)
-      setCurrentUser({
-        id: `user-${Date.now()}`,
-        name: name.trim(),
-      })
-      navigation.navigate('ChatList', { userName: name.trim() })
+      
+      if (selectedMode === 'backend') {
+        // Create user in database for backend mode
+        const user = await createUser(name.trim())
+        if (user) {
+          navigation.navigate('ChatList', { userName: name.trim() })
+        }
+        // Error handling is done in the store
+      } else {
+        // Use local user creation for local mode
+        setCurrentUser({
+          id: `user-${Date.now()}`,
+          name: name.trim(),
+        })
+        navigation.navigate('ChatList', { userName: name.trim() })
+      }
     }
   }
 
@@ -50,9 +61,9 @@ export const NameInputScreen: React.FC = () => {
         <StorageModeSelector selectedMode={selectedMode} onModeSelect={setSelectedMode} />
 
         <Button
-          title='Start Chatting'
+          title={isLoading ? 'Creating User...' : 'Start Chatting'}
           onPress={handleSubmit}
-          disabled={!name.trim() || !selectedMode}
+          disabled={!name.trim() || !selectedMode || isLoading}
           size='large'
           style={styles.continueButton}
         />

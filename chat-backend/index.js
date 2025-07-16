@@ -9,6 +9,7 @@ const path = require('path')
 const { Server } = require('socket.io')
 const http = require('http')
 const multer = require('multer')
+const DatabaseService = require('./src/database/DatabaseService')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -16,6 +17,9 @@ const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024
 const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads'
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*'
 const server = http.createServer(app)
+
+// Initialize database service
+const db = new DatabaseService()
 
 // Setup log file - clear on server start
 const logFile = path.join(__dirname, 'server.log')
@@ -202,24 +206,52 @@ conversations.forEach((conv) => {
 
 // Routes
 // Conversation management routes
-app.get('/api/conversations', (req, res) => {
+app.get('/api/conversations', async (req, res) => {
   try {
-    // Add last message to each conversation
-    const conversationsWithLastMessage = conversations.map((conv) => {
-      const lastMessage =
-        conv.messages.length > 0
-          ? conv.messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
-          : null
+    const { userId } = req.query
+    
+    if (!userId) {
+      // Fallback to in-memory for backward compatibility
+      const conversationsWithLastMessage = conversations.map((conv) => {
+        const lastMessage =
+          conv.messages.length > 0
+            ? conv.messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
+            : null
 
-      return {
-        ...conv,
-        lastMessage: lastMessage || null,
-      }
-    })
+        return {
+          ...conv,
+          lastMessage: lastMessage || null,
+        }
+      })
+
+      return res.json({
+        success: true,
+        data: conversationsWithLastMessage,
+      })
+    }
+
+    // Use database for user-specific conversations
+    const userConversations = await db.getConversationsForUser(userId)
+    
+    // Transform database format to match frontend expectations
+    const formattedConversations = userConversations.map(conv => ({
+      id: conv.id,
+      title: conv.name || conv.title,
+      participants: conv.participants.map(p => p.user.username),
+      createdAt: conv.createdAt,
+      updatedAt: conv.updatedAt,
+      lastMessage: conv.messages.length > 0 ? {
+        id: conv.messages[0].id,
+        text: conv.messages[0].text,
+        senderId: conv.messages[0].senderId,
+        senderName: conv.messages[0].sender.username,
+        timestamp: conv.messages[0].timestamp
+      } : null
+    }))
 
     res.json({
       success: true,
-      data: conversationsWithLastMessage,
+      data: formattedConversations,
     })
   } catch (error) {
     console.error('Error fetching conversations:', error)
@@ -230,12 +262,55 @@ app.get('/api/conversations', (req, res) => {
   }
 })
 
-// Get messages from a conversation
-app.get('/api/conversations/:id/messages', (req, res) => {
+// Get messages from a conversation with pagination
+app.get('/api/conversations/:id/messages', async (req, res) => {
   try {
     const { id } = req.params
+    const { page = 1, limit = 50 } = req.query
 
-    // Find the conversation and return its messages
+    // Try database first
+    try {
+      const messages = await db.getMessages(id, parseInt(page), parseInt(limit))
+      
+      // Transform database format to match frontend expectations
+      const formattedMessages = messages.map(msg => ({
+        id: msg.id,
+        text: msg.text,
+        senderId: msg.senderId,
+        senderName: msg.sender.username,
+        timestamp: msg.timestamp,
+        file: msg.files.length > 0 ? {
+          id: msg.files[0].id,
+          name: msg.files[0].filename,
+          path: msg.files[0].path,
+          type: msg.files[0].type,
+          size: msg.files[0].size
+        } : null,
+        reactions: msg.reactions.map(r => ({
+          emoji: r.emoji,
+          userId: r.userId
+        })),
+        readBy: msg.readReceipts.map(r => ({
+          userId: r.userId,
+          userName: r.userName,
+          readAt: r.readAt
+        }))
+      })).reverse() // Reverse to match expected order
+
+      return res.json({
+        success: true,
+        data: formattedMessages,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          hasMore: messages.length === parseInt(limit)
+        }
+      })
+    } catch (dbError) {
+      console.log('Database query failed, falling back to in-memory:', dbError.message)
+    }
+
+    // Fallback to in-memory for backward compatibility
     const conversation = conversations.find((conv) => conv.id === id)
 
     if (!conversation) {
@@ -1008,9 +1083,101 @@ io.on('connection', (socket) => {
   })
 })
 
-server.listen(PORT, () => {
-  const startMessage = `Chat backend server with WebSocket running on port ${PORT}`
-  console.log(startMessage)
-  logToFile(startMessage)
-  logToFile(`Log file: ${logFile}`)
+// User management endpoints
+app.post('/api/users', async (req, res) => {
+  try {
+    const { username } = req.body
+    
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username is required'
+      })
+    }
+
+    // Check if user already exists
+    const existingUser = await db.getUserByUsername(username)
+    if (existingUser) {
+      return res.json({
+        success: true,
+        data: existingUser
+      })
+    }
+
+    // Create new user
+    const newUser = await db.createUser({
+      username,
+      status: 'online'
+    })
+
+    res.json({
+      success: true,
+      data: newUser
+    })
+  } catch (error) {
+    console.error('Error creating user:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create user'
+    })
+  }
 })
+
+app.get('/api/users/:username', async (req, res) => {
+  try {
+    const { username } = req.params
+    const user = await db.getUserByUsername(username)
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      })
+    }
+
+    res.json({
+      success: true,
+      data: user
+    })
+  } catch (error) {
+    console.error('Error fetching user:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch user'
+    })
+  }
+})
+
+// Initialize database and start server
+async function startServer() {
+  try {
+    // Connect to database
+    await db.connect()
+    
+    // Start server
+    server.listen(PORT, () => {
+      const startMessage = `Chat backend server with WebSocket and Database running on port ${PORT}`
+      console.log(startMessage)
+      logToFile(startMessage)
+      logToFile(`Log file: ${logFile}`)
+    })
+  } catch (error) {
+    console.error('Failed to start server:', error)
+    process.exit(1)
+  }
+}
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Shutting down server...')
+  await db.disconnect()
+  process.exit(0)
+})
+
+process.on('SIGTERM', async () => {
+  console.log('Shutting down server...')
+  await db.disconnect()
+  process.exit(0)
+})
+
+startServer()

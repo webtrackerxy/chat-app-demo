@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  publicKey String?
+  lastSeen  DateTime @default(now())
+  status    String   @default("offline")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sentMessages         Message[]              @relation("MessageSender")
+  conversations        ConversationParticipant[]
+  createdConversations Conversation[]         @relation("ConversationCreator")
+
+  @@map("users")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  type      String   @default("group") // "group" or "direct"
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  // Relations
+  creator      User?                    @relation("ConversationCreator", fields: [createdBy], references: [id])
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String    @id @default(cuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime  @default(now())
+  role           String    @default("member") // "admin", "member"
+  leftAt         DateTime?
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String
+  senderId       String
+  text           String?
+  threadId       String?   // For threading support
+  replyToId      String?   // For threading support
+  encrypted      Boolean   @default(false)
+  encryptionKey  String?
+  timestamp      DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  conversation Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User           @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  files        MessageFile[]
+  reactions    MessageReaction[]
+  readReceipts ReadReceipt[]
+  replyTo      Message?       @relation("MessageThread", fields: [replyToId], references: [id])
+  replies      Message[]      @relation("MessageThread")
+
+  @@map("messages")
+}
+
+model MessageFile {
+  id        String   @id @default(cuid())
+  messageId String
+  filename  String
+  path      String
+  type      String
+  size      Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("message_files")
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_reactions")
+}
+
+model ReadReceipt {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  userName  String
+  readAt    DateTime @default(now())
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("read_receipts")
+}
