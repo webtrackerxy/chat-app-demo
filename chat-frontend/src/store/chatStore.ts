@@ -1,8 +1,9 @@
 import { create } from 'zustand'
-import { Message, Conversation } from '@chat-types'
+import { Message, Conversation, DbUser } from '@chat-types'
 import { StorageApiFactory, StorageApiInterface } from '@api/storageApi'
 import { StorageMode } from '@types'
 import { ParticipantEmulator } from '@services/participantEmulator'
+import { chatApi } from '@api/chatApi'
 
 interface ChatState {
   conversations: Conversation[]
@@ -17,6 +18,7 @@ interface ChatState {
   setStorageMode: (mode: StorageMode) => void
   setCurrentUser: (user: { id: string; name: string }) => void
   setCurrentConversation: (conversation: Conversation | null) => void
+  createUser: (username: string) => Promise<DbUser | null>
   loadConversations: () => Promise<void>
   loadMessages: (conversationId: string) => Promise<void>
   sendMessage: (text: string, conversationId: string) => Promise<void>
@@ -50,6 +52,34 @@ export const useChatStore = create<ChatState>((set, get) => {
     },
 
     setCurrentUser: (user) => set({ currentUser: user }),
+
+    createUser: async (username: string) => {
+      try {
+        set({ isLoading: true, error: null })
+        
+        const response = await chatApi.createUser({ username })
+        
+        if (response.success && response.data) {
+          // Set the created user as current user
+          set({ 
+            currentUser: { 
+              id: response.data.id, 
+              name: response.data.username 
+            } 
+          })
+          return response.data
+        } else {
+          set({ error: response.error || 'Failed to create user' })
+          return null
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        set({ error: message })
+        return null
+      } finally {
+        set({ isLoading: false })
+      }
+    },
 
     setCurrentConversation: (conversation) => {
       set({ currentConversation: conversation })

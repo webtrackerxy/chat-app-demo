@@ -4,6 +4,12 @@ import {
   CreateMessageRequest,
   CreateConversationRequest,
   ApiResponse,
+  DbUser,
+  CreateUserRequest,
+  MessageHistoryRequest,
+  PaginatedResponse,
+  SearchMessagesRequest,
+  SearchResult,
 } from '@chat-types'
 import { getApiUrl } from '@config/env'
 
@@ -44,12 +50,22 @@ class ChatApi {
     }
   }
 
-  async getConversations(): Promise<ApiResponse<Conversation[]>> {
-    return this.request<Conversation[]>('/conversations')
+  async getConversations(userId?: string): Promise<ApiResponse<Conversation[]>> {
+    const params = userId ? `?userId=${encodeURIComponent(userId)}` : ''
+    return this.request<Conversation[]>(`/conversations${params}`)
   }
 
   async getMessages(conversationId: string): Promise<ApiResponse<Message[]>> {
     return this.request<Message[]>(`/conversations/${conversationId}/messages`)
+  }
+
+  async getMessageHistory(params: MessageHistoryRequest): Promise<ApiResponse<PaginatedResponse<Message>>> {
+    const { conversationId, page = 1, limit = 50 } = params
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    })
+    return this.request<PaginatedResponse<Message>>(`/conversations/${conversationId}/messages?${queryParams}`)
   }
 
   async createConversation(data: CreateConversationRequest): Promise<ApiResponse<Conversation>> {
@@ -86,6 +102,30 @@ class ChatApi {
       method: 'PUT',
       body: JSON.stringify({ title }),
     })
+  }
+
+  // User management methods
+  async createUser(data: CreateUserRequest): Promise<ApiResponse<DbUser>> {
+    return this.request<DbUser>('/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getUser(username: string): Promise<ApiResponse<DbUser>> {
+    return this.request<DbUser>(`/users/${encodeURIComponent(username)}`)
+  }
+
+  // Search methods (for future implementation)
+  async searchMessages(params: SearchMessagesRequest): Promise<ApiResponse<SearchResult[]>> {
+    const queryParams = new URLSearchParams({
+      query: params.query,
+      limit: (params.limit || 50).toString()
+    })
+    if (params.conversationId) {
+      queryParams.append('conversationId', params.conversationId)
+    }
+    return this.request<SearchResult[]>(`/search/messages?${queryParams}`)
   }
 }
 

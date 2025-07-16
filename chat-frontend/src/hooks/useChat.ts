@@ -18,6 +18,7 @@ export const useChat = () => {
     setCurrentConversation,
     setCurrentUser,
     setStorageMode,
+    createUser,
     clearError,
   } = useChatStore()
 
@@ -41,6 +42,7 @@ export const useChat = () => {
     setCurrentConversation,
     setCurrentUser,
     setStorageMode,
+    createUser,
     clearError,
   }
 }
