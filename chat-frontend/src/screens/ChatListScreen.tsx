@@ -6,6 +6,7 @@ import { RouteProp } from '@react-navigation/native'
 import { useChat } from '@hooks/useChat'
 import { Conversation } from '@chat-types'
 import { Header, EmptyState, Button } from '@components'
+import { useTheme } from '@theme'
 import { ConversationItem } from '@components/ConversationItem'
 import { ActionModal } from '@components/ActionModal'
 import { RootStackParamList } from '@types'
@@ -17,6 +18,8 @@ export const ChatListScreen: React.FC = () => {
   const navigation = useNavigation<ChatListScreenNavigationProp>()
   const route = useRoute<ChatListScreenRouteProp>()
   const { userName } = route.params
+  const { colors, spacing } = useTheme()
+  const styles = createStyles(colors, spacing)
   const {
     conversations,
     isLoading,
@@ -186,18 +189,20 @@ export const ChatListScreen: React.FC = () => {
   )
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container: {
-    flex: 1,
-  },
-  conversationsList: {
-    flex: 1,
-  },
-  conversationsContainer: {
-    padding: 16,
-  },
-})
+const createStyles = (colors: any, spacing: any) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.semantic.background.primary,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: colors.semantic.background.primary,
+    },
+    conversationsList: {
+      flex: 1,
+    },
+    conversationsContainer: {
+      padding: spacing.lg,
+    },
+  })

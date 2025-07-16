@@ -4,6 +4,7 @@ export { Input } from './Input'
 export { ActionModal } from './ActionModal'
 export { Header } from './Header'
 export { EmptyState } from './EmptyState'
+export { ThemeToggle } from './ThemeToggle'
 
 // Specific Components
 export { StorageModeSelector } from './StorageModeSelector'

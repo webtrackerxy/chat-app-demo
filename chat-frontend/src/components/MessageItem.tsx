@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
 import { Message } from '@chat-types'
 import { FileMessage } from './FileMessage'
+import { useTheme } from '@theme'
 
 interface MessageItemProps {
   message: Message
@@ -81,6 +82,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const groupedReactions = getGroupedReactions()
   const readReceiptsText = getReadReceiptsText()
   const currentUserReactionEmoji = getCurrentUserReactionEmoji()
+
+  const { colors, spacing, borderRadius, typography } = useTheme()
+  const styles = createStyles(colors, spacing, borderRadius, typography)
 
   return (
     <View style={styles.messageContainer}>
@@ -192,145 +196,145 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   )
 }
 
-const styles = StyleSheet.create({
-  messageContainer: {
-    marginBottom: 16,
-  },
-  container: {
-    padding: 12,
-    borderRadius: 8,
-    maxWidth: '80%',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  content: {
-    flex: 1,
-  },
-  ownMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#007AFF',
-    marginLeft: '20%',
-  },
-  otherMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#4CAF50',
-    marginRight: '20%',
-  },
-  senderName: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 4,
-    color: '#FFD700',
-  },
-  messageText: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  ownMessageText: {
-    color: '#fff',
-  },
-  otherMessageText: {
-    color: '#fff',
-  },
-  messageTime: {
-    fontSize: 10,
-    color: '#fff',
-    textAlign: 'right',
-  },
-  deleteButton: {
-    marginLeft: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  deleteButtonText: {
-    fontSize: 14,
-  },
-  // New styles for reactions
-  reactionsContainer: {
-    marginTop: 4,
-    maxWidth: '80%',
-    maxHeight: 80,
-    overflow: 'hidden',
-  },
-  reactionsRight: {
-    alignSelf: 'flex-end',
-    marginLeft: '20%',
-  },
-  reactionsLeft: {
-    alignSelf: 'flex-start',
-    marginRight: '20%',
-  },
-  existingReactions: {
-    marginBottom: 4,
-    maxHeight: 32,
-  },
-  reactionBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginRight: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.2)',
-    minHeight: 24,
-  },
-  reactionBubbleActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  reactionEmoji: {
-    fontSize: 14,
-    lineHeight: 16,
-    marginRight: 4,
-  },
-  reactionCount: {
-    fontSize: 12,
-    color: '#333',
-    fontWeight: '600',
-  },
-  quickReactions: {
-    opacity: 0.7,
-    height: 32,
-    maxHeight: 32,
-    flex: 0,
-  },
-  quickReactionButton: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 4,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  quickReactionButtonSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#0051CC',
-  },
-  quickReactionEmoji: {
-    fontSize: 18,
-    lineHeight: 20,
-  },
-  quickReactionEmojiSelected: {
-    // Emoji remains the same, just the background changes
-  },
-  // New styles for read receipts
-  readReceipts: {
-    fontSize: 10,
-    color: '#666',
-    textAlign: 'right',
-    marginTop: 4,
-    marginRight: 12,
-    fontStyle: 'italic',
-  },
-})
+const createStyles = (colors: any, spacing: any, borderRadius: any, typography: any) =>
+  StyleSheet.create({
+    messageContainer: {
+      marginBottom: spacing.lg,
+    },
+    container: {
+      padding: spacing.md,
+      borderRadius: borderRadius.md,
+      maxWidth: '80%',
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+    },
+    content: {
+      flex: 1,
+    },
+    ownMessage: {
+      alignSelf: 'flex-end',
+      backgroundColor: colors.primary[500],
+      marginLeft: '20%',
+    },
+    otherMessage: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.success[500],
+      marginRight: '20%',
+    },
+    senderName: {
+      ...typography.body.xs.bold,
+      marginBottom: spacing.xs,
+      color: colors.accent.yellow,
+    },
+    messageText: {
+      ...typography.body.m.regular,
+      marginBottom: spacing.xs,
+    },
+    ownMessageText: {
+      color: colors.base.white,
+    },
+    otherMessageText: {
+      color: colors.base.white,
+    },
+    messageTime: {
+      ...typography.body.xs.regular,
+      color: colors.base.white,
+      textAlign: 'right',
+      opacity: 0.8,
+    },
+    deleteButton: {
+      marginLeft: spacing.sm,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.3)',
+    },
+    deleteButtonText: {
+      ...typography.body.s.regular,
+    },
+    // Reaction styles with design tokens
+    reactionsContainer: {
+      marginTop: spacing.xs,
+      maxWidth: '80%',
+      maxHeight: 80,
+      overflow: 'hidden',
+    },
+    reactionsRight: {
+      alignSelf: 'flex-end',
+      marginLeft: '20%',
+    },
+    reactionsLeft: {
+      alignSelf: 'flex-start',
+      marginRight: '20%',
+    },
+    existingReactions: {
+      marginBottom: spacing.xs,
+      maxHeight: 32,
+    },
+    reactionBubble: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.semantic.surface.secondary,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs / 2,
+      marginRight: spacing.xs,
+      borderWidth: 1,
+      borderColor: colors.semantic.border.secondary,
+      minHeight: 24,
+    },
+    reactionBubbleActive: {
+      backgroundColor: colors.semantic.interactive.primary,
+      borderColor: colors.semantic.interactive.primaryHover,
+    },
+    reactionEmoji: {
+      fontSize: 14,
+      lineHeight: 16,
+      marginRight: spacing.xs,
+    },
+    reactionCount: {
+      ...typography.body.xs.bold,
+      color: colors.semantic.text.primary,
+    },
+    quickReactions: {
+      opacity: 0.7,
+      height: 32,
+      maxHeight: 32,
+      flex: 0,
+    },
+    quickReactionButton: {
+      width: 32,
+      height: 32,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: spacing.xs,
+      borderRadius: borderRadius.lg,
+      backgroundColor: colors.semantic.surface.tertiary,
+      borderWidth: 1,
+      borderColor: 'transparent',
+    },
+    quickReactionButtonSelected: {
+      backgroundColor: colors.semantic.interactive.primary,
+      borderColor: colors.semantic.interactive.primaryHover,
+    },
+    quickReactionEmoji: {
+      fontSize: 18,
+      lineHeight: 20,
+    },
+    quickReactionEmojiSelected: {
+      // Emoji remains the same, just the background changes
+    },
+    // Read receipts with design tokens
+    readReceipts: {
+      ...typography.body.xs.regular,
+      color: colors.semantic.text.tertiary,
+      textAlign: 'right',
+      marginTop: spacing.xs,
+      marginRight: spacing.md,
+      fontStyle: 'italic',
+    },
+  })

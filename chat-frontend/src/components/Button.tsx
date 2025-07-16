@@ -1,5 +1,6 @@
 import React from 'react'
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native'
+import { useTheme } from '@theme'
 
 interface ButtonProps {
   title: string
@@ -18,6 +19,10 @@ export const Button: React.FC<ButtonProps> = ({
   size = 'medium',
   style,
 }) => {
+  const { colors, spacing, borderRadius, typography } = useTheme()
+
+  const styles = createStyles(colors, spacing, borderRadius, typography)
+
   return (
     <TouchableOpacity
       style={[
@@ -37,66 +42,69 @@ export const Button: React.FC<ButtonProps> = ({
   )
 }
 
-const styles = StyleSheet.create({
-  button: {
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Variants
-  primaryButton: {
-    backgroundColor: '#007AFF',
-  },
-  secondaryButton: {
-    backgroundColor: '#f0f0f0',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  dangerButton: {
-    backgroundColor: '#ff3b30',
-  },
-  textButton: {
-    backgroundColor: 'transparent',
-  },
-  // Sizes
-  small: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    minHeight: 32,
-  },
-  medium: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 44,
-  },
-  large: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    minHeight: 52,
-  },
-  // States
-  disabled: {
-    backgroundColor: '#ccc',
-    borderColor: '#ccc',
-  },
-  // Text styles
-  textStyle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  primaryText: {
-    color: '#fff',
-  },
-  secondaryText: {
-    color: '#333',
-  },
-  dangerText: {
-    color: '#fff',
-  },
-  textText: {
-    color: '#007AFF',
-  },
-  disabledText: {
-    color: '#999',
-  },
-})
+const createStyles = (colors: any, spacing: any, borderRadius: any, typography: any) =>
+  StyleSheet.create({
+    button: {
+      borderRadius: borderRadius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    // Variants
+    primaryButton: {
+      backgroundColor: colors.semantic.interactive.primary,
+    },
+    secondaryButton: {
+      backgroundColor: colors.semantic.interactive.secondary,
+      borderWidth: 1,
+      borderColor: colors.semantic.border.primary,
+    },
+    dangerButton: {
+      backgroundColor: colors.semantic.status.error,
+    },
+    textButton: {
+      backgroundColor: 'transparent',
+    },
+    // Sizes
+    small: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      minHeight: 32,
+      ...typography.body.s.bold,
+    },
+    medium: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+      minHeight: 44,
+      ...typography.body.m.bold,
+    },
+    large: {
+      paddingHorizontal: spacing['2xl'],
+      paddingVertical: spacing.lg,
+      minHeight: 52,
+      ...typography.body.l.bold,
+    },
+    // States
+    disabled: {
+      backgroundColor: colors.gray[300],
+      borderColor: colors.gray[300],
+    },
+    // Text styles
+    textStyle: {
+      textAlign: 'center',
+    },
+    primaryText: {
+      color: colors.semantic.text.inverse,
+    },
+    secondaryText: {
+      color: colors.semantic.text.primary,
+    },
+    dangerText: {
+      color: colors.semantic.text.inverse,
+    },
+    textText: {
+      color: colors.semantic.interactive.primary,
+    },
+    disabledText: {
+      color: colors.semantic.text.disabled,
+    },
+  })

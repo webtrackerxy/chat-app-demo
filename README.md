@@ -57,6 +57,8 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 - **Presence controls**: Manual online/offline toggle in header
 - **Multimedia sharing**: Drag-and-drop or click to share files, images, videos
 - **Voice messaging**: One-tap recording with visual feedback and playback controls
+- **Dark/Light theme**: Seamless theme switching with automatic component adaptation
+- **Design tokens**: Consistent styling system with semantic color mapping
 - **Compact design**: Optimized message sizes for mobile-first experience
 - **Responsive design**: Works on web, iOS, and Android
 - **Offline fallback**: Graceful degradation when disconnected
@@ -79,8 +81,9 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 │ │ ├── /context ✅ SocketContext for connection management
 │ │ ├── /store ✅ Zustand state management
 │ │ ├── /config ✅ Environment variable management
-│ │ ├── /components ✅ MessageInput + MessageItem + FilePicker + VoiceRecorder + FileMessage + VideoPlayer
-│ │ ├── /screens ✅ ChatRoom with real-time features + presence controls + file sharing
+│ │ ├── /components ✅ MessageInput + MessageItem + FilePicker + VoiceRecorder + FileMessage + VideoPlayer + ThemeToggle
+│ │ ├── /screens ✅ ChatRoom with real-time features + presence controls + file sharing + dark/light themes
+│ │ ├── /theme ✅ Design tokens system + ThemeContext + dark/light mode + semantic colors
 │ │ ├── /types ✅ Local type definitions with path mapping support
 │ │ ├── /__tests__ ✅ Component and integration tests
 │ │ └── App.tsx
@@ -157,6 +160,7 @@ Available path mappings:
 - `@config` → `src/config`
 - `@context` → `src/context`
 - `@types` → `src/types`
+- `@theme` → `src/theme`
 - `@chat-types` → `../chat-types/src`
 
 ## 🚀 Quick Start
@@ -187,7 +191,8 @@ npx expo start --localhost
 8. **Check read receipts** → see who has read your messages
 9. **Share files** → click 📎 to upload images, videos, documents
 10. **Record voice** → click 🎤 to record and send voice messages
-11. **Delete messages** → long press or click delete button for real-time removal
+11. **Toggle themes** → click 🌙/☀️ in header to switch between dark/light mode
+12. **Delete messages** → long press or click delete button for real-time removal
 
 ### 3. Verify WebSocket Connection
 - Look for **🟢 Connected** in the chat header (backend mode)
@@ -270,6 +275,9 @@ cd chat-frontend && npm test
 - ✅ **Voice message recording** with live audio controls
 - ✅ **Video sharing** with inline playback
 - ✅ **Message deletion** with real-time updates
+- ✅ **Dark/Light theme system** with automatic component adaptation
+- ✅ **Design tokens architecture** with semantic color mapping
+- ✅ **Theme persistence** with AsyncStorage
 - ✅ **Compact UI design** optimized for mobile
 
 ### Code Quality & Developer Experience
@@ -319,6 +327,63 @@ REACT_APP_MAX_FILE_SIZE=10485760               # Client file size limit
 ```
 
 For detailed configuration instructions, see [ENV_CONFIG.md](./ENV_CONFIG.md).
+
+### Theme System & Design Tokens
+
+The app features a comprehensive design tokens system with automatic dark/light mode support:
+
+#### Design Tokens Architecture
+```typescript
+// Reevo Design System tokens from design-tokens.json
+const tokens = {
+  colors: {
+    primary: { 500: '#00BCD4' },    // Brand colors
+    gray: { 50: '#FAFAFA', 900: '#212121' },  // Neutral scale
+    semantic: {                      // Auto-adapting colors
+      background: { primary: 'auto' }, // White in light, dark in dark
+      text: { primary: 'auto' },       // Dark in light, light in dark
+      surface: { primary: 'auto' }     // Adapts to theme
+    }
+  },
+  spacing: { xs: 4, sm: 8, md: 16, lg: 24 },
+  typography: { heading: {}, body: {} },
+  borderRadius: { sm: 4, md: 8, lg: 12 }
+}
+```
+
+#### Theme Features
+- **Automatic Adaptation**: All components automatically switch between light/dark themes
+- **Semantic Colors**: Colors adapt based on context (background, text, surface, etc.)
+- **Theme Persistence**: Selected theme is saved and restored on app restart
+- **Design System**: Based on Reevo Design System with mobile-optimized tokens
+- **TypeScript Integration**: Full type safety with theme tokens
+
+#### Usage Examples
+```typescript
+import { useTheme } from '@theme'
+
+const MyComponent = () => {
+  const { colors, spacing, typography } = useTheme()
+  
+  return (
+    <View style={{
+      backgroundColor: colors.semantic.background.primary,
+      padding: spacing.lg,
+      borderRadius: colors.borderRadius.md
+    }}>
+      <Text style={{
+        ...typography.heading[4],
+        color: colors.semantic.text.primary
+      }}>
+        This adapts to light/dark themes automatically
+      </Text>
+    </View>
+  )
+}
+```
+
+#### Theme Toggle
+Users can switch themes using the 🌙/☀️ button in the header. All components update instantly with smooth transitions.
 
 ## 📱 Platform Support
 

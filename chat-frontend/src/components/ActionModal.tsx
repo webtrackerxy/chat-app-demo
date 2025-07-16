@@ -9,6 +9,7 @@ import {
 } from 'react-native'
 import { Input } from './Input'
 import { Button } from './Button'
+import { useTheme } from '@theme'
 
 interface ActionModalProps {
   visible: boolean
@@ -33,6 +34,9 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
 }) => {
+  const { colors, spacing, borderRadius, typography, shadows } = useTheme()
+  const styles = createStyles(colors, spacing, borderRadius, typography, shadows)
+
   return (
     <Modal visible={visible} transparent={true} animationType='fade' onRequestClose={onCancel}>
       <TouchableWithoutFeedback onPress={onCancel}>
@@ -72,44 +76,37 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   )
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  container: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    margin: 20,
-    minWidth: 300,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
+const createStyles = (colors: any, spacing: any, borderRadius: any, typography: any, shadows: any) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  input: {
-    marginBottom: 20,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  button: {
-    flex: 1,
-    marginHorizontal: 8,
-  },
-})
+    container: {
+      backgroundColor: colors.semantic.surface.elevated,
+      borderRadius: borderRadius.md,
+      padding: spacing.xl,
+      margin: spacing.lg,
+      minWidth: 300,
+      ...shadows.lg,
+    },
+    title: {
+      ...typography.heading[5],
+      color: colors.semantic.text.primary,
+      marginBottom: spacing.lg,
+      textAlign: 'center',
+    },
+    input: {
+      marginBottom: spacing.lg,
+    },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    button: {
+      flex: 1,
+      marginHorizontal: spacing.sm,
+    },
+  })
