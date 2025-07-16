@@ -22,6 +22,7 @@ import { useUserPresence } from '@hooks/useUserPresence'
 import { useMessageReactions } from '@hooks/useMessageReactions'
 import { Message, FileAttachment } from '@chat-types'
 import { Header, MessageItem, MessageInput, EmptyState } from '@components'
+import { useTheme } from '@theme'
 import { socketService } from '@services/socketService'
 import { RootStackParamList } from '@types'
 
@@ -32,6 +33,8 @@ export const ChatRoomScreen: React.FC = () => {
   const navigation = useNavigation<ChatRoomScreenNavigationProp>()
   const route = useRoute<ChatRoomScreenRouteProp>()
   const { userName, conversationId } = route.params
+  const { colors, spacing, borderRadius, typography } = useTheme()
+  const styles = createStyles(colors, spacing, borderRadius, typography)
   const {
     currentConversation,
     isLoading,
@@ -317,44 +320,45 @@ export const ChatRoomScreen: React.FC = () => {
   )
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container: {
-    flex: 1,
-  },
-  messagesList: {
-    flex: 1,
-  },
-  messagesContainer: {
-    padding: 16,
-    flexGrow: 1,
-  },
-  typingIndicator: {
-    padding: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#f8f9fa',
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-  },
-  typingText: {
-    fontSize: 12,
-    color: '#6c757d',
-    fontStyle: 'italic',
-  },
-  presenceToggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.2)',
-  },
-  presenceToggleText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#333',
-  },
-})
+const createStyles = (colors: any, spacing: any, borderRadius: any, typography: any) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.semantic.background.primary,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: colors.semantic.background.primary,
+    },
+    messagesList: {
+      flex: 1,
+    },
+    messagesContainer: {
+      padding: spacing.lg,
+      flexGrow: 1,
+    },
+    typingIndicator: {
+      padding: spacing.sm,
+      paddingHorizontal: spacing.lg,
+      backgroundColor: colors.semantic.surface.secondary,
+      borderTopWidth: 1,
+      borderTopColor: colors.semantic.border.secondary,
+    },
+    typingText: {
+      ...typography.body.xs.regular,
+      color: colors.semantic.text.tertiary,
+      fontStyle: 'italic',
+    },
+    presenceToggle: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderRadius: borderRadius.lg,
+      backgroundColor: colors.semantic.surface.tertiary,
+      borderWidth: 1,
+      borderColor: colors.semantic.border.secondary,
+    },
+    presenceToggleText: {
+      ...typography.body.xs.bold,
+      color: colors.semantic.text.primary,
+    },
+  })

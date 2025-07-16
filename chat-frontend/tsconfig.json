@@ -21,7 +21,9 @@
       "@types": ["src/types"],
       "@api/*": ["src/api/*"],
       "@context/*": ["src/context/*"],
-      "@chat-types": ["../chat-types/src"]
+      "@chat-types": ["../chat-types/src"],
+      "@theme": ["src/theme"],
+      "@theme/*": ["src/theme/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],

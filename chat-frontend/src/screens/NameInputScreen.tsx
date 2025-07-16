@@ -6,6 +6,7 @@ import { Button, Input, StorageModeSelector } from '@components'
 import { useChat } from '@hooks/useChat'
 import { RootStackParamList } from '@types'
 import { StorageMode } from '@types'
+import { useTheme } from '@theme'
 
 type NameInputScreenNavigationProp = StackNavigationProp<RootStackParamList, 'NameInput'>
 
@@ -25,6 +26,9 @@ export const NameInputScreen: React.FC = () => {
       navigation.navigate('ChatList', { userName: name.trim() })
     }
   }
+
+  const { colors, spacing, typography } = useTheme()
+  const styles = createStyles(colors, spacing, typography)
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -57,35 +61,36 @@ export const NameInputScreen: React.FC = () => {
   )
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  nameInput: {
-    width: '100%',
-    marginBottom: 24,
-  },
-  continueButton: {
-    marginTop: 16,
-    minWidth: 200,
-  },
-})
+const createStyles = (colors: any, spacing: any, typography: any) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.semantic.background.primary,
+    },
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing['2xl'],
+      backgroundColor: colors.semantic.background.primary,
+    },
+    title: {
+      ...typography.heading[1],
+      marginBottom: spacing.xs,
+      color: colors.semantic.text.primary,
+    },
+    subtitle: {
+      ...typography.body.l.regular,
+      color: colors.semantic.text.secondary,
+      marginBottom: spacing.xl,
+      textAlign: 'center',
+    },
+    nameInput: {
+      width: '100%',
+      marginBottom: spacing.xl,
+    },
+    continueButton: {
+      marginTop: spacing.lg,
+      minWidth: 200,
+    },
+  })

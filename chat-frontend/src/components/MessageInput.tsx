@@ -4,6 +4,7 @@ import { Button } from './Button'
 import { FilePicker } from './FilePicker'
 import { VoiceRecorder } from './VoiceRecorder'
 import { FileAttachment } from '@chat-types'
+import { useTheme } from '@theme'
 
 interface MessageInputProps {
   value: string
@@ -39,6 +40,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onVoiceRecorded,
   showVoiceRecorder = false,
 }) => {
+  const { colors, spacing, borderRadius, typography } = useTheme()
+  const styles = createStyles(colors, spacing, borderRadius, typography)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const canSend = value.trim().length > 0 && !disabled
 
@@ -102,6 +105,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         value={value}
         onChangeText={handleTextChange}
         placeholder={placeholder}
+        placeholderTextColor={colors.semantic.text.tertiary}
         multiline
         maxLength={500}
       />
@@ -116,32 +120,35 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    alignItems: 'flex-end',
-    backgroundColor: '#fff',
-  },
-  attachmentButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
-    maxHeight: 100,
-    fontSize: 16,
-  },
-  sendButton: {
-    borderRadius: 20,
-    minWidth: 80,
-  },
-})
+const createStyles = (colors: any, spacing: any, borderRadius: any, typography: any) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      padding: spacing.lg,
+      borderTopWidth: 1,
+      borderTopColor: colors.semantic.border.secondary,
+      alignItems: 'flex-end',
+      backgroundColor: colors.semantic.surface.primary,
+    },
+    attachmentButtons: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    input: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.semantic.border.primary,
+      backgroundColor: colors.semantic.background.primary,
+      borderRadius: borderRadius.xl,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+      marginRight: spacing.sm,
+      maxHeight: 100,
+      ...typography.body.m.regular,
+      color: colors.semantic.text.primary,
+    },
+    sendButton: {
+      borderRadius: borderRadius.xl,
+      minWidth: 80,
+    },
+  })

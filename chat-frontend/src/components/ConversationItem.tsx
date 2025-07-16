@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { Conversation } from '@chat-types'
+import { useTheme } from '@theme'
 
 interface ConversationItemProps {
   conversation: Conversation
@@ -15,6 +16,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const { colors, spacing, borderRadius, typography, shadows } = useTheme()
+  const styles = createStyles(colors, spacing, borderRadius, typography, shadows)
   const handleDelete = () => {
     Alert.alert('Delete Conversation', `Are you sure you want to delete "${conversation.title}"?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -83,72 +86,69 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
+const createStyles = (colors: any, spacing: any, borderRadius: any, typography: any, shadows: any) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.semantic.surface.primary,
+      borderRadius: borderRadius.md,
+      padding: spacing.lg,
+      marginBottom: spacing.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      ...shadows.sm,
+      borderWidth: 1,
+      borderColor: colors.semantic.border.secondary,
     },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    elevation: 3,
-  },
-  content: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    flex: 1,
-  },
-  date: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 8,
-  },
-  lastMessage: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  participants: {
-    fontSize: 12,
-    color: '#999',
-  },
-  actions: {
-    flexDirection: 'row',
-    marginLeft: 12,
-  },
-  actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  actionButtonText: {
-    fontSize: 16,
-  },
-})
+    content: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing.sm,
+    },
+    title: {
+      ...typography.heading[5],
+      color: colors.semantic.text.primary,
+      flex: 1,
+    },
+    date: {
+      ...typography.body.xs.regular,
+      color: colors.semantic.text.secondary,
+      marginLeft: spacing.sm,
+    },
+    lastMessage: {
+      ...typography.body.m.regular,
+      color: colors.semantic.text.secondary,
+      marginBottom: spacing.sm,
+      lineHeight: 20,
+    },
+    footer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    participants: {
+      ...typography.body.xs.regular,
+      color: colors.semantic.text.tertiary,
+    },
+    actions: {
+      flexDirection: 'row',
+      marginLeft: spacing.md,
+    },
+    actionButton: {
+      width: 32,
+      height: 32,
+      borderRadius: borderRadius.lg,
+      backgroundColor: colors.semantic.surface.tertiary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.semantic.border.secondary,
+    },
+    actionButtonText: {
+      fontSize: 16,
+    },
+  })

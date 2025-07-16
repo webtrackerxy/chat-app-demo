@@ -1,5 +1,6 @@
 import React from 'react'
 import { TextInput, StyleSheet, ViewStyle, TextInputProps } from 'react-native'
+import { useTheme } from '@theme'
 
 interface InputProps extends TextInputProps {
   variant?: 'default' | 'rounded' | 'centered'
@@ -13,44 +14,49 @@ export const Input: React.FC<InputProps> = ({
   style,
   ...props
 }) => {
+  const { colors, spacing, borderRadius, typography } = useTheme()
+  const styles = createStyles(colors, spacing, borderRadius, typography)
+
   return <TextInput style={[styles.input, styles[variant], styles[size], style]} {...props} />
 }
 
-const styles = StyleSheet.create({
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-  // Variants
-  default: {
-    borderRadius: 8,
-    paddingHorizontal: 12,
-  },
-  rounded: {
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    textAlign: 'center',
-    borderWidth: 2,
-    borderColor: '#007AFF',
-  },
-  centered: {
-    textAlign: 'center',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-  },
-  // Sizes
-  small: {
-    height: 36,
-    fontSize: 14,
-  },
-  medium: {
-    height: 44,
-    fontSize: 16,
-  },
-  large: {
-    height: 52,
-    fontSize: 18,
-  },
-})
+const createStyles = (colors: any, spacing: any, borderRadius: any, typography: any) =>
+  StyleSheet.create({
+    input: {
+      borderWidth: 1,
+      borderColor: colors.semantic.border.primary,
+      backgroundColor: colors.semantic.surface.primary,
+      color: colors.semantic.text.primary,
+      ...typography.body.m.regular,
+    },
+    // Variants
+    default: {
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.md,
+    },
+    rounded: {
+      borderRadius: borderRadius['2xl'],
+      paddingHorizontal: spacing.xl,
+      textAlign: 'center',
+      borderWidth: 2,
+      borderColor: colors.semantic.border.focus,
+    },
+    centered: {
+      textAlign: 'center',
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.lg,
+    },
+    // Sizes
+    small: {
+      height: 36,
+      ...typography.body.s.regular,
+    },
+    medium: {
+      height: 44,
+      ...typography.body.m.regular,
+    },
+    large: {
+      height: 52,
+      ...typography.body.l.regular,
+    },
+  })

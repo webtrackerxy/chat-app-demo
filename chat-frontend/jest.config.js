@@ -27,6 +27,8 @@ module.exports = {
     '^@api/(.*)$': '<rootDir>/src/api/$1',
     '^@context/(.*)$': '<rootDir>/src/context/$1',
     '^@chat-types$': '<rootDir>/../chat-types/src',
+    '^@theme$': '<rootDir>/src/theme',
+    '^@theme/(.*)$': '<rootDir>/src/theme/$1',
     'react-native': 'react-native-web',
     'expo-audio': '<rootDir>/src/__mocks__/expo-audio.js',
     'expo-file-system': '<rootDir>/src/__mocks__/expo-file-system.js',
