@@ -269,8 +269,7 @@ class DatabaseService {
   async searchMessages(query, conversationId = null, limit = 50) {
     const where = {
       text: {
-        contains: query,
-        mode: 'insensitive'
+        contains: query
       }
     }
 
@@ -293,6 +292,11 @@ class DatabaseService {
   async createThread(parentMessageId, replyMessageData) {
     // Generate thread ID if it doesn't exist
     const parentMessage = await this.getMessageById(parentMessageId)
+    
+    if (!parentMessage) {
+      throw new Error(`Parent message with ID ${parentMessageId} not found`)
+    }
+    
     const threadId = parentMessage.threadId || parentMessageId
 
     return await this.saveMessage({
@@ -363,6 +367,110 @@ class DatabaseService {
     })
 
     return { messageCount, participantCount }
+  }
+
+  // Phase 2: Private Messaging
+  async createDirectConversation(user1Id, user2Id) {
+    // Check if direct conversation already exists between these users
+    const existingConversation = await this.findDirectConversation(user1Id, user2Id)
+    if (existingConversation) {
+      return existingConversation
+    }
+
+    return await this.prisma.$transaction(async (prisma) => {
+      // Create direct conversation
+      const conversation = await prisma.conversation.create({
+        data: {
+          type: 'direct',
+          createdBy: user1Id
+        }
+      })
+
+      // Add both participants
+      await prisma.conversationParticipant.createMany({
+        data: [
+          { conversationId: conversation.id, userId: user1Id },
+          { conversationId: conversation.id, userId: user2Id }
+        ]
+      })
+
+      return await prisma.conversation.findUnique({
+        where: { id: conversation.id },
+        include: {
+          participants: {
+            include: { user: true }
+          }
+        }
+      })
+    })
+  }
+
+  async findDirectConversation(user1Id, user2Id) {
+    const conversations = await this.prisma.conversation.findMany({
+      where: {
+        type: 'direct',
+        participants: {
+          every: {
+            userId: { in: [user1Id, user2Id] },
+            leftAt: null
+          }
+        }
+      },
+      include: {
+        participants: {
+          include: { user: true }
+        }
+      }
+    })
+
+    // Filter to ensure exactly 2 participants
+    return conversations.find(conv => 
+      conv.participants.length === 2 &&
+      conv.participants.some(p => p.userId === user1Id) &&
+      conv.participants.some(p => p.userId === user2Id)
+    )
+  }
+
+  async getAllUsersForDirectMessages(currentUserId) {
+    return await this.prisma.user.findMany({
+      where: {
+        id: { not: currentUserId }
+      },
+      select: {
+        id: true,
+        username: true,
+        status: true,
+        lastSeen: true
+      },
+      orderBy: { username: 'asc' }
+    })
+  }
+
+  async getDirectConversationsForUser(userId) {
+    return await this.prisma.conversation.findMany({
+      where: {
+        type: 'direct',
+        participants: {
+          some: {
+            userId,
+            leftAt: null
+          }
+        }
+      },
+      include: {
+        participants: {
+          include: { user: true }
+        },
+        messages: {
+          orderBy: { timestamp: 'desc' },
+          take: 1,
+          include: {
+            sender: true
+          }
+        }
+      },
+      orderBy: { updatedAt: 'desc' }
+    })
   }
 }
 

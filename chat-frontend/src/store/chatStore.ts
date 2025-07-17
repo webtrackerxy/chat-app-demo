@@ -83,8 +83,8 @@ export const useChatStore = create<ChatState>((set, get) => {
 
     setCurrentConversation: (conversation) => {
       set({ currentConversation: conversation })
-      // Load messages for the selected conversation
-      if (conversation) {
+      // Only load messages if the conversation doesn't already have them
+      if (conversation && (!conversation.messages || conversation.messages.length === 0)) {
         get().loadMessages(conversation.id)
       }
     },

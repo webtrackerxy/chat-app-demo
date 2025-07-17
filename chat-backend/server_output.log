@@ -1,0 +1,1181 @@
+
+> chat-backend@1.0.0 start
+> node index.js
+
+Chat backend server with WebSocket running on port 3000
+User connected: SUk0Mtqx4GtLWJU1AAAB
+User Mike is now online
+User connected: FxlpeV4uI3Jvu-iPAAAD
+Message 1 marked as read by Mike
+Message 2 marked as read by Mike
+User connected: wXnm6NSRCFaq5Gx4AAAF
+User Mary is now online
+Message 1 marked as read by John
+Message 2 marked as read by John
+Message 1 marked as read by Mary
+Message 2 marked as read by Mary
+File uploaded: {
+  id: '69ed7819-96e3-4e4b-bc0b-f9ef12344cab',
+  originalName: 'README.md',
+  filename: 'file-1752590807941-50849947.md',
+  mimeType: 'application/octet-stream',
+  size: 7941,
+  uploadedAt: 2025-07-15T14:46:47.944Z,
+  url: '/uploads/file-1752590807941-50849947.md',
+  type: 'document'
+}
+Action: POST /api/upload
+Data: {
+  "body": {},
+  "query": {},
+  "params": {}
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2024-01-01T10:01:00.000Z",
+    "messages": [
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+User disconnected: FxlpeV4uI3Jvu-iPAAAD
+Action: GET /api/conversations
+Data: {
+  "body": {},
+  "query": {},
+  "params": {}
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2024-01-01T10:01:00.000Z",
+    "messages": [
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+User connected: _qJJrLw6PHup6uaDAAAH
+Socket _qJJrLw6PHup6uaDAAAH joined conversation general
+Action: GET /api/conversations/:id/messages
+Data: {
+  "body": {},
+  "query": {},
+  "params": {
+    "id": "general"
+  }
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2024-01-01T10:01:00.000Z",
+    "messages": [
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+Action: GET /api/conversations/:id/messages
+Data: {
+  "body": {},
+  "query": {},
+  "params": {
+    "id": "general"
+  }
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2024-01-01T10:01:00.000Z",
+    "messages": [
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+Action: GET /api/conversations
+Data: {
+  "body": {},
+  "query": {},
+  "params": {}
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2024-01-01T10:01:00.000Z",
+    "messages": [
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+Socket wXnm6NSRCFaq5Gx4AAAF joined conversation general
+User Mary is now online
+Action: GET /api/conversations/:id/messages
+Data: {
+  "body": {},
+  "query": {},
+  "params": {
+    "id": "general"
+  }
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2024-01-01T10:01:00.000Z",
+    "messages": [
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+Action: GET /api/conversations/:id/messages
+Data: {
+  "body": {},
+  "query": {},
+  "params": {
+    "id": "general"
+  }
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2024-01-01T10:01:00.000Z",
+    "messages": [
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+User Mary is now online
+User Mike is now online
+File uploaded: {
+  id: 'f4fe537b-0e28-4f7f-b34a-1b2a9c5fc5e9',
+  originalName: 'Simulator Screenshot - iPhone 16 Pro - 2025-07-01 at 16.38.23.png',
+  filename: 'file-1752590989322-558263303.png',
+  mimeType: 'image/png',
+  size: 92278,
+  uploadedAt: 2025-07-15T14:49:49.329Z,
+  url: '/uploads/file-1752590989322-558263303.png',
+  type: 'image'
+}
+Action: POST /api/upload
+Data: {
+  "body": {},
+  "query": {},
+  "params": {}
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2024-01-01T10:01:00.000Z",
+    "messages": [
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+File message sent to conversation general: {
+  id: 'f91eaded-873b-459a-960c-0ddfb824a637',
+  text: 'Image',
+  senderId: 'user_mike',
+  senderName: 'Mike',
+  timestamp: 2025-07-15T14:49:49.377Z,
+  type: 'image',
+  file: {
+    id: 'f4fe537b-0e28-4f7f-b34a-1b2a9c5fc5e9',
+    originalName: 'Simulator Screenshot - iPhone 16 Pro - 2025-07-01 at 16.38.23.png',
+    filename: 'file-1752590989322-558263303.png',
+    mimeType: 'image/png',
+    size: 92278,
+    uploadedAt: '2025-07-15T14:49:49.329Z',
+    url: '/uploads/file-1752590989322-558263303.png',
+    type: 'image'
+  },
+  readBy: [],
+  reactions: []
+}
+Message f91eaded-873b-459a-960c-0ddfb824a637 marked as read by Mary
+Reaction 👍 added to message f91eaded-873b-459a-960c-0ddfb824a637 by Mary
+Socket wXnm6NSRCFaq5Gx4AAAF joined conversation general
+User Mary is now online
+Action: GET /api/conversations/:id/messages
+Data: {
+  "body": {},
+  "query": {},
+  "params": {
+    "id": "general"
+  }
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2025-07-15T14:49:49.377Z",
+    "messages": [
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "f91eaded-873b-459a-960c-0ddfb824a637",
+        "text": "Image",
+        "senderId": "user_mike",
+        "senderName": "Mike",
+        "timestamp": "2025-07-15T14:49:49.377Z",
+        "type": "image",
+        "file": {
+          "id": "f4fe537b-0e28-4f7f-b34a-1b2a9c5fc5e9",
+          "originalName": "Simulator Screenshot - iPhone 16 Pro - 2025-07-01 at 16.38.23.png",
+          "filename": "file-1752590989322-558263303.png",
+          "mimeType": "image/png",
+          "size": 92278,
+          "uploadedAt": "2025-07-15T14:49:49.329Z",
+          "url": "/uploads/file-1752590989322-558263303.png",
+          "type": "image"
+        },
+        "readBy": [
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:49:50.419Z"
+          }
+        ],
+        "reactions": [
+          {
+            "id": "f5896a80-1f13-4c24-af1f-195ee46a2fe8",
+            "userId": "user_mary",
+            "userName": "Mary",
+            "emoji": "👍",
+            "timestamp": "2025-07-15T14:50:13.662Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+Action: GET /api/conversations/:id/messages
+Data: {
+  "body": {},
+  "query": {},
+  "params": {
+    "id": "general"
+  }
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2025-07-15T14:49:49.377Z",
+    "messages": [
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "f91eaded-873b-459a-960c-0ddfb824a637",
+        "text": "Image",
+        "senderId": "user_mike",
+        "senderName": "Mike",
+        "timestamp": "2025-07-15T14:49:49.377Z",
+        "type": "image",
+        "file": {
+          "id": "f4fe537b-0e28-4f7f-b34a-1b2a9c5fc5e9",
+          "originalName": "Simulator Screenshot - iPhone 16 Pro - 2025-07-01 at 16.38.23.png",
+          "filename": "file-1752590989322-558263303.png",
+          "mimeType": "image/png",
+          "size": 92278,
+          "uploadedAt": "2025-07-15T14:49:49.329Z",
+          "url": "/uploads/file-1752590989322-558263303.png",
+          "type": "image"
+        },
+        "readBy": [
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:49:50.419Z"
+          }
+        ],
+        "reactions": [
+          {
+            "id": "f5896a80-1f13-4c24-af1f-195ee46a2fe8",
+            "userId": "user_mary",
+            "userName": "Mary",
+            "emoji": "👍",
+            "timestamp": "2025-07-15T14:50:13.662Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+File uploaded: {
+  id: '5b3b9fea-6d84-437f-939a-d1cc723e5461',
+  originalName: 'Apple Store  -  App Privacy Information.pdf',
+  filename: 'file-1752591409728-855181086.pdf',
+  mimeType: 'application/pdf',
+  size: 91261,
+  uploadedAt: 2025-07-15T14:56:49.731Z,
+  url: '/uploads/file-1752591409728-855181086.pdf',
+  type: 'document'
+}
+Action: POST /api/upload
+Data: {
+  "body": {},
+  "query": {},
+  "params": {}
+}
+Conversations: [
+  {
+    "id": "general",
+    "title": "General",
+    "participants": [],
+    "createdAt": "2024-01-01T09:00:00.000Z",
+    "updatedAt": "2025-07-15T14:49:49.377Z",
+    "messages": [
+      {
+        "id": "1",
+        "text": "Welcome to the General conversation! 🎉",
+        "senderId": "system",
+        "senderName": "System",
+        "timestamp": "2024-01-01T10:00:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.516Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.642Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.416Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "2",
+        "text": "Hello everyone!",
+        "senderId": "user1",
+        "senderName": "Alice",
+        "timestamp": "2024-01-01T10:01:00.000Z",
+        "readBy": [
+          {
+            "userId": "user_mike",
+            "userName": "Mike",
+            "readAt": "2025-07-15T14:46:24.518Z"
+          },
+          {
+            "userId": "user_john",
+            "userName": "John",
+            "readAt": "2025-07-15T14:46:25.645Z"
+          },
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:46:26.417Z"
+          }
+        ],
+        "reactions": []
+      },
+      {
+        "id": "f91eaded-873b-459a-960c-0ddfb824a637",
+        "text": "Image",
+        "senderId": "user_mike",
+        "senderName": "Mike",
+        "timestamp": "2025-07-15T14:49:49.377Z",
+        "type": "image",
+        "file": {
+          "id": "f4fe537b-0e28-4f7f-b34a-1b2a9c5fc5e9",
+          "originalName": "Simulator Screenshot - iPhone 16 Pro - 2025-07-01 at 16.38.23.png",
+          "filename": "file-1752590989322-558263303.png",
+          "mimeType": "image/png",
+          "size": 92278,
+          "uploadedAt": "2025-07-15T14:49:49.329Z",
+          "url": "/uploads/file-1752590989322-558263303.png",
+          "type": "image"
+        },
+        "readBy": [
+          {
+            "userId": "user_mary",
+            "userName": "Mary",
+            "readAt": "2025-07-15T14:49:50.419Z"
+          }
+        ],
+        "reactions": [
+          {
+            "id": "f5896a80-1f13-4c24-af1f-195ee46a2fe8",
+            "userId": "user_mary",
+            "userName": "Mary",
+            "emoji": "👍",
+            "timestamp": "2025-07-15T14:50:13.662Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tech-talk",
+    "title": "Tech Talk",
+    "participants": [
+      "user1",
+      "user2"
+    ],
+    "createdAt": "2024-01-01T09:30:00.000Z",
+    "updatedAt": "2024-01-01T10:30:00.000Z",
+    "messages": [
+      {
+        "id": "3",
+        "text": "Let's discuss the latest in tech!",
+        "senderId": "user2",
+        "senderName": "Bob",
+        "timestamp": "2024-01-01T10:30:00.000Z",
+        "readBy": [],
+        "reactions": []
+      }
+    ]
+  }
+]
+File message sent to conversation general: {
+  id: '1c204ec2-e253-469e-b6a1-e6f656a5aca5',
+  text: 'Apple Store  -  App Privacy Information.pdf',
+  senderId: 'user_mike',
+  senderName: 'Mike',
+  timestamp: 2025-07-15T14:56:49.749Z,
+  type: 'document',
+  file: {
+    id: '5b3b9fea-6d84-437f-939a-d1cc723e5461',
+    originalName: 'Apple Store  -  App Privacy Information.pdf',
+    filename: 'file-1752591409728-855181086.pdf',
+    mimeType: 'application/pdf',
+    size: 91261,
+    uploadedAt: '2025-07-15T14:56:49.731Z',
+    url: '/uploads/file-1752591409728-855181086.pdf',
+    type: 'document'
+  },
+  readBy: [],
+  reactions: []
+}
+Message 1c204ec2-e253-469e-b6a1-e6f656a5aca5 marked as read by Mary
+Reaction 😂 added to message 2 by Mike

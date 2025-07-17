@@ -10,6 +10,13 @@ import {
   PaginatedResponse,
   SearchMessagesRequest,
   SearchResult,
+  DirectConversationRequest,
+  UserListResponse,
+  ThreadReplyRequest,
+  MessageSearchRequest,
+  ConversationSearchRequest,
+  MessageSearchResult,
+  SearchResponse,
 } from '@chat-types'
 import { getApiUrl } from '@config/env'
 
@@ -126,6 +133,60 @@ class ChatApi {
       queryParams.append('conversationId', params.conversationId)
     }
     return this.request<SearchResult[]>(`/search/messages?${queryParams}`)
+  }
+
+  // Phase 2: Private Messaging API methods
+  async getAllUsers(currentUserId: string): Promise<ApiResponse<UserListResponse[]>> {
+    const queryParams = new URLSearchParams({
+      currentUserId
+    })
+    return this.request<UserListResponse[]>(`/users?${queryParams}`)
+  }
+
+  async createDirectConversation(data: DirectConversationRequest): Promise<ApiResponse<Conversation>> {
+    return this.request<Conversation>('/conversations/direct', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getDirectConversations(userId: string): Promise<ApiResponse<Conversation[]>> {
+    const queryParams = new URLSearchParams({
+      userId
+    })
+    return this.request<Conversation[]>(`/conversations/direct?${queryParams}`)
+  }
+
+  // Phase 3: Message Threading API methods
+  async createThreadReply(messageId: string, data: ThreadReplyRequest): Promise<ApiResponse<Message>> {
+    return this.request<Message>(`/messages/${messageId}/reply`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getThread(threadId: string): Promise<ApiResponse<Message[]>> {
+    return this.request<Message[]>(`/threads/${threadId}`)
+  }
+
+  // Phase 4: Message Search API methods
+  async searchMessagesAdvanced(params: MessageSearchRequest): Promise<ApiResponse<SearchResponse<MessageSearchResult>>> {
+    const queryParams = new URLSearchParams({
+      query: params.query,
+      limit: (params.limit || 50).toString()
+    })
+    if (params.conversationId) {
+      queryParams.append('conversationId', params.conversationId)
+    }
+    return this.request<SearchResponse<MessageSearchResult>>(`/search/messages?${queryParams}`)
+  }
+
+  async searchConversations(params: ConversationSearchRequest): Promise<ApiResponse<SearchResponse<Conversation>>> {
+    const queryParams = new URLSearchParams({
+      query: params.query,
+      userId: params.userId
+    })
+    return this.request<SearchResponse<Conversation>>(`/search/conversations?${queryParams}`)
   }
 }
 

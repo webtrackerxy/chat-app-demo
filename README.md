@@ -25,6 +25,9 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 - **Real-time read receipts** showing who has read your messages
 - **Automatic read detection** after 1 second of viewing
 - **Message deletion** with real-time updates across all clients
+- **Message threading** - Reply to specific messages with navigation
+- **Private messaging** - Direct 1-on-1 conversations between users
+- **Message search** - Search across all conversations with filtering
 
 ### 📁 Multimedia File Sharing
 - **Image sharing** - Upload and share JPEG, PNG, GIF, WebP (optimized previews)
@@ -43,7 +46,7 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 - 🧰 **Zustand state management** with unified useChat() hook
 - ⚡ **Fast local development** with optional database persistence
 - 🔄 **Dual mode support**: Real-time (WebSocket + Database) + Local (in-memory)
-- 🎣 **Advanced React hooks**: useUserPresence, useMessageReactions, useReadReceipts, useRealtimeMessages, useMessageHistory
+- 🎣 **Advanced React hooks**: useUserPresence, useMessageReactions, useReadReceipts, useRealtimeMessages, useMessageHistory, usePrivateMessaging, useMessageThreading, useMessageSearch
 - 🌍 **Environment configuration** - Centralized .env configuration for all services
 - 📁 **File upload system** - Multer-based backend with real-time broadcasting
 - 🛣️ **Path mappings** - Clean import paths with TypeScript resolution
@@ -61,6 +64,10 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 - **Message persistence**: All messages stored in database with automatic syncing
 - **Message history**: Paginated loading of older messages with smooth scrolling
 - **User management**: Persistent user accounts with database backing
+- **Private messaging**: Start direct 1-on-1 conversations with any user
+- **Message threading**: Reply to specific messages with visual indicators and navigation
+- **Message search**: Find messages across all conversations with filtering and highlighting
+- **Auto-scroll functionality**: Messages automatically scroll to latest with smooth animations
 - **Dark/Light theme**: Seamless theme switching with automatic component adaptation
 - **Design tokens**: Consistent styling system with semantic color mapping
 - **Compact design**: Optimized message sizes for mobile-first experience
@@ -80,12 +87,12 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 │ ├── eslint.config.js ✅ ESLint configuration
 │ ├── /src
 │ │ ├── /api ✅ REST client (uses chat-types via @chat-types) + database API integration
-│ │ ├── /hooks ✅ useChat + useRealtimeMessages + useTypingIndicator + useUserPresence + useMessageReactions + useReadReceipts + useMessageHistory
+│ │ ├── /hooks ✅ useChat + useRealtimeMessages + useTypingIndicator + useUserPresence + useMessageReactions + useReadReceipts + useMessageHistory + usePrivateMessaging + useMessageThreading + useMessageSearch
 │ │ ├── /services ✅ WebSocket client (socketService) + fileUploadService
 │ │ ├── /context ✅ SocketContext for connection management
 │ │ ├── /store ✅ Zustand state management
 │ │ ├── /config ✅ Environment variable management
-│ │ ├── /components ✅ MessageInput + MessageItem + FilePicker + VoiceRecorder + FileMessage + VideoPlayer + ThemeToggle
+│ │ ├── /components ✅ MessageInput + MessageItem + FilePicker + VoiceRecorder + FileMessage + VideoPlayer + ThemeToggle + UserSelector + SearchModal
 │ │ ├── /screens ✅ ChatRoom with real-time features + presence controls + file sharing + dark/light themes
 │ │ ├── /theme ✅ Design tokens system + ThemeContext + dark/light mode + semantic colors
 │ │ ├── /types ✅ Local type definitions with path mapping support
@@ -208,6 +215,9 @@ npx expo start --localhost
 12. **Delete messages** → long press or click delete button for real-time removal
 13. **Test persistence** → refresh page and see messages reload from database
 14. **Load message history** → scroll up to load older paginated messages
+15. **Start private chat** → click 💬 Private Chat button to start direct messaging
+16. **Reply to messages** → click Reply button to create threaded conversations
+17. **Search messages** → click 🔍 button to search across all conversations
 
 ### 3. Verify WebSocket Connection
 - Look for **🟢 Connected** in the chat header (backend mode)
@@ -288,6 +298,9 @@ cd chat-frontend && npm test
 - ✅ **Message reactions** with one-emoji-per-user restriction
 - ✅ **Read receipts** with automatic detection
 - ✅ **Manual presence controls** via header toggle button
+- ✅ **Private messaging** with direct 1-on-1 conversations (Phase 2)
+- ✅ **Message threading** with reply functionality and navigation (Phase 3)
+- ✅ **Message search** with full-text search across conversations (Phase 4)
 - ✅ **Real-time file sharing** with instant broadcasting
 - ✅ **Voice message recording** with live audio controls
 - ✅ **Video sharing** with inline playback
@@ -323,6 +336,9 @@ The app supports two storage modes:
 - **User management** with persistent accounts
 - Features typing indicators and connection status
 - Includes user presence, reactions, and read receipts (all persisted)
+- **Private messaging** with direct conversations
+- **Message threading** with reply functionality
+- **Message search** across all conversations
 - **Multimedia file sharing** with real-time broadcasting
 - **Voice message recording** and playback
 - **Message deletion** with live updates
@@ -332,7 +348,7 @@ The app supports two storage modes:
 - Uses in-memory storage with polling
 - Works without backend server
 - Good for development and testing
-- Enhanced features (presence, reactions, read receipts, file sharing) are disabled
+- Enhanced features (presence, reactions, read receipts, file sharing, private messaging, threading, search) are disabled
 
 ### Environment Setup
 ```bash
@@ -484,10 +500,12 @@ Users can switch themes using the 🌙/☀️ button in the header. All componen
 - **User management** - Persistent user accounts ✅ 
 - **Message history** - Paginated loading of older messages ✅
 
+### ✅ Recently Implemented (Phase 2-4)
+- **Private messaging** - Direct messages between users ✅
+- **Message threading** - Reply to specific messages with UI navigation ✅
+- **Message search** - Find messages across conversations with modal interface ✅
+
 ### 🚧 Planned Implementation
-- **Private messaging** - Direct messages between users (Phase 2)
-- **Message threading** - Reply to specific messages (Phase 3)
-- **Message search** - Find messages across conversations (Phase 4)
 - **Message encryption** - End-to-end message security (Phase 5)
 
 ### 🔮 Future Ideas

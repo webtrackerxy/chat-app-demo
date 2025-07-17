@@ -166,8 +166,12 @@ export const useRealtimeMessages = ({
 
   // Manually set messages (for initial load from API)
   const setInitialMessages = useCallback((initialMessages: Message[]) => {
-    setMessages(initialMessages)
-  }, [])
+    console.log('Setting initial messages:', initialMessages.length, 'messages for conversation:', conversationId)
+    // Only set messages if we have actual messages to prevent clearing existing ones
+    if (initialMessages.length > 0) {
+      setMessages(initialMessages)
+    }
+  }, [conversationId])
 
   return {
     messages,
