@@ -27,30 +27,69 @@ interface ThemeProviderProps {
   defaultMode?: ThemeMode
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({
-  children,
-  defaultMode = 'light',
-}) => {
-  const [mode, setModeState] = useState<ThemeMode>(defaultMode)
-  const [isLoaded, setIsLoaded] = useState(false)
+export const ThemeProvider: React.FC<ThemeProviderProps> = (props) => {
+  console.log('ThemeProvider called with props:', props)
+  
+  // Safe prop extraction with fallbacks
+  const children = props?.children || null
+  const defaultMode = props?.defaultMode || 'light'
+  
+  // Safe state initialization with error handling
+  let mode, setModeState, isLoaded, setIsLoaded
+  try {
+    [mode, setModeState] = useState<ThemeMode>(defaultMode)
+    [isLoaded, setIsLoaded] = useState(false)
+  } catch (error) {
+    console.error('ThemeProvider useState error:', error)
+    // Return a minimal fallback provider
+    return (
+      <ThemeContext.Provider value={{
+        mode: 'light',
+        toggleMode: () => {},
+        setMode: () => {},
+        colors: {
+          ...lightColors,
+          semantic: createSemanticColors(lightColors),
+        },
+        typography,
+        spacing,
+        borderRadius,
+        shadows,
+        isDark: false,
+        isLight: true,
+      }}>
+        {children}
+      </ThemeContext.Provider>
+    )
+  }
 
   // Load saved theme from storage on app start
-  useEffect(() => {
-    const loadSavedTheme = async () => {
-      try {
-        const savedMode = await AsyncStorage.getItem(THEME_STORAGE_KEY)
-        if (savedMode && (savedMode === 'light' || savedMode === 'dark')) {
-          setModeState(savedMode)
+  try {
+    useEffect(() => {
+      const loadSavedTheme = async () => {
+        try {
+          const savedMode = await AsyncStorage.getItem(THEME_STORAGE_KEY)
+          if (savedMode && (savedMode === 'light' || savedMode === 'dark')) {
+            setModeState(savedMode)
+          }
+        } catch (error) {
+          console.warn('Failed to load theme from storage:', error)
+        } finally {
+          setIsLoaded(true)
         }
-      } catch (error) {
-        console.warn('Failed to load theme from storage:', error)
-      } finally {
-        setIsLoaded(true)
       }
-    }
 
-    loadSavedTheme()
-  }, [])
+      loadSavedTheme()
+    }, [])
+  } catch (error) {
+    console.warn('useEffect not available in ThemeProvider:', error)
+    // Set loaded to true if useEffect fails
+    try {
+      setIsLoaded(true)
+    } catch (e) {
+      console.warn('setIsLoaded not available:', e)
+    }
+  }
 
   // Save theme to storage when it changes
   const setMode = async (newMode: ThemeMode) => {
@@ -87,12 +126,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     isLight: mode === 'light',
   }
 
-  // Don't render until theme is loaded from storage
-  if (!isLoaded) {
-    return null
-  }
-
-  return <ThemeContext.Provider value={themeValue}>{children}</ThemeContext.Provider>
+  // Always provide the theme context, even during loading
+  return (
+    <ThemeContext.Provider value={themeValue}>
+      {children}
+    </ThemeContext.Provider>
+  )
 }
 
 export const useTheme = (): ThemeContextType => {

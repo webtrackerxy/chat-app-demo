@@ -268,7 +268,27 @@ app.get('/api/conversations/:id/messages', async (req, res) => {
     const { id } = req.params
     const { page = 1, limit = 50 } = req.query
 
-    // Try database first
+    // Check in-memory storage first (where messages are actually stored)
+    const conversation = conversations.find((conv) => conv.id === id)
+
+    if (conversation && conversation.messages.length > 0) {
+      // Return messages sorted by timestamp
+      const sortedMessages = conversation.messages.sort(
+        (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+      )
+
+      return res.json({
+        success: true,
+        data: sortedMessages,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          hasMore: false
+        }
+      })
+    }
+
+    // Try database as fallback
     try {
       const messages = await db.getMessages(id, parseInt(page), parseInt(limit))
       
@@ -307,12 +327,10 @@ app.get('/api/conversations/:id/messages', async (req, res) => {
         }
       })
     } catch (dbError) {
-      console.log('Database query failed, falling back to in-memory:', dbError.message)
+      console.log('Database query failed:', dbError.message)
     }
 
-    // Fallback to in-memory for backward compatibility
-    const conversation = conversations.find((conv) => conv.id === id)
-
+    // If conversation not found in both storage systems
     if (!conversation) {
       return res.status(404).json({
         success: false,
@@ -320,14 +338,15 @@ app.get('/api/conversations/:id/messages', async (req, res) => {
       })
     }
 
-    // Return messages sorted by timestamp
-    const sortedMessages = conversation.messages.sort(
-      (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
-    )
-
+    // If conversation exists but has no messages
     res.json({
       success: true,
-      data: sortedMessages,
+      data: [],
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        hasMore: false
+      }
     })
   } catch (error) {
     console.error('Error fetching messages:', error)
@@ -613,7 +632,7 @@ app.put('/api/conversations/:conversationId', (req, res) => {
 })
 
 // Global error handler
-app.use((error, req, res) => {
+app.use((error, req, res, next) => {
   console.error('Global error handler:', error)
   console.error('Error stack:', error.stack)
   console.error('Request path:', req.path)
@@ -1144,6 +1163,363 @@ app.get('/api/users/:username', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch user'
+    })
+  }
+})
+
+// Phase 2: Private Messaging API endpoints
+app.get('/api/users', async (req, res) => {
+  try {
+    const { currentUserId } = req.query
+    
+    if (!currentUserId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Current user ID is required'
+      })
+    }
+
+    const users = await db.getAllUsersForDirectMessages(currentUserId)
+    
+    res.json({
+      success: true,
+      data: users
+    })
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch users'
+    })
+  }
+})
+
+app.post('/api/conversations/direct', async (req, res) => {
+  try {
+    const { user1Id, user2Id } = req.body
+    
+    if (!user1Id || !user2Id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Both user IDs are required'
+      })
+    }
+
+    if (user1Id === user2Id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot create direct conversation with yourself'
+      })
+    }
+
+    const conversation = await db.createDirectConversation(user1Id, user2Id)
+    
+    // Transform to frontend format
+    const formattedConversation = {
+      id: conversation.id,
+      type: conversation.type,
+      title: conversation.participants
+        .filter(p => p.userId !== user1Id)
+        .map(p => p.user.username)[0] || 'Direct Message',
+      participants: conversation.participants.map(p => p.user.username),
+      createdAt: conversation.createdAt,
+      updatedAt: conversation.updatedAt,
+      lastMessage: null
+    }
+
+    res.json({
+      success: true,
+      data: formattedConversation
+    })
+  } catch (error) {
+    console.error('Error creating direct conversation:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create direct conversation'
+    })
+  }
+})
+
+app.get('/api/conversations/direct', async (req, res) => {
+  try {
+    const { userId } = req.query
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      })
+    }
+
+    const directConversations = await db.getDirectConversationsForUser(userId)
+    
+    // Transform to frontend format
+    const formattedConversations = directConversations.map(conv => ({
+      id: conv.id,
+      type: conv.type,
+      title: conv.participants
+        .filter(p => p.userId !== userId)
+        .map(p => p.user.username)[0] || 'Direct Message',
+      participants: conv.participants.map(p => p.user.username),
+      createdAt: conv.createdAt,
+      updatedAt: conv.updatedAt,
+      lastMessage: conv.messages.length > 0 ? {
+        id: conv.messages[0].id,
+        text: conv.messages[0].text,
+        senderId: conv.messages[0].senderId,
+        senderName: conv.messages[0].sender.username,
+        timestamp: conv.messages[0].timestamp
+      } : null
+    }))
+
+    res.json({
+      success: true,
+      data: formattedConversations
+    })
+  } catch (error) {
+    console.error('Error fetching direct conversations:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch direct conversations'
+    })
+  }
+})
+
+// Phase 3: Message Threading API endpoints
+app.post('/api/messages/:messageId/reply', async (req, res) => {
+  try {
+    const { messageId } = req.params
+    const { text, senderId, conversationId } = req.body
+    
+    if (!text || !senderId || !conversationId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Text, senderId, and conversationId are required'
+      })
+    }
+
+    // First, check if the parent message exists in the in-memory storage
+    const conversation = conversations.find((conv) => conv.id === conversationId)
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        error: 'Conversation not found'
+      })
+    }
+
+    const parentMessage = conversation.messages.find(msg => msg.id === messageId)
+    if (!parentMessage) {
+      return res.status(404).json({
+        success: false,
+        error: 'Parent message not found'
+      })
+    }
+
+    // Create the thread reply message
+    const threadId = parentMessage.threadId || messageId
+    const replyMessage = {
+      id: uuidv4(),
+      text,
+      senderId,
+      senderName: senderId.replace('user_', '').charAt(0).toUpperCase() + senderId.replace('user_', '').slice(1), // Simple name conversion
+      timestamp: new Date(),
+      type: 'text',
+      file: null,
+      threadId,
+      replyToId: messageId,
+      reactions: [],
+      readBy: []
+    }
+
+    // Add the reply message to the conversation
+    conversation.messages.push(replyMessage)
+    conversation.updatedAt = new Date()
+
+    // Transform to frontend format
+    const formattedMessage = {
+      id: replyMessage.id,
+      text: replyMessage.text,
+      senderId: replyMessage.senderId,
+      senderName: replyMessage.senderName,
+      timestamp: replyMessage.timestamp,
+      threadId: replyMessage.threadId,
+      replyToId: replyMessage.replyToId,
+      reactions: replyMessage.reactions,
+      readBy: replyMessage.readBy
+    }
+
+    // Emit the new thread reply to all clients in the conversation room
+    io.to(conversationId).emit('new_message', formattedMessage)
+    
+    console.log(`Thread reply sent: ${formattedMessage.id} in conversation ${conversationId}`)
+    logToFile(`Thread reply sent: ${formattedMessage.id} in conversation ${conversationId}`)
+
+    res.json({
+      success: true,
+      data: formattedMessage
+    })
+  } catch (error) {
+    console.error('Error creating thread reply:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create thread reply'
+    })
+  }
+})
+
+app.get('/api/threads/:threadId', async (req, res) => {
+  try {
+    const { threadId } = req.params
+    
+    const threadMessages = await db.getThread(threadId)
+    
+    // Transform to frontend format
+    const formattedMessages = threadMessages.map(msg => ({
+      id: msg.id,
+      text: msg.text,
+      senderId: msg.senderId,
+      senderName: msg.sender.username,
+      timestamp: msg.timestamp,
+      threadId: msg.threadId,
+      replyToId: msg.replyToId,
+      reactions: msg.reactions.map(r => ({
+        emoji: r.emoji,
+        userId: r.userId
+      })),
+      readBy: msg.readReceipts.map(r => ({
+        userId: r.userId,
+        userName: r.userName,
+        readAt: r.readAt
+      }))
+    }))
+
+    res.json({
+      success: true,
+      data: formattedMessages
+    })
+  } catch (error) {
+    console.error('Error fetching thread:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch thread'
+    })
+  }
+})
+
+// Phase 4: Message Search API endpoints
+app.get('/api/search/messages', async (req, res) => {
+  try {
+    const { query, conversationId, limit = 50 } = req.query
+    
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Search query is required'
+      })
+    }
+
+    const searchResults = await db.searchMessages(
+      query.trim(), 
+      conversationId || null, 
+      parseInt(limit)
+    )
+    
+    // Transform to frontend format
+    const formattedResults = searchResults.map(msg => ({
+      id: msg.id,
+      text: msg.text,
+      senderId: msg.senderId,
+      senderName: msg.sender.username,
+      timestamp: msg.timestamp,
+      conversationId: msg.conversationId,
+      conversationName: msg.conversation.name || `Conversation ${msg.conversation.id}`,
+      conversationType: msg.conversation.type,
+      threadId: msg.threadId,
+      replyToId: msg.replyToId
+    }))
+
+    res.json({
+      success: true,
+      data: formattedResults,
+      meta: {
+        query: query.trim(),
+        conversationId: conversationId || null,
+        totalResults: formattedResults.length
+      }
+    })
+  } catch (error) {
+    console.error('Error searching messages:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to search messages'
+    })
+  }
+})
+
+app.get('/api/search/conversations', async (req, res) => {
+  try {
+    const { query, userId } = req.query
+    
+    if (!query || query.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Search query is required'
+      })
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      })
+    }
+
+    // Get user's conversations and filter by search query
+    const userConversations = await db.getConversationsForUser(userId)
+    
+    const filteredConversations = userConversations.filter(conv => {
+      const searchTerm = query.trim().toLowerCase()
+      
+      // Search in conversation name
+      if (conv.name && conv.name.toLowerCase().includes(searchTerm)) {
+        return true
+      }
+      
+      // Search in participant usernames
+      const participantNames = conv.participants.map(p => p.user.username.toLowerCase())
+      return participantNames.some(name => name.includes(searchTerm))
+    })
+    
+    // Transform to frontend format
+    const formattedConversations = filteredConversations.map(conv => ({
+      id: conv.id,
+      type: conv.type,
+      title: conv.name || conv.title,
+      participants: conv.participants.map(p => p.user.username),
+      createdAt: conv.createdAt,
+      updatedAt: conv.updatedAt,
+      lastMessage: conv.messages.length > 0 ? {
+        id: conv.messages[0].id,
+        text: conv.messages[0].text,
+        senderId: conv.messages[0].senderId,
+        senderName: conv.messages[0].sender.username,
+        timestamp: conv.messages[0].timestamp
+      } : null
+    }))
+
+    res.json({
+      success: true,
+      data: formattedConversations,
+      meta: {
+        query: query.trim(),
+        totalResults: formattedConversations.length
+      }
+    })
+  } catch (error) {
+    console.error('Error searching conversations:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to search conversations'
     })
   }
 })

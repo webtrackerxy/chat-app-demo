@@ -23,6 +23,8 @@ export interface Message {
   file?: FileAttachment; // Optional: File attachment
   readBy?: ReadReceipt[]; // Optional: Array of read receipts
   reactions?: MessageReaction[]; // Optional: Array of reactions
+  threadId?: string; // Optional: Thread ID for threading support
+  replyToId?: string; // Optional: Parent message ID for threading
 }
 
 // Represents a chat conversation between multiple participants
@@ -214,4 +216,58 @@ export interface Thread {
 export interface CreateThreadRequest {
   parentMessageId: string;
   message: CreateMessageRequest;
+}
+
+// Phase 2: Private Messaging types
+export interface DirectConversationRequest {
+  user1Id: string;
+  user2Id: string;
+}
+
+export interface UserListResponse {
+  id: string;
+  username: string;
+  status: string;
+  lastSeen: Date;
+}
+
+// Phase 3: Threading types
+export interface ThreadReplyRequest {
+  text: string;
+  senderId: string;
+  conversationId: string;
+}
+
+// Phase 4: Search types
+export interface MessageSearchRequest {
+  query: string;
+  conversationId?: string;
+  limit?: number;
+}
+
+export interface ConversationSearchRequest {
+  query: string;
+  userId: string;
+}
+
+export interface MessageSearchResult {
+  id: string;
+  text: string;
+  senderId: string;
+  senderName: string;
+  timestamp: Date;
+  conversationId: string;
+  conversationName: string;
+  conversationType: 'group' | 'direct';
+  threadId?: string;
+  replyToId?: string;
+}
+
+export interface SearchResponse<T> {
+  data: T[];
+  meta: {
+    query: string;
+    conversationId?: string;
+    totalResults: number;
+  };
 }

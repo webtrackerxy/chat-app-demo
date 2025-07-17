@@ -15,6 +15,10 @@ interface MessageItemProps {
   currentUserId?: string
   showReadReceipts?: boolean
   showReactions?: boolean
+  // Threading support
+  onReply?: (message: Message) => void
+  showReplyButton?: boolean
+  onReplyIndicatorPress?: (parentMessageId: string) => void
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -27,6 +31,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   currentUserId,
   showReadReceipts = true,
   showReactions = true,
+  onReply,
+  showReplyButton = false,
+  onReplyIndicatorPress,
 }) => {
   // Helper function to get read receipts text
   const getReadReceiptsText = () => {
@@ -95,6 +102,17 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         activeOpacity={showDeleteButton ? 0.7 : 1}
       >
         <View style={styles.content}>
+          {/* Reply indicator */}
+          {message.replyToId && (
+            <TouchableOpacity
+              style={styles.replyIndicator}
+              onPress={() => onReplyIndicatorPress?.(message.replyToId!)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.replyText}>↩️ Replying to a message</Text>
+            </TouchableOpacity>
+          )}
+          
           <Text style={styles.senderName}>{message.senderName}</Text>
           {/* Render file content or text message */}
           {message.file ? (
@@ -111,6 +129,16 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           )}
           <Text style={styles.messageTime}>{new Date(message.timestamp).toLocaleTimeString()}</Text>
         </View>
+
+        {showReplyButton && onReply && !isMyMessage && (
+          <TouchableOpacity
+            style={styles.replyButton}
+            onPress={() => onReply(message)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={styles.replyButtonText}>↩️</Text>
+          </TouchableOpacity>
+        )}
 
         {showDeleteButton && onDelete && (
           <TouchableOpacity
@@ -335,6 +363,37 @@ const createStyles = (colors: any, spacing: any, borderRadius: any, typography: 
       textAlign: 'right',
       marginTop: spacing.xs,
       marginRight: spacing.md,
+      fontStyle: 'italic',
+    },
+    // Reply button styles
+    replyButton: {
+      marginLeft: spacing.sm,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.3)',
+    },
+    replyButtonText: {
+      ...typography.body.s.regular,
+    },
+    // Reply indicator styles
+    replyIndicator: {
+      marginBottom: spacing.xs,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs / 2,
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      borderRadius: borderRadius.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: colors.accent.blue,
+    },
+    replyText: {
+      ...typography.body.xs.regular,
+      color: colors.base.white,
+      opacity: 0.8,
       fontStyle: 'italic',
     },
   })

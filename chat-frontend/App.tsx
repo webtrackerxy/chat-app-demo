@@ -11,7 +11,16 @@ import { ThemeProvider, useTheme } from '@theme'
 const Stack = createStackNavigator<RootStackParamList>()
 
 const AppNavigation = () => {
-  const { isDark } = useTheme()
+  let themeContext
+  try {
+    themeContext = useTheme()
+  } catch (error) {
+    console.error('AppNavigation - Theme context error:', error)
+    // Fallback to default theme
+    themeContext = { isDark: false }
+  }
+  
+  const { isDark } = themeContext
   
   return (
     <NavigationContainer>
@@ -31,6 +40,9 @@ const AppNavigation = () => {
 }
 
 export default function App() {
+  console.log('App component rendering')
+  console.log('ThemeProvider:', ThemeProvider)
+  
   return (
     <ThemeProvider defaultMode="light">
       <AppNavigation />
