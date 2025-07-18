@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react'
 import { chatApi } from '@api/chatApi'
-import { 
-  MessageSearchResult, 
-  Conversation, 
-  MessageSearchRequest, 
-  ConversationSearchRequest 
+import {
+  MessageSearchResult,
+  Conversation,
+  MessageSearchRequest,
+  ConversationSearchRequest,
 } from '@chat-types'
 
 export interface UseMessageSearchReturn {
@@ -40,45 +40,44 @@ export const useMessageSearch = (): UseMessageSearchReturn => {
     setError(null)
   }, [])
 
-  const searchMessages = useCallback(async (
-    query: string, 
-    conversationId?: string, 
-    limit?: number
-  ) => {
-    if (!query.trim()) {
-      setError('Search query cannot be empty')
-      return
-    }
-
-    setIsLoading(true)
-    setError(null)
-    setLastQuery(query.trim())
-    
-    try {
-      const request: MessageSearchRequest = {
-        query: query.trim(),
-        conversationId,
-        limit
+  const searchMessages = useCallback(
+    async (query: string, conversationId?: string, limit?: number) => {
+      if (!query.trim()) {
+        setError('Search query cannot be empty')
+        return
       }
-      
-      const response = await chatApi.searchMessagesAdvanced(request)
-      
-      if (response.success) {
-        setMessageResults(response.data.data)
-        setResultCount(response.data.meta.totalResults)
-      } else {
-        setError(response.error || 'Failed to search messages')
+
+      setIsLoading(true)
+      setError(null)
+      setLastQuery(query.trim())
+
+      try {
+        const request: MessageSearchRequest = {
+          query: query.trim(),
+          conversationId,
+          limit,
+        }
+
+        const response = await chatApi.searchMessagesAdvanced(request)
+
+        if (response.success) {
+          setMessageResults(response.data.data)
+          setResultCount(response.data.meta.totalResults)
+        } else {
+          setError(response.error || 'Failed to search messages')
+          setMessageResults([])
+          setResultCount(0)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error occurred')
         setMessageResults([])
         setResultCount(0)
+      } finally {
+        setIsLoading(false)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred')
-      setMessageResults([])
-      setResultCount(0)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+    },
+    [],
+  )
 
   const searchConversations = useCallback(async (query: string, userId: string) => {
     if (!query.trim()) {
@@ -94,15 +93,15 @@ export const useMessageSearch = (): UseMessageSearchReturn => {
     setIsLoading(true)
     setError(null)
     setLastQuery(query.trim())
-    
+
     try {
       const request: ConversationSearchRequest = {
         query: query.trim(),
-        userId
+        userId,
       }
-      
+
       const response = await chatApi.searchConversations(request)
-      
+
       if (response.success) {
         setConversationResults(response.data.data)
         setResultCount(response.data.meta.totalResults)

@@ -21,58 +21,67 @@ export const useMessageHistory = (): UseMessageHistoryResult => {
   const [currentPage, setCurrentPage] = useState(1)
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
 
-  const loadMessages = useCallback(async (params: MessageHistoryRequest, append = false) => {
-    if (isLoading) return
+  const loadMessages = useCallback(
+    async (params: MessageHistoryRequest, append = false) => {
+      if (isLoading) return
 
-    setIsLoading(true)
-    setError(null)
+      setIsLoading(true)
+      setError(null)
 
-    try {
-      const response = await chatApi.getMessageHistory(params)
-      
-      if (response.success && response.data) {
-        const newMessages = response.data.data || []
-        
-        if (append) {
-          setMessages(prev => [...prev, ...newMessages])
+      try {
+        const response = await chatApi.getMessageHistory(params)
+
+        if (response.success && response.data) {
+          const newMessages = response.data.data || []
+
+          if (append) {
+            setMessages((prev) => [...prev, ...newMessages])
+          } else {
+            setMessages(newMessages)
+          }
+
+          setHasMore(response.data.pagination.hasMore)
+          setCurrentPage(response.data.pagination.page)
         } else {
-          setMessages(newMessages)
+          setError(response.error || 'Failed to load messages')
         }
-
-        setHasMore(response.data.pagination.hasMore)
-        setCurrentPage(response.data.pagination.page)
-      } else {
-        setError(response.error || 'Failed to load messages')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setIsLoading(false)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [isLoading])
+    },
+    [isLoading],
+  )
 
-  const loadInitialMessages = useCallback(async (conversationId: string) => {
-    setCurrentConversationId(conversationId)
-    setCurrentPage(1)
-    setHasMore(true)
-    setMessages([])
-    
-    await loadMessages({
-      conversationId,
-      page: 1,
-      limit: 50
-    })
-  }, [loadMessages])
+  const loadInitialMessages = useCallback(
+    async (conversationId: string) => {
+      setCurrentConversationId(conversationId)
+      setCurrentPage(1)
+      setHasMore(true)
+      setMessages([])
+
+      await loadMessages({
+        conversationId,
+        page: 1,
+        limit: 50,
+      })
+    },
+    [loadMessages],
+  )
 
   const loadMore = useCallback(async () => {
     if (!currentConversationId || !hasMore || isLoading) return
 
     const nextPage = currentPage + 1
-    await loadMessages({
-      conversationId: currentConversationId,
-      page: nextPage,
-      limit: 50
-    }, true)
+    await loadMessages(
+      {
+        conversationId: currentConversationId,
+        page: nextPage,
+        limit: 50,
+      },
+      true,
+    )
   }, [currentConversationId, hasMore, isLoading, currentPage, loadMessages])
 
   const refresh = useCallback(async () => {
@@ -80,11 +89,11 @@ export const useMessageHistory = (): UseMessageHistoryResult => {
 
     setCurrentPage(1)
     setHasMore(true)
-    
+
     await loadMessages({
       conversationId: currentConversationId,
       page: 1,
-      limit: 50
+      limit: 50,
     })
   }, [currentConversationId, loadMessages])
 
@@ -96,6 +105,6 @@ export const useMessageHistory = (): UseMessageHistoryResult => {
     currentPage,
     loadMore,
     refresh,
-    loadInitialMessages
+    loadInitialMessages,
   }
 }

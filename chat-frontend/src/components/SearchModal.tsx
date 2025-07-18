@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  FlatList, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
   ActivityIndicator,
-  Modal 
+  Modal,
 } from 'react-native'
 import { useTheme } from '@theme'
 import { useMessageSearch } from '@hooks/useMessageSearch'
@@ -20,6 +20,8 @@ interface SearchModalProps {
   onConversationSelect?: (conversation: Conversation) => void
 }
 
+type SearchResult = MessageSearchResult | Conversation
+
 export const SearchModal: React.FC<SearchModalProps> = (props) => {
   // Early return if props are completely invalid
   if (!props) {
@@ -31,17 +33,11 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
   const currentUserId = props.currentUserId ?? ''
   const onMessageSelect = props.onMessageSelect
   const onConversationSelect = props.onConversationSelect
-  
-  // Safe state management with error handling
-  let query, setQuery, searchType, setSearchType
-  try {
-    [query, setQuery] = useState('')
-    [searchType, setSearchType] = useState<'messages' | 'conversations'>('messages')
-  } catch (error) {
-    console.error('React hooks not available in SearchModal:', error)
-    return null
-  }
-  
+
+  // State management
+  const [query, setQuery] = useState('')
+  const [searchType, setSearchType] = useState<'messages' | 'conversations'>('messages')
+
   // Safe theme access with fallback
   let themeResult
   try {
@@ -50,31 +46,31 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
     console.warn('Theme context not available in SearchModal:', error)
     themeResult = null
   }
-  
+
   const { colors, spacing, typography } = themeResult || {
     colors: {
       semantic: {
         background: { primary: '#ffffff' },
         surface: { primary: '#f5f5f5' },
         text: { primary: '#000000', secondary: '#666666' },
-        border: { secondary: '#e0e0e0' }
+        border: { secondary: '#e0e0e0' },
       },
       primary: { 500: '#007AFF' },
       gray: { 100: '#f5f5f5', 200: '#e0e0e0', 300: '#cccccc' },
       white: '#ffffff',
-      red: { 500: '#ff0000' }
+      red: { 500: '#ff0000' },
     },
     spacing: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 },
     typography: {
       heading: { 4: { fontSize: 18, fontWeight: 'bold' } },
-      body: { 
+      body: {
         large: { fontSize: 16 },
         medium: { fontSize: 14 },
-        small: { fontSize: 12 }
-      }
-    }
+        small: { fontSize: 12 },
+      },
+    },
   }
-  
+
   // Safe search hook access with fallback
   let searchResult
   try {
@@ -83,7 +79,7 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
     console.warn('Search hook not available in SearchModal:', error)
     searchResult = null
   }
-  
+
   const {
     messageResults,
     conversationResults,
@@ -93,7 +89,7 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
     searchConversations,
     clearResults,
     lastQuery,
-    resultCount
+    resultCount,
   } = searchResult || {
     messageResults: [],
     conversationResults: [],
@@ -103,12 +99,12 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
     searchConversations: () => Promise.resolve(),
     clearResults: () => {},
     lastQuery: null,
-    resultCount: 0
+    resultCount: 0,
   }
 
   const handleSearch = () => {
     if (!query.trim()) return
-    
+
     if (searchType === 'messages') {
       searchMessages(query.trim())
     } else {
@@ -126,10 +122,14 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
 
   const formatTimestamp = (timestamp: Date) => {
     const date = new Date(timestamp)
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    })
+    return (
+      date.toLocaleDateString() +
+      ' ' +
+      date.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    )
   }
 
   const renderMessageResult = ({ item }: { item: MessageSearchResult }) => (
@@ -147,43 +147,53 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
         handleClose()
       }}
     >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.xs }}>
+      <View
+        style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.xs }}
+      >
         <Text
-          style={{
-            ...typography.body.medium,
-            color: colors.semantic.text.primary,
-            fontWeight: '600',
-          }}
+          style={[
+            (typography.body.m?.regular as any) || { fontSize: 16 },
+            {
+              color: colors.semantic.text.primary,
+              fontWeight: '600',
+            },
+          ]}
         >
           {item.senderName}
         </Text>
         <Text
-          style={{
-            ...typography.body.small,
-            color: colors.semantic.text.secondary,
-          }}
+          style={[
+            (typography.body.s?.regular as any) || { fontSize: 12 },
+            {
+              color: colors.semantic.text.secondary,
+            },
+          ]}
         >
           {formatTimestamp(item.timestamp)}
         </Text>
       </View>
-      
+
       <Text
-        style={{
-          ...typography.body.medium,
-          color: colors.semantic.text.primary,
-          marginBottom: spacing.xs,
-        }}
+        style={[
+          (typography.body.m?.regular as any) || { fontSize: 16 },
+          {
+            color: colors.semantic.text.primary,
+            marginBottom: spacing.xs,
+          },
+        ]}
         numberOfLines={2}
       >
         {item.text}
       </Text>
-      
+
       <Text
-        style={{
-          ...typography.body.small,
-          color: colors.semantic.text.secondary,
-          fontStyle: 'italic',
-        }}
+        style={[
+          (typography.body.s?.regular as any) || { fontSize: 12 },
+          {
+            color: colors.semantic.text.secondary,
+            fontStyle: 'italic',
+          },
+        ]}
       >
         in {item.conversationName} ({item.conversationType})
       </Text>
@@ -206,33 +216,39 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
       }}
     >
       <Text
-        style={{
-          ...typography.body.large,
-          color: colors.semantic.text.primary,
-          fontWeight: '600',
-          marginBottom: spacing.xs,
-        }}
+        style={[
+          (typography.body.l?.regular as any) || { fontSize: 18 },
+          {
+            color: colors.semantic.text.primary,
+            fontWeight: '600',
+            marginBottom: spacing.xs,
+          },
+        ]}
       >
         {item.title}
       </Text>
-      
+
       <Text
-        style={{
-          ...typography.body.small,
-          color: colors.semantic.text.secondary,
-          marginBottom: spacing.xs,
-        }}
+        style={[
+          (typography.body.s?.regular as any) || { fontSize: 12 },
+          {
+            color: colors.semantic.text.secondary,
+            marginBottom: spacing.xs,
+          },
+        ]}
       >
         Participants: {item.participants.join(', ')}
       </Text>
-      
+
       {item.lastMessage && (
         <Text
-          style={{
-            ...typography.body.small,
-            color: colors.semantic.text.secondary,
-            fontStyle: 'italic',
-          }}
+          style={[
+            (typography.body.s?.regular as any) || { fontSize: 12 },
+            {
+              color: colors.semantic.text.secondary,
+              fontStyle: 'italic',
+            },
+          ]}
           numberOfLines={1}
         >
           Last: {item.lastMessage.text}
@@ -244,8 +260,8 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
+      animationType='slide'
+      presentationStyle='pageSheet'
       onRequestClose={handleClose}
     >
       <View
@@ -276,11 +292,13 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
           </Text>
           <TouchableOpacity onPress={handleClose}>
             <Text
-              style={{
-                ...typography.body.large,
-                color: colors.primary[500],
-                fontWeight: '600',
-              }}
+              style={[
+                (typography.body.l?.regular as any) || { fontSize: 18 },
+                {
+                  color: colors.primary[500],
+                  fontWeight: '600',
+                },
+              ]}
             >
               Done
             </Text>
@@ -307,33 +325,44 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
             onPress={() => setSearchType('messages')}
           >
             <Text
-              style={{
-                ...typography.body.medium,
-                color: searchType === 'messages' ? colors.white : colors.semantic.text.primary,
-                fontWeight: '600',
-              }}
+              style={[
+                (typography.body.m?.regular as any) || { fontSize: 16 },
+                {
+                  color:
+                    searchType === 'messages'
+                      ? colors.base?.white || colors.semantic.text.primary
+                      : colors.semantic.text.primary,
+                  fontWeight: '600',
+                },
+              ]}
             >
               Messages
             </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={{
               flex: 1,
               paddingVertical: spacing.sm,
               paddingHorizontal: spacing.md,
-              backgroundColor: searchType === 'conversations' ? colors.primary[500] : colors.gray[200],
+              backgroundColor:
+                searchType === 'conversations' ? colors.primary[500] : colors.gray[200],
               borderRadius: spacing.xs,
               alignItems: 'center',
             }}
             onPress={() => setSearchType('conversations')}
           >
             <Text
-              style={{
-                ...typography.body.medium,
-                color: searchType === 'conversations' ? colors.white : colors.semantic.text.primary,
-                fontWeight: '600',
-              }}
+              style={[
+                (typography.body.m?.regular as any) || { fontSize: 16 },
+                {
+                  color:
+                    searchType === 'conversations'
+                      ? colors.base?.white || colors.semantic.text.primary
+                      : colors.semantic.text.primary,
+                  fontWeight: '600',
+                },
+              ]}
             >
               Conversations
             </Text>
@@ -349,25 +378,27 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
           }}
         >
           <TextInput
-            style={{
-              flex: 1,
-              paddingVertical: spacing.sm,
-              paddingHorizontal: spacing.md,
-              backgroundColor: colors.semantic.surface.primary,
-              borderRadius: spacing.xs,
-              borderWidth: 1,
-              borderColor: colors.gray[300],
-              ...typography.body.medium,
-              color: colors.semantic.text.primary,
-            }}
+            style={[
+              (typography.body.m?.regular as any) || { fontSize: 16 },
+              {
+                flex: 1,
+                paddingVertical: spacing.sm,
+                paddingHorizontal: spacing.md,
+                backgroundColor: colors.semantic.surface.primary,
+                borderRadius: spacing.xs,
+                borderWidth: 1,
+                borderColor: colors.gray[300],
+                color: colors.semantic.text.primary,
+              },
+            ]}
             placeholder={`Search ${searchType}...`}
             placeholderTextColor={colors.semantic.text.secondary}
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={handleSearch}
-            returnKeyType="search"
+            returnKeyType='search'
           />
-          
+
           <TouchableOpacity
             style={{
               paddingVertical: spacing.sm,
@@ -380,11 +411,13 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
             disabled={!query.trim() || isLoading}
           >
             <Text
-              style={{
-                ...typography.body.medium,
-                color: colors.white,
-                fontWeight: '600',
-              }}
+              style={[
+                (typography.body.m?.regular as any) || { fontSize: 16 },
+                {
+                  color: colors.base?.white || colors.semantic.text.primary,
+                  fontWeight: '600',
+                },
+              ]}
             >
               Search
             </Text>
@@ -401,13 +434,15 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
                 alignItems: 'center',
               }}
             >
-              <ActivityIndicator size="large" color={colors.primary[500]} />
+              <ActivityIndicator size='large' color={colors.primary[500]} />
               <Text
-                style={{
-                  ...typography.body.medium,
-                  color: colors.semantic.text.secondary,
-                  marginTop: spacing.md,
-                }}
+                style={[
+                  (typography.body.m?.regular as any) || { fontSize: 16 },
+                  {
+                    color: colors.semantic.text.secondary,
+                    marginTop: spacing.md,
+                  },
+                ]}
               >
                 Searching...
               </Text>
@@ -422,11 +457,13 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
               }}
             >
               <Text
-                style={{
-                  ...typography.body.medium,
-                  color: colors.red[500],
-                  textAlign: 'center',
-                }}
+                style={[
+                  (typography.body.m?.regular as any) || { fontSize: 16 },
+                  {
+                    color: colors.error?.[500] || colors.semantic.text.primary,
+                    textAlign: 'center',
+                  },
+                ]}
               >
                 {error}
               </Text>
@@ -442,19 +479,27 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
                 }}
               >
                 <Text
-                  style={{
-                    ...typography.body.small,
-                    color: colors.semantic.text.secondary,
-                  }}
+                  style={[
+                    (typography.body.s?.regular as any) || { fontSize: 12 },
+                    {
+                      color: colors.semantic.text.secondary,
+                    },
+                  ]}
                 >
                   {resultCount} result{resultCount !== 1 ? 's' : ''} for "{lastQuery}"
                 </Text>
               </View>
-              
-              <FlatList
+
+              <FlatList<SearchResult>
                 data={searchType === 'messages' ? messageResults : conversationResults}
                 keyExtractor={(item) => item.id}
-                renderItem={searchType === 'messages' ? renderMessageResult : renderConversationResult}
+                renderItem={({ item }) => {
+                  if (searchType === 'messages') {
+                    return renderMessageResult({ item: item as MessageSearchResult })
+                  } else {
+                    return renderConversationResult({ item: item as Conversation })
+                  }
+                }}
                 showsVerticalScrollIndicator={true}
                 ListEmptyComponent={
                   <View
@@ -464,11 +509,13 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
                     }}
                   >
                     <Text
-                      style={{
-                        ...typography.body.medium,
-                        color: colors.semantic.text.secondary,
-                        textAlign: 'center',
-                      }}
+                      style={[
+                        (typography.body.m?.regular as any) || { fontSize: 16 },
+                        {
+                          color: colors.semantic.text.secondary,
+                          textAlign: 'center',
+                        },
+                      ]}
                     >
                       No {searchType} found
                     </Text>
@@ -486,11 +533,13 @@ export const SearchModal: React.FC<SearchModalProps> = (props) => {
               }}
             >
               <Text
-                style={{
-                  ...typography.body.large,
-                  color: colors.semantic.text.secondary,
-                  textAlign: 'center',
-                }}
+                style={[
+                  (typography.body.l?.regular as any) || { fontSize: 18 },
+                  {
+                    color: colors.semantic.text.secondary,
+                    textAlign: 'center',
+                  },
+                ]}
               >
                 Enter a search term to find {searchType}
               </Text>

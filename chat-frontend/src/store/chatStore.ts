@@ -56,16 +56,16 @@ export const useChatStore = create<ChatState>((set, get) => {
     createUser: async (username: string) => {
       try {
         set({ isLoading: true, error: null })
-        
+
         const response = await chatApi.createUser({ username })
-        
+
         if (response.success && response.data) {
           // Set the created user as current user
-          set({ 
-            currentUser: { 
-              id: response.data.id, 
-              name: response.data.username 
-            } 
+          set({
+            currentUser: {
+              id: response.data.id,
+              name: response.data.username,
+            },
           })
           return response.data
         } else {

@@ -10,6 +10,7 @@ const { Server } = require('socket.io')
 const http = require('http')
 const multer = require('multer')
 const DatabaseService = require('./src/database/DatabaseService')
+const EncryptionService = require('./src/services/EncryptionService')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -20,6 +21,9 @@ const server = http.createServer(app)
 
 // Initialize database service
 const db = new DatabaseService()
+
+// Initialize encryption service
+const encryptionService = new EncryptionService()
 
 // Setup log file - clear on server start
 const logFile = path.join(__dirname, 'server.log')
@@ -386,9 +390,9 @@ app.post('/api/conversations', (req, res) => {
   }
 })
 // Add message to conversation endpoint
-app.post('/api/messages', (req, res) => {
+app.post('/api/messages', async (req, res) => {
   try {
-    const { text, senderId, senderName, conversationId } = req.body
+    const { text, senderId, senderName, conversationId, encrypted = false, encryptionKeyId } = req.body
 
     // Find the conversation
     const conversation = conversations.find((conv) => conv.id === conversationId)
@@ -408,6 +412,8 @@ app.post('/api/messages', (req, res) => {
       timestamp: new Date(),
       type: 'text', // Default message type
       file: null, // File attachment (if any)
+      encrypted: encrypted,
+      encryptionKeyId: encryptionKeyId || null
     }
 
     // Add message to conversation's messages array
@@ -415,6 +421,25 @@ app.post('/api/messages', (req, res) => {
 
     // Update conversation's updatedAt timestamp
     conversation.updatedAt = new Date()
+
+    // If using database persistence and encryption is enabled, store encrypted message
+    if (encrypted && encryptionKeyId) {
+      try {
+        // Store encrypted message in database
+        await db.createMessage({
+          id: newMessage.id,
+          text: text, // This should be encrypted text
+          senderId: senderId,
+          conversationId: conversationId,
+          timestamp: newMessage.timestamp,
+          encrypted: true,
+          encryptionKey: encryptionKeyId
+        })
+      } catch (dbError) {
+        console.error('Error storing encrypted message:', dbError)
+        // Continue with in-memory storage even if database fails
+      }
+    }
 
     res.json({
       success: true,
@@ -480,57 +505,79 @@ app.delete('/api/messages/:messageId', (req, res) => {
 })
 
 // File upload endpoint
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  try {
-    console.log('Upload request received:')
-    console.log('req.file:', req.file)
-    console.log('req.body:', req.body)
-    console.log('req.headers:', req.headers)
-
-    if (!req.file) {
-      console.log('No file in request')
-      return res.status(400).json({
+app.post('/api/upload', (req, res) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      console.log('Multer error:', err)
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          error: 'File size too large'
+        })
+      }
+      if (err.message && err.message.includes('not allowed')) {
+        return res.status(400).json({
+          success: false,
+          error: err.message
+        })
+      }
+      return res.status(500).json({
         success: false,
-        error: 'No file uploaded',
+        error: 'Upload failed'
       })
     }
 
-    // Get file metadata
-    const fileMetadata = {
-      id: uuidv4(),
-      originalName: req.file.originalname,
-      filename: req.file.filename,
-      mimeType: req.file.mimetype,
-      size: req.file.size,
-      uploadedAt: new Date(),
-      url: `/uploads/${req.file.filename}`,
+    try {
+      console.log('Upload request received:')
+      console.log('req.file:', req.file)
+      console.log('req.body:', req.body)
+      console.log('req.headers:', req.headers)
+
+      if (!req.file) {
+        console.log('No file in request')
+        return res.status(400).json({
+          success: false,
+          error: 'No file uploaded',
+        })
+      }
+
+      // Get file metadata
+      const fileMetadata = {
+        id: uuidv4(),
+        originalName: req.file.originalname,
+        filename: req.file.filename,
+        mimeType: req.file.mimetype,
+        size: req.file.size,
+        uploadedAt: new Date(),
+        url: `/uploads/${req.file.filename}`,
+      }
+
+      // Determine file type category
+      if (req.file.mimetype.startsWith('image/')) {
+        fileMetadata.type = 'image'
+      } else if (req.file.mimetype.startsWith('audio/')) {
+        fileMetadata.type = 'audio'
+      } else if (req.file.mimetype.startsWith('video/')) {
+        fileMetadata.type = 'video'
+      } else {
+        fileMetadata.type = 'document'
+      }
+
+      console.log('File uploaded:', fileMetadata)
+      logToFile(`File uploaded: ${JSON.stringify(fileMetadata)}`)
+
+      res.json({
+        success: true,
+        data: fileMetadata,
+      })
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      res.status(500).json({
+        success: false,
+        error: 'Failed to upload file',
+      })
     }
-
-    // Determine file type category
-    if (req.file.mimetype.startsWith('image/')) {
-      fileMetadata.type = 'image'
-    } else if (req.file.mimetype.startsWith('audio/')) {
-      fileMetadata.type = 'audio'
-    } else if (req.file.mimetype.startsWith('video/')) {
-      fileMetadata.type = 'video'
-    } else {
-      fileMetadata.type = 'document'
-    }
-
-    console.log('File uploaded:', fileMetadata)
-    logToFile(`File uploaded: ${JSON.stringify(fileMetadata)}`)
-
-    res.json({
-      success: true,
-      data: fileMetadata,
-    })
-  } catch (error) {
-    console.error('Error uploading file:', error)
-    res.status(500).json({
-      success: false,
-      error: 'Failed to upload file',
-    })
-  }
+  })
 })
 
 // File download endpoint
@@ -1520,6 +1567,170 @@ app.get('/api/search/conversations', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to search conversations'
+    })
+  }
+})
+
+// Encryption endpoints
+// Generate encryption keys for a user
+app.post('/api/users/:userId/keys', async (req, res) => {
+  try {
+    const { userId } = req.params
+    const { password } = req.body
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password is required for key generation'
+      })
+    }
+
+    // Check if user exists
+    const user = await db.getUser(userId)
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      })
+    }
+
+    // Generate encryption keys
+    const keys = await encryptionService.createUserKeys(userId, password)
+
+    res.json({
+      success: true,
+      data: {
+        publicKey: keys.publicKey,
+        encryptedPrivateKey: keys.encryptedPrivateKey
+      }
+    })
+  } catch (error) {
+    console.error('Error generating user keys:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate encryption keys'
+    })
+  }
+})
+
+// Get user's public key
+app.get('/api/users/:userId/public-key', async (req, res) => {
+  try {
+    const { userId } = req.params
+
+    const user = await db.getUser(userId)
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      })
+    }
+
+    if (!user.publicKey) {
+      return res.status(404).json({
+        success: false,
+        error: 'User has no public key'
+      })
+    }
+
+    res.json({
+      success: true,
+      data: {
+        publicKey: user.publicKey
+      }
+    })
+  } catch (error) {
+    console.error('Error getting public key:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get public key'
+    })
+  }
+})
+
+// Get or create conversation key for a user
+app.post('/api/conversations/:conversationId/keys', async (req, res) => {
+  try {
+    const { conversationId } = req.params
+    const { userId } = req.body
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      })
+    }
+
+    // Check if user has encryption keys
+    const hasKeys = await encryptionService.hasUserKeys(userId)
+    if (!hasKeys) {
+      return res.status(400).json({
+        success: false,
+        error: 'User must have encryption keys set up first'
+      })
+    }
+
+    // Get or create conversation key
+    const conversationKey = await encryptionService.getOrCreateConversationKey(conversationId, userId)
+
+    res.json({
+      success: true,
+      data: {
+        keyId: conversationKey.keyId,
+        encryptedKey: conversationKey.encryptedKey,
+        conversationId: conversationKey.conversationId
+      }
+    })
+  } catch (error) {
+    console.error('Error getting conversation key:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get conversation key'
+    })
+  }
+})
+
+// Check if user has encryption keys
+app.get('/api/users/:userId/has-keys', async (req, res) => {
+  try {
+    const { userId } = req.params
+
+    const hasKeys = await encryptionService.hasUserKeys(userId)
+
+    res.json({
+      success: true,
+      data: {
+        hasKeys: hasKeys
+      }
+    })
+  } catch (error) {
+    console.error('Error checking user keys:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check user keys'
+    })
+  }
+})
+
+// Distribute conversation key to all participants (for new conversations)
+app.post('/api/conversations/:conversationId/distribute-key', async (req, res) => {
+  try {
+    const { conversationId } = req.params
+
+    // Distribute key to all participants
+    const keyId = await encryptionService.distributeConversationKey(conversationId)
+
+    res.json({
+      success: true,
+      data: {
+        keyId: keyId
+      }
+    })
+  } catch (error) {
+    console.error('Error distributing conversation key:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to distribute conversation key'
     })
   }
 })

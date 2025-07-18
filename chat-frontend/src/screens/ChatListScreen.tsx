@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { View, FlatList, StyleSheet, RefreshControl, SafeAreaView, Text, TouchableOpacity } from 'react-native'
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  RefreshControl,
+  SafeAreaView,
+  Text,
+  TouchableOpacity,
+} from 'react-native'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
 import { RouteProp } from '@react-navigation/native'
@@ -18,25 +26,33 @@ type ChatListScreenRouteProp = RouteProp<RootStackParamList, 'ChatList'>
 
 export const ChatListScreen: React.FC = () => {
   console.log('ChatListScreen - component initializing')
-  
+
   let navigation, route
-  
+
   try {
     navigation = useNavigation<ChatListScreenNavigationProp>()
     route = useRoute<ChatListScreenRouteProp>()
   } catch (error) {
     console.error('ChatListScreen - Navigation context error:', error)
-    return <View><Text>Navigation error</Text></View>
+    return (
+      <View>
+        <Text>Navigation error</Text>
+      </View>
+    )
   }
-  
+
   console.log('ChatListScreen - navigation:', navigation)
   console.log('ChatListScreen - route:', route)
-  
+
   if (!route || !route.params) {
     console.error('ChatListScreen - Route params not available')
-    return <View><Text>Route error</Text></View>
+    return (
+      <View>
+        <Text>Route error</Text>
+      </View>
+    )
   }
-  
+
   const { userName } = route.params
   const { colors, spacing } = useTheme()
   const styles = createStyles(colors, spacing)
@@ -52,9 +68,7 @@ export const ChatListScreen: React.FC = () => {
     setCurrentConversation,
   } = useChat()
 
-  const {
-    createDirectConversation,
-  } = usePrivateMessaging()
+  const { createDirectConversation } = usePrivateMessaging()
 
   const [refreshing, setRefreshing] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -86,9 +100,16 @@ export const ChatListScreen: React.FC = () => {
       conversationId: conversation.id,
     })
   }
-  
+
   // Debug logging
-  console.log('ChatListScreen - userName:', userName, 'userId:', userId, 'showUserSelector:', showUserSelector)
+  console.log(
+    'ChatListScreen - userName:',
+    userName,
+    'userId:',
+    userId,
+    'showUserSelector:',
+    showUserSelector,
+  )
 
   useEffect(() => {
     loadConversations()
@@ -102,13 +123,17 @@ export const ChatListScreen: React.FC = () => {
 
   const handleCreateConversation = async () => {
     if (newConversationTitle.trim()) {
-      await createConversation({
-        title: newConversationTitle.trim(),
-        participants: [userName], // Add current user as participant
-      })
-      setNewConversationTitle('')
-      setShowCreateModal(false)
-      loadConversations() // Refresh the list
+      try {
+        await createConversation({
+          title: newConversationTitle.trim(),
+          participants: [userName], // Add current user as participant
+        })
+        setNewConversationTitle('')
+        setShowCreateModal(false)
+        loadConversations() // Refresh the list
+      } catch (error) {
+        console.error('Failed to create conversation:', error)
+      }
     }
   }
 
@@ -150,11 +175,11 @@ export const ChatListScreen: React.FC = () => {
       console.error('User ID is not available')
       return
     }
-    
+
     try {
       const conversation = await createDirectConversation(userId, selectedUser.id)
       setShowUserSelector(false)
-      
+
       // Navigate to the new conversation
       if (conversation) {
         navigation.navigate('ChatRoom', {
@@ -204,18 +229,26 @@ export const ChatListScreen: React.FC = () => {
               </TouchableOpacity>
               {storageMode === 'local' ? (
                 <Button
-                  title='+ Add'
+                  title='+ Create Room'
                   onPress={() => setShowCreateModal(true)}
                   variant='text'
                   size='small'
                 />
               ) : storageMode === 'backend' && userId ? (
-                <Button
-                  title='💬 Private Chat'
-                  onPress={handleStartPrivateChat}
-                  variant='text'
-                  size='small'
-                />
+                <>
+                  <Button
+                    title='+ Create Room'
+                    onPress={() => setShowCreateModal(true)}
+                    variant='text'
+                    size='small'
+                  />
+                  <Button
+                    title='💬 Private Chat'
+                    onPress={handleStartPrivateChat}
+                    variant='text'
+                    size='small'
+                  />
+                </>
               ) : null}
             </View>
           }
@@ -242,7 +275,7 @@ export const ChatListScreen: React.FC = () => {
               subtitle={
                 storageMode === 'local'
                   ? 'Create your first conversation to get started!'
-                  : 'Conversations will appear here when available.'
+                  : 'Create a room or start a private chat to begin messaging!'
               }
             />
           }

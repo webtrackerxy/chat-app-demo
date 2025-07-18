@@ -9,24 +9,24 @@ jest.mock('@api/chatApi', () => ({
     createUser: jest.fn(),
     getUser: jest.fn(),
     getConversations: jest.fn(),
-    getMessageHistory: jest.fn()
-  }
+    getMessageHistory: jest.fn(),
+  },
 }))
 
 // Mock AsyncStorage for theme persistence
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),
-  removeItem: jest.fn()
+  removeItem: jest.fn(),
 }))
 
 // Mock participant emulator
 jest.mock('@services/participantEmulator', () => ({
   ParticipantEmulator: {
     getInstance: () => ({
-      setMessageAddedCallback: jest.fn()
-    })
-  }
+      setMessageAddedCallback: jest.fn(),
+    }),
+  },
 }))
 
 const mockChatApi = chatApi as jest.Mocked<typeof chatApi>
@@ -36,13 +36,23 @@ describe('ChatStore Database Integration', () => {
     jest.clearAllMocks()
   })
 
+  afterEach(() => {
+    // Reset the store state after each test
+    const { result } = renderHook(() => useChatStore())
+    act(() => {
+      result.current.setCurrentUser(null)
+      result.current.clearError()
+      result.current.setStorageMode('local')
+    })
+  })
+
   const createMockUser = (username: string): DbUser => ({
     id: `user_${username}`,
     username,
     status: 'online',
     createdAt: new Date(),
     updatedAt: new Date(),
-    lastSeen: new Date()
+    lastSeen: new Date(),
   })
 
   describe('User Creation', () => {
@@ -51,7 +61,7 @@ describe('ChatStore Database Integration', () => {
       const successResponse = {
         success: true,
         data: mockUser,
-        error: undefined
+        error: undefined,
       }
 
       mockChatApi.createUser.mockResolvedValue(successResponse)
@@ -67,12 +77,12 @@ describe('ChatStore Database Integration', () => {
       })
 
       expect(mockChatApi.createUser).toHaveBeenCalledWith({
-        username: 'testuser'
+        username: 'testuser',
       })
       expect(createdUser).toEqual(mockUser)
       expect(result.current.currentUser).toEqual({
         id: mockUser.id,
-        name: mockUser.username
+        name: mockUser.username,
       })
       expect(result.current.isLoading).toBe(false)
       expect(result.current.error).toBe(null)
@@ -100,7 +110,7 @@ describe('ChatStore Database Integration', () => {
       await act(async () => {
         resolvePromise!({
           success: true,
-          data: createMockUser('testuser')
+          data: createMockUser('testuser'),
         })
         await createUserPromise!
       })
@@ -112,7 +122,7 @@ describe('ChatStore Database Integration', () => {
       const errorResponse = {
         success: false,
         data: null as any,
-        error: 'Username already exists'
+        error: 'Username already exists',
       }
 
       mockChatApi.createUser.mockResolvedValue(errorResponse)
@@ -155,7 +165,7 @@ describe('ChatStore Database Integration', () => {
       })
 
       expect(mockChatApi.createUser).toHaveBeenCalledWith({
-        username: ''
+        username: '',
       })
       // The API call will be made but should fail validation on the backend
     })
@@ -174,7 +184,7 @@ describe('ChatStore Database Integration', () => {
       mockChatApi.createUser.mockResolvedValue({
         success: false,
         data: null as any,
-        error: 'Some error'
+        error: 'Some error',
       })
 
       await act(async () => {
@@ -187,13 +197,13 @@ describe('ChatStore Database Integration', () => {
       act(() => {
         result.current.setCurrentUser({
           id: 'manual_user',
-          name: 'Manual User'
+          name: 'Manual User',
         })
       })
 
       expect(result.current.currentUser).toEqual({
         id: 'manual_user',
-        name: 'Manual User'
+        name: 'Manual User',
       })
       expect(result.current.error).toBe('Some error') // Error should remain
 
@@ -212,8 +222,12 @@ describe('ChatStore Database Integration', () => {
       let resolve1: (value: any) => void
       let resolve2: (value: any) => void
 
-      const promise1 = new Promise((resolve) => { resolve1 = resolve })
-      const promise2 = new Promise((resolve) => { resolve2 = resolve })
+      const promise1 = new Promise((resolve) => {
+        resolve1 = resolve
+      })
+      const promise2 = new Promise((resolve) => {
+        resolve2 = resolve
+      })
 
       mockChatApi.createUser
         .mockReturnValueOnce(promise1 as any)
@@ -236,7 +250,7 @@ describe('ChatStore Database Integration', () => {
       await act(async () => {
         resolve1!({
           success: true,
-          data: mockUser1
+          data: mockUser1,
         })
         await promise1Result
       })
@@ -248,7 +262,7 @@ describe('ChatStore Database Integration', () => {
       await act(async () => {
         resolve2!({
           success: true,
-          data: mockUser2
+          data: mockUser2,
         })
         await promise2Result
       })
@@ -274,7 +288,7 @@ describe('ChatStore Database Integration', () => {
       const mockUser = createMockUser('testuser')
       mockChatApi.createUser.mockResolvedValue({
         success: true,
-        data: mockUser
+        data: mockUser,
       })
 
       await act(async () => {
@@ -301,7 +315,7 @@ describe('ChatStore Database Integration', () => {
       act(() => {
         result.current.setCurrentUser({
           id: 'test_user',
-          name: 'Test User'
+          name: 'Test User',
         })
       })
 
@@ -323,7 +337,7 @@ describe('ChatStore Database Integration', () => {
       mockChatApi.createUser.mockResolvedValueOnce({
         success: false,
         data: null as any,
-        error: 'Server error'
+        error: 'Server error',
       })
 
       await act(async () => {
@@ -337,7 +351,7 @@ describe('ChatStore Database Integration', () => {
       const mockUser = createMockUser('testuser')
       mockChatApi.createUser.mockResolvedValueOnce({
         success: true,
-        data: mockUser
+        data: mockUser,
       })
 
       await act(async () => {
@@ -354,7 +368,7 @@ describe('ChatStore Database Integration', () => {
       // API returns invalid response
       mockChatApi.createUser.mockResolvedValue({
         success: true,
-        data: null as any // Invalid: success but no data
+        data: null as any, // Invalid: success but no data
       })
 
       await act(async () => {

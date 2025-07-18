@@ -19,7 +19,7 @@ export const NameInputScreen: React.FC = () => {
   const handleSubmit = async () => {
     if (name.trim() && selectedMode) {
       setStorageMode(selectedMode)
-      
+
       if (selectedMode === 'backend') {
         // Create user in database for backend mode
         const user = await createUser(name.trim())

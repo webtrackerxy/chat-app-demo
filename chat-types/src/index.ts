@@ -53,6 +53,8 @@ export interface CreateMessageRequest {
   conversationId: string;
   senderId: string;
   senderName: string;
+  encrypted?: boolean;
+  encryptionKeyId?: string;
 }
 
 // Payload structure to create a file message
@@ -141,6 +143,7 @@ export interface DbUser {
   id: string;
   username: string;
   publicKey?: string;
+  privateKey?: string; // Encrypted private key stored on server
   lastSeen: Date;
   status: string;
   createdAt: Date;
@@ -271,3 +274,29 @@ export interface SearchResponse<T> {
     totalResults: number;
   };
 }
+
+// Key management types
+export interface UserKeyGenerationRequest {
+  userId: string;
+  password: string; // For encrypting private key
+}
+
+export interface ConversationKeyRequest {
+  conversationId: string;
+  userId: string;
+}
+
+export interface EncryptedUserKeys {
+  publicKey: string;
+  encryptedPrivateKey: string;
+  keyId: string;
+}
+
+export interface ConversationKeyResponse {
+  keyId: string;
+  encryptedKey: string; // Encrypted with user's public key
+  conversationId: string;
+}
+
+// Encryption-related types and utilities
+export * from './encryption';

@@ -1,0 +1,61 @@
+yarn run v1.22.22
+$ jest --onlyFailures
+  console.log
+    ✅ Database connected successfully
+
+      at DatabaseService.log [as connect] (src/database/DatabaseService.js:11:15)
+
+  console.log
+    🔌 Database disconnected
+
+      at DatabaseService.log [as disconnect] (src/database/DatabaseService.js:20:13)
+
+  console.log
+    ✅ Database connected successfully
+
+      at DatabaseService.log [as connect] (src/database/DatabaseService.js:11:15)
+
+  console.log
+    🔌 Database disconnected
+
+      at DatabaseService.log [as disconnect] (src/database/DatabaseService.js:20:13)
+
+  console.log
+    ✅ Database connected successfully
+
+      at DatabaseService.log [as connect] (src/database/DatabaseService.js:11:15)
+
+  console.error
+    ❌ Database connection failed: Error: Connection failed
+        at Object.<anonymous> (/Users/mike.li/working/test/chat-app-demo/chat-backend/__tests__/DatabaseService.test.js:81:21)
+        at Promise.finally.completed (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-circus/build/jestAdapterInit.js:1559:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-circus/build/jestAdapterInit.js:1499:10)
+        at _callCircusTest (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-circus/build/jestAdapterInit.js:1009:40)
+        at _runTest (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-circus/build/jestAdapterInit.js:949:3)
+        at _runTestsForDescribeBlock (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-circus/build/jestAdapterInit.js:839:13)
+        at _runTestsForDescribeBlock (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-circus/build/jestAdapterInit.js:829:11)
+        at _runTestsForDescribeBlock (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-circus/build/jestAdapterInit.js:829:11)
+        at run (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-circus/build/jestAdapterInit.js:757:3)
+        at runAndTransformResultsToJestFormat (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-circus/build/jestAdapterInit.js:1920:21)
+        at jestAdapter (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-circus/build/runner.js:101:19)
+        at runTestInternal (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-runner/build/index.js:272:16)
+        at runTest (/Users/mike.li/working/test/chat-app-demo/chat-backend/node_modules/jest-runner/build/index.js:340:7)
+
+      11 |       console.log('✅ Database connected successfully')
+      12 |     } catch (error) {
+    > 13 |       console.error('❌ Database connection failed:', error)
+         |               ^
+      14 |       throw error
+      15 |     }
+      16 |   }
+
+      at DatabaseService.error [as connect] (src/database/DatabaseService.js:13:15)
+      at Object.<anonymous> (__tests__/DatabaseService.test.js:84:7)
+
+  console.log
+    🔌 Database disconnected
+
+      at DatabaseService.log [as disconnect] (src/database/DatabaseService.js:20:13)
+
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

@@ -5,6 +5,7 @@ export const config = {
   API_PORT: process.env.REACT_APP_API_PORT || '3000',
   SOCKET_URL: process.env.REACT_APP_SOCKET_URL || 'http://localhost:3000',
   MAX_FILE_SIZE: parseInt(process.env.REACT_APP_MAX_FILE_SIZE || '10485760'), // 10MB
+  DEBUG_ENCRYPTION: process.env.REACT_APP_DEBUG_ENCRYPTION === 'true' || __DEV__,
 } as const
 
 // Helper functions
@@ -13,3 +14,4 @@ export const getSocketUrl = () => config.SOCKET_URL
 export const getUploadUrl = () => `${config.API_URL}/api/upload`
 export const getFileUrl = (filename: string) => `${config.API_URL}/uploads/${filename}`
 export const getMaxFileSize = () => config.MAX_FILE_SIZE
+export const isDebugEncryption = () => config.DEBUG_ENCRYPTION
