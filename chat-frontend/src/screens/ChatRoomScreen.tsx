@@ -22,15 +22,24 @@ import { useUserPresence } from '@hooks/useUserPresence'
 import { useMessageReactions } from '@hooks/useMessageReactions'
 import { useMessageThreading } from '@hooks/useMessageThreading'
 import { Message, FileAttachment } from '@chat-types'
-import { Header, MessageItem, MessageInput, EmptyState } from '@components'
+import {
+  Header,
+  MessageItem,
+  MessageInput,
+  EmptyState,
+  EncryptionToggle,
+  EncryptionDebugPanel,
+} from '@components'
 import { useTheme } from '@theme'
 import { socketService } from '@services/socketService'
 import { RootStackParamList } from '@types'
+import { isDebugEncryption } from '@config/env'
 
 type ChatRoomScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ChatRoom'>
 type ChatRoomScreenRouteProp = RouteProp<RootStackParamList, 'ChatRoom'>
 
 export const ChatRoomScreen: React.FC = () => {
+  console.log('ChatRoomScreen')
   const navigation = useNavigation<ChatRoomScreenNavigationProp>()
   const route = useRoute<ChatRoomScreenRouteProp>()
   const { userName, conversationId } = route.params
@@ -50,6 +59,8 @@ export const ChatRoomScreen: React.FC = () => {
   } = useChat()
   const [inputText, setInputText] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [isEncryptionEnabled, setIsEncryptionEnabled] = useState(false)
+  const [showDebugPanel, setShowDebugPanel] = useState(false)
   const flatListRef = useRef<FlatList>(null)
 
   // Generate a simple userId from userName for demo purposes
@@ -134,7 +145,7 @@ export const ChatRoomScreen: React.FC = () => {
   useEffect(() => {
     if (conversationId && (!currentConversation || currentConversation.id !== conversationId)) {
       // Find the conversation in the store
-      const conversation = conversations.find(conv => conv.id === conversationId)
+      const conversation = conversations.find((conv) => conv.id === conversationId)
       if (conversation) {
         console.log('Setting current conversation from store:', conversation.id)
         setCurrentConversation(conversation)
@@ -148,11 +159,15 @@ export const ChatRoomScreen: React.FC = () => {
 
   // Set initial messages for real-time hook when messages are loaded
   useEffect(() => {
-    if (storageMode === 'backend' && currentConversation?.messages && currentConversation.messages.length > 0) {
+    if (
+      storageMode === 'backend' &&
+      currentConversation?.messages &&
+      currentConversation.messages.length > 0
+    ) {
       // Only set initial messages when we have actual messages
       // This prevents clearing real-time messages with empty arrays
       setInitialMessages(currentConversation.messages)
-      
+
       // Auto-scroll to bottom when conversation first loads
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: false })
@@ -162,17 +177,35 @@ export const ChatRoomScreen: React.FC = () => {
 
   // Get messages based on storage mode
   const messages = useMemo(() => {
+    let messagesList: Message[] = []
+
     if (storageMode === 'backend') {
       // Always prefer real-time messages when connected, even if empty initially
       if (isConnected) {
         console.log('Using real-time messages:', realtimeMessages.length, 'messages')
-        return realtimeMessages
+        messagesList = realtimeMessages
+      } else {
+        // Fall back to conversation messages from API when not connected
+        console.log('Using API messages:', currentConversation?.messages?.length || 0, 'messages')
+        messagesList = currentConversation?.messages || []
       }
-      // Fall back to conversation messages from API when not connected
-      console.log('Using API messages:', currentConversation?.messages?.length || 0, 'messages')
-      return currentConversation?.messages || []
+    } else {
+      messagesList = currentConversation?.messages || []
     }
-    return currentConversation?.messages || []
+
+    // Debug log for encrypted messages
+    if (isDebugEncryption() && messagesList.length > 0) {
+      const encryptedMessages = messagesList.filter((msg) => (msg as any).encrypted)
+      if (encryptedMessages.length > 0) {
+        console.log('🔐 DEBUG: Found encrypted messages:', {
+          totalMessages: messagesList.length,
+          encryptedCount: encryptedMessages.length,
+          encryptedMessageIds: encryptedMessages.map((msg) => msg.id),
+        })
+      }
+    }
+
+    return messagesList
   }, [storageMode, isConnected, realtimeMessages, currentConversation?.messages])
 
   // Auto-scroll to latest message when messages change
@@ -198,6 +231,16 @@ export const ChatRoomScreen: React.FC = () => {
 
   const handleSendMessage = async () => {
     if (inputText.trim()) {
+      if (isDebugEncryption()) {
+        console.log('🔐 DEBUG: Sending message:', {
+          text: inputText.trim(),
+          userId,
+          conversationId,
+          isEncrypted: isEncryptionEnabled,
+          storageMode,
+        })
+      }
+
       if (storageMode === 'backend' && isConnected) {
         // Use real-time messaging for backend mode
         sendRealtimeMessage(inputText.trim(), userId, userName)
@@ -206,7 +249,7 @@ export const ChatRoomScreen: React.FC = () => {
         await sendMessage(inputText.trim(), conversationId)
       }
       setInputText('')
-      
+
       // Auto-scroll to latest message after sending
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true })
@@ -278,7 +321,7 @@ export const ChatRoomScreen: React.FC = () => {
               try {
                 await createThreadReply(message.id, replyText.trim(), userId, conversationId)
                 // Real-time update will handle showing the new reply via WebSocket
-                
+
                 // Auto-scroll to latest message after sending thread reply
                 setTimeout(() => {
                   flatListRef.current?.scrollToEnd({ animated: true })
@@ -291,14 +334,14 @@ export const ChatRoomScreen: React.FC = () => {
           },
         },
       ],
-      'plain-text'
+      'plain-text',
     )
   }
 
   const handleScrollToParentMessage = (parentMessageId: string) => {
     // Find the index of the parent message in the messages array
-    const parentIndex = messages.findIndex(msg => msg.id === parentMessageId)
-    
+    const parentIndex = messages.findIndex((msg) => msg.id === parentMessageId)
+
     if (parentIndex !== -1) {
       try {
         // Scroll to the parent message
@@ -325,8 +368,35 @@ export const ChatRoomScreen: React.FC = () => {
     setRefreshing(false)
   }
 
+  const handleEncryptionChange = (enabled: boolean) => {
+    setIsEncryptionEnabled(enabled)
+
+    if (isDebugEncryption()) {
+      console.log('🔐 DEBUG: Encryption status changed:', {
+        enabled,
+        conversationId,
+        userId,
+        timestamp: new Date().toISOString(),
+      })
+    }
+
+    console.log(`Encryption ${enabled ? 'enabled' : 'disabled'} for conversation:`, conversationId)
+  }
+
   const renderMessage = ({ item }: { item: Message }) => {
     const isMyMessage = item.senderName === userName
+
+    // Debug log for encrypted messages
+    if (isDebugEncryption() && (item as any).encrypted) {
+      console.log('🔐 DEBUG: Rendering encrypted message:', {
+        messageId: item.id,
+        isMyMessage,
+        hasEncryptedPayload: !!(item as any).encryptedPayload,
+        text: item.text,
+        timestamp: item.timestamp,
+        senderName: item.senderName,
+      })
+    }
 
     // Get current reactions from hook instead of message object
     const currentReactions = getMessageReactions(item.id)
@@ -382,17 +452,34 @@ export const ChatRoomScreen: React.FC = () => {
           }
           onBack={() => navigation.goBack()}
           rightComponent={
-            storageMode === 'backend' && isConnected ? (
-              <TouchableOpacity
-                style={styles.presenceToggle}
-                onPress={isCurrentUserOnline ? setUserOffline : setUserOnline}
-              >
-                <Text style={styles.presenceToggleText}>
-                  {isCurrentUserOnline ? '🟢 Online' : '🔴 Offline'}
-                </Text>
-              </TouchableOpacity>
-            ) : null
+            <View style={styles.headerActions}>
+              {storageMode === 'backend' && isConnected && (
+                <TouchableOpacity
+                  style={styles.presenceToggle}
+                  onPress={isCurrentUserOnline ? setUserOffline : setUserOnline}
+                >
+                  <Text style={styles.presenceToggleText}>
+                    {isCurrentUserOnline ? '🟢 Online' : '🔴 Offline'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {isDebugEncryption() && (
+                <TouchableOpacity
+                  style={styles.debugToggle}
+                  onPress={() => setShowDebugPanel(!showDebugPanel)}
+                >
+                  <Text style={styles.debugToggleText}>{showDebugPanel ? '🔐❌' : '🔐📊'}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           }
+        />
+
+        {/* Encryption Toggle - show in both modes */}
+        <EncryptionToggle
+          conversationId={conversationId}
+          userId={userId}
+          onEncryptionChange={handleEncryptionChange}
         />
 
         <FlatList
@@ -447,6 +534,11 @@ export const ChatRoomScreen: React.FC = () => {
           onVoiceRecorded={handleFileSelected}
           showVoiceRecorder={storageMode === 'backend' && isConnected}
         />
+
+        {/* Debug Panel */}
+        {isDebugEncryption() && (
+          <EncryptionDebugPanel visible={showDebugPanel} onClose={() => setShowDebugPanel(false)} />
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   )
@@ -490,6 +582,23 @@ const createStyles = (colors: any, spacing: any, borderRadius: any, typography: 
       borderColor: colors.semantic.border.secondary,
     },
     presenceToggleText: {
+      ...typography.body.xs.bold,
+      color: colors.semantic.text.primary,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    debugToggle: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      borderRadius: borderRadius.md,
+      backgroundColor: colors.semantic.surface.tertiary,
+      borderWidth: 1,
+      borderColor: colors.semantic.border.secondary,
+    },
+    debugToggleText: {
       ...typography.body.xs.bold,
       color: colors.semantic.text.primary,
     },

@@ -112,7 +112,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               <Text style={styles.replyText}>↩️ Replying to a message</Text>
             </TouchableOpacity>
           )}
-          
+
           <Text style={styles.senderName}>{message.senderName}</Text>
           {/* Render file content or text message */}
           {message.file ? (

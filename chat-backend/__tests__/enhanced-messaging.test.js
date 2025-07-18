@@ -13,6 +13,9 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
   let testUsers = []
   let testConversations = []
 
+  // Increase timeout for this test suite
+  jest.setTimeout(30000)
+
   beforeAll(async () => {
     // Set test database URL
     process.env.DATABASE_URL = `file:${TEST_DB_PATH}`
@@ -29,7 +32,7 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
     try {
       await execAsync('npx prisma db push --force-reset', { 
         cwd: path.join(__dirname, '..'),
-        env: { ...process.env, DATABASE_URL: `file:${TEST_DB_PATH}` }
+        env: { ...process.env, DATABASE_URL: `file:${TEST_DB_PATH}` },
       })
     } catch (error) {
       console.log('Schema push error (may be expected):', error.message)
@@ -47,7 +50,7 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
         if (!currentUserId) {
           return res.status(400).json({
             success: false,
-            error: 'Current user ID is required'
+            error: 'Current user ID is required',
           })
         }
 
@@ -55,12 +58,12 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
         
         res.json({
           success: true,
-          data: users
+          data: users,
         })
       } catch (error) {
         res.status(500).json({
           success: false,
-          error: 'Failed to fetch users'
+          error: 'Failed to fetch users',
         })
       }
     })
@@ -72,7 +75,7 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
         if (!user1Id || !user2Id) {
           return res.status(400).json({
             success: false,
-            error: 'Both user IDs are required'
+            error: 'Both user IDs are required',
           })
         }
 
@@ -87,17 +90,17 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
           participants: conversation.participants.map(p => p.user.username),
           createdAt: conversation.createdAt,
           updatedAt: conversation.updatedAt,
-          lastMessage: null
+          lastMessage: null,
         }
 
         res.json({
           success: true,
-          data: formattedConversation
+          data: formattedConversation,
         })
       } catch (error) {
         res.status(500).json({
           success: false,
-          error: 'Failed to create direct conversation'
+          error: 'Failed to create direct conversation',
         })
       }
     })
@@ -109,7 +112,7 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
         if (!userId) {
           return res.status(400).json({
             success: false,
-            error: 'User ID is required'
+            error: 'User ID is required',
           })
         }
 
@@ -129,18 +132,18 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
             text: conv.messages[0].text,
             senderId: conv.messages[0].senderId,
             senderName: conv.messages[0].sender.username,
-            timestamp: conv.messages[0].timestamp
-          } : null
+            timestamp: conv.messages[0].timestamp,
+          } : null,
         }))
 
         res.json({
           success: true,
-          data: formattedConversations
+          data: formattedConversations,
         })
       } catch (error) {
         res.status(500).json({
           success: false,
-          error: 'Failed to fetch direct conversations'
+          error: 'Failed to fetch direct conversations',
         })
       }
     })
@@ -154,14 +157,14 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
         if (!text || !senderId || !conversationId) {
           return res.status(400).json({
             success: false,
-            error: 'Text, senderId, and conversationId are required'
+            error: 'Text, senderId, and conversationId are required',
           })
         }
 
         const replyMessage = await dbService.createThread(messageId, {
           text,
           senderId,
-          conversationId
+          conversationId,
         })
 
         const formattedMessage = {
@@ -174,23 +177,23 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
           replyToId: replyMessage.replyToId,
           reactions: replyMessage.reactions.map(r => ({
             emoji: r.emoji,
-            userId: r.userId
+            userId: r.userId,
           })),
           readBy: replyMessage.readReceipts.map(r => ({
             userId: r.userId,
             userName: r.userName,
-            readAt: r.readAt
-          }))
+            readAt: r.readAt,
+          })),
         }
 
         res.json({
           success: true,
-          data: formattedMessage
+          data: formattedMessage,
         })
       } catch (error) {
         res.status(500).json({
           success: false,
-          error: 'Failed to create thread reply'
+          error: 'Failed to create thread reply',
         })
       }
     })
@@ -211,23 +214,23 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
           replyToId: msg.replyToId,
           reactions: msg.reactions.map(r => ({
             emoji: r.emoji,
-            userId: r.userId
+            userId: r.userId,
           })),
           readBy: msg.readReceipts.map(r => ({
             userId: r.userId,
             userName: r.userName,
-            readAt: r.readAt
-          }))
+            readAt: r.readAt,
+          })),
         }))
 
         res.json({
           success: true,
-          data: formattedMessages
+          data: formattedMessages,
         })
       } catch (error) {
         res.status(500).json({
           success: false,
-          error: 'Failed to fetch thread'
+          error: 'Failed to fetch thread',
         })
       }
     })
@@ -240,14 +243,14 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
         if (!query || query.trim().length === 0) {
           return res.status(400).json({
             success: false,
-            error: 'Search query is required'
+            error: 'Search query is required',
           })
         }
 
         const searchResults = await dbService.searchMessages(
           query.trim(), 
           conversationId || null, 
-          parseInt(limit)
+          parseInt(limit),
         )
         
         const formattedResults = searchResults.map(msg => ({
@@ -260,7 +263,7 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
           conversationName: msg.conversation.name || `Conversation ${msg.conversation.id}`,
           conversationType: msg.conversation.type,
           threadId: msg.threadId,
-          replyToId: msg.replyToId
+          replyToId: msg.replyToId,
         }))
 
         res.json({
@@ -269,13 +272,13 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
           meta: {
             query: query.trim(),
             conversationId: conversationId || null,
-            totalResults: formattedResults.length
-          }
+            totalResults: formattedResults.length,
+          },
         })
       } catch (error) {
         res.status(500).json({
           success: false,
-          error: 'Failed to search messages'
+          error: 'Failed to search messages',
         })
       }
     })
@@ -287,14 +290,14 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
         if (!query || query.trim().length === 0) {
           return res.status(400).json({
             success: false,
-            error: 'Search query is required'
+            error: 'Search query is required',
           })
         }
 
         if (!userId) {
           return res.status(400).json({
             success: false,
-            error: 'User ID is required'
+            error: 'User ID is required',
           })
         }
 
@@ -323,8 +326,8 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
             text: conv.messages[0].text,
             senderId: conv.messages[0].senderId,
             senderName: conv.messages[0].sender.username,
-            timestamp: conv.messages[0].timestamp
-          } : null
+            timestamp: conv.messages[0].timestamp,
+          } : null,
         }))
 
         res.json({
@@ -332,13 +335,13 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
           data: formattedConversations,
           meta: {
             query: query.trim(),
-            totalResults: formattedConversations.length
-          }
+            totalResults: formattedConversations.length,
+          },
         })
       } catch (error) {
         res.status(500).json({
           success: false,
-          error: 'Failed to search conversations'
+          error: 'Failed to search conversations',
         })
       }
     })
@@ -453,7 +456,7 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
 
       const conversation = await dbService.createConversation(
         { name: 'Test Chat', type: 'group' },
-        [user1.id, user2.id]
+        [user1.id, user2.id],
       )
       testConversations = [conversation]
 
@@ -461,7 +464,7 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
       const parentMessage = await dbService.saveMessage({
         text: 'Original message',
         senderId: user1.id,
-        conversationId: conversation.id
+        conversationId: conversation.id,
       })
 
       // Create thread reply
@@ -470,7 +473,7 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
         .send({
           text: 'This is a reply',
           senderId: user2.id,
-          conversationId: conversation.id
+          conversationId: conversation.id,
         })
         .expect(200)
 
@@ -489,7 +492,7 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
 
       const conversation = await dbService.createConversation(
         { name: 'Test Chat', type: 'group' },
-        [user1.id, user2.id]
+        [user1.id, user2.id],
       )
       testConversations = [conversation]
 
@@ -497,20 +500,20 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
       const parentMessage = await dbService.saveMessage({
         text: 'Original message',
         senderId: user1.id,
-        conversationId: conversation.id
+        conversationId: conversation.id,
       })
 
       // Create multiple thread replies
       await dbService.createThread(parentMessage.id, {
         text: 'First reply',
         senderId: user2.id,
-        conversationId: conversation.id
+        conversationId: conversation.id,
       })
 
       await dbService.createThread(parentMessage.id, {
         text: 'Second reply',
         senderId: user1.id,
-        conversationId: conversation.id
+        conversationId: conversation.id,
       })
 
       const response = await request(app)
@@ -534,11 +537,11 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
 
       const conv1 = await dbService.createConversation(
         { name: 'Chat 1', type: 'group' },
-        [user1.id, user2.id]
+        [user1.id, user2.id],
       )
       const conv2 = await dbService.createConversation(
         { name: 'Chat 2', type: 'group' },
-        [user1.id, user2.id]
+        [user1.id, user2.id],
       )
       testConversations = [conv1, conv2]
 
@@ -546,17 +549,17 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
       await dbService.saveMessage({
         text: 'Hello world from chat 1',
         senderId: user1.id,
-        conversationId: conv1.id
+        conversationId: conv1.id,
       })
       await dbService.saveMessage({
         text: 'Hello universe from chat 2',
         senderId: user2.id,
-        conversationId: conv2.id
+        conversationId: conv2.id,
       })
       await dbService.saveMessage({
         text: 'Goodbye world',
         senderId: user1.id,
-        conversationId: conv1.id
+        conversationId: conv1.id,
       })
 
       const response = await request(app)
@@ -581,11 +584,11 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
 
       const conv1 = await dbService.createConversation(
         { name: 'Chat 1', type: 'group' },
-        [user1.id, user2.id]
+        [user1.id, user2.id],
       )
       const conv2 = await dbService.createConversation(
         { name: 'Chat 2', type: 'group' },
-        [user1.id, user2.id]
+        [user1.id, user2.id],
       )
       testConversations = [conv1, conv2]
 
@@ -593,12 +596,12 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
       await dbService.saveMessage({
         text: 'Hello world from chat 1',
         senderId: user1.id,
-        conversationId: conv1.id
+        conversationId: conv1.id,
       })
       await dbService.saveMessage({
         text: 'Hello universe from chat 2',
         senderId: user2.id,
-        conversationId: conv2.id
+        conversationId: conv2.id,
       })
 
       const response = await request(app)
@@ -621,11 +624,11 @@ describe('Enhanced Messaging Features (Phases 2-4)', () => {
       // Create conversations
       const conv1 = await dbService.createConversation(
         { name: 'Project Alpha', type: 'group' },
-        [user1.id, user2.id]
+        [user1.id, user2.id],
       )
       const conv2 = await dbService.createConversation(
         { name: 'Random Chat', type: 'group' },
-        [user1.id, user3.id]
+        [user1.id, user3.id],
       )
       testConversations = [conv1, conv2]
 

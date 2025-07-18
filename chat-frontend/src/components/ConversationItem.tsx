@@ -86,7 +86,13 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   )
 }
 
-const createStyles = (colors: any, spacing: any, borderRadius: any, typography: any, shadows: any) =>
+const createStyles = (
+  colors: any,
+  spacing: any,
+  borderRadius: any,
+  typography: any,
+  shadows: any,
+) =>
   StyleSheet.create({
     container: {
       backgroundColor: colors.semantic.surface.primary,

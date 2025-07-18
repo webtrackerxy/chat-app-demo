@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  FlatList, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
   ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
-  Platform 
+  Platform,
 } from 'react-native'
 import { useTheme } from '@theme'
 import { useMessageThreading } from '@hooks/useMessageThreading'
@@ -29,7 +29,7 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
   parentMessage,
   currentUserId,
   currentUserName,
-  conversationId
+  conversationId,
 }) => {
   const { colors, spacing, typography } = useTheme()
   const {
@@ -39,9 +39,9 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
     loadThread,
     createThreadReply,
     getThreadMessages,
-    clearError
+    clearError,
   } = useMessageThreading()
-  
+
   const [replyText, setReplyText] = useState('')
   const [isSending, setIsSending] = useState(false)
 
@@ -56,17 +56,17 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
 
   const handleSendReply = async () => {
     if (!replyText.trim() || !parentMessage || isSending) return
-    
+
     setIsSending(true)
-    
+
     try {
       const success = await createThreadReply(
         parentMessage.id,
         replyText.trim(),
         currentUserId,
-        conversationId
+        conversationId,
       )
-      
+
       if (success) {
         setReplyText('')
       }
@@ -93,7 +93,7 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
   const renderMessage = ({ item, index }: { item: Message; index: number }) => {
     const isMyMessage = item.senderId === currentUserId
     const isParentMessage = index === 0
-    
+
     return (
       <View
         style={{
@@ -116,36 +116,42 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
               }}
             >
               <Text
-                style={{
-                  ...typography.body.small,
-                  color: colors.primary[600],
-                  fontWeight: '600',
-                  marginBottom: spacing.xs,
-                }}
+                style={[
+                  typography.body.s.regular as any,
+                  {
+                    color: colors.primary[600],
+                    fontWeight: '600',
+                    marginBottom: spacing.xs,
+                  },
+                ]}
               >
                 Original Message
               </Text>
               <Text
-                style={{
-                  ...typography.body.medium,
-                  color: colors.semantic.text.primary,
-                }}
+                style={[
+                  typography.body.m.regular as any,
+                  {
+                    color: colors.semantic.text.primary,
+                  },
+                ]}
               >
                 {item.text}
               </Text>
               <Text
-                style={{
-                  ...typography.body.small,
-                  color: colors.semantic.text.secondary,
-                  marginTop: spacing.xs,
-                }}
+                style={[
+                  typography.body.s.regular as any,
+                  {
+                    color: colors.semantic.text.secondary,
+                    marginTop: spacing.xs,
+                  },
+                ]}
               >
                 {item.senderName} • {formatTimestamp(item.timestamp)}
               </Text>
             </View>
           </View>
         )}
-        
+
         {!isParentMessage && (
           <View
             style={{
@@ -157,7 +163,9 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
             <View
               style={{
                 maxWidth: '80%',
-                backgroundColor: isMyMessage ? colors.primary[500] : colors.semantic.surface.primary,
+                backgroundColor: isMyMessage
+                  ? colors.primary[500]
+                  : colors.semantic.surface.primary,
                 borderRadius: spacing.md,
                 padding: spacing.md,
                 borderWidth: isMyMessage ? 0 : 1,
@@ -165,20 +173,24 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
               }}
             >
               <Text
-                style={{
-                  ...typography.body.medium,
-                  color: isMyMessage ? colors.white : colors.semantic.text.primary,
-                  marginBottom: spacing.xs,
-                }}
+                style={[
+                  typography.body.m.regular as any,
+                  {
+                    color: isMyMessage ? colors.base.white : colors.semantic.text.primary,
+                    marginBottom: spacing.xs,
+                  },
+                ]}
               >
                 {item.text}
               </Text>
-              
+
               <Text
-                style={{
-                  ...typography.body.small,
-                  color: isMyMessage ? colors.primary[100] : colors.semantic.text.secondary,
-                }}
+                style={[
+                  typography.body.s.regular as any,
+                  {
+                    color: isMyMessage ? colors.primary[100] : colors.semantic.text.secondary,
+                  },
+                ]}
               >
                 {item.senderName} • {formatTimestamp(item.timestamp)}
               </Text>
@@ -196,8 +208,8 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
+      animationType='slide'
+      presentationStyle='pageSheet'
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
@@ -232,11 +244,13 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
             </Text>
             <TouchableOpacity onPress={onClose}>
               <Text
-                style={{
-                  ...typography.body.large,
-                  color: colors.primary[500],
-                  fontWeight: '600',
-                }}
+                style={[
+                  typography.body.l.regular as any,
+                  {
+                    color: colors.primary[500],
+                    fontWeight: '600',
+                  },
+                ]}
               >
                 Done
               </Text>
@@ -253,13 +267,15 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
                   alignItems: 'center',
                 }}
               >
-                <ActivityIndicator size="large" color={colors.primary[500]} />
+                <ActivityIndicator size='large' color={colors.primary[500]} />
                 <Text
-                  style={{
-                    ...typography.body.medium,
-                    color: colors.semantic.text.secondary,
-                    marginTop: spacing.md,
-                  }}
+                  style={[
+                    typography.body.m.regular as any,
+                    {
+                      color: colors.semantic.text.secondary,
+                      marginTop: spacing.md,
+                    },
+                  ]}
                 >
                   Loading thread...
                 </Text>
@@ -274,12 +290,14 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
                 }}
               >
                 <Text
-                  style={{
-                    ...typography.body.medium,
-                    color: colors.red[500],
-                    textAlign: 'center',
-                    marginBottom: spacing.md,
-                  }}
+                  style={[
+                    typography.body.m.regular as any,
+                    {
+                      color: colors.error[500],
+                      textAlign: 'center',
+                      marginBottom: spacing.md,
+                    },
+                  ]}
                 >
                   {error}
                 </Text>
@@ -296,11 +314,13 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
                   }}
                 >
                   <Text
-                    style={{
-                      ...typography.body.medium,
-                      color: colors.white,
-                      fontWeight: '600',
-                    }}
+                    style={[
+                      typography.body.m.regular as any,
+                      {
+                        color: colors.base.white,
+                        fontWeight: '600',
+                      },
+                    ]}
                   >
                     Retry
                   </Text>
@@ -328,26 +348,28 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
             }}
           >
             <TextInput
-              style={{
-                flex: 1,
-                paddingVertical: spacing.sm,
-                paddingHorizontal: spacing.md,
-                backgroundColor: colors.semantic.surface.primary,
-                borderRadius: spacing.md,
-                borderWidth: 1,
-                borderColor: colors.gray[300],
-                ...typography.body.medium,
-                color: colors.semantic.text.primary,
-                maxHeight: 100,
-              }}
-              placeholder="Reply to thread..."
+              style={[
+                typography.body.m.regular as any,
+                {
+                  flex: 1,
+                  paddingVertical: spacing.sm,
+                  paddingHorizontal: spacing.md,
+                  backgroundColor: colors.semantic.surface.primary,
+                  borderRadius: spacing.md,
+                  borderWidth: 1,
+                  borderColor: colors.gray[300],
+                  color: colors.semantic.text.primary,
+                  maxHeight: 100,
+                },
+              ]}
+              placeholder='Reply to thread...'
               placeholderTextColor={colors.semantic.text.secondary}
               value={replyText}
               onChangeText={setReplyText}
               multiline
-              textAlignVertical="center"
+              textAlignVertical='center'
             />
-            
+
             <TouchableOpacity
               style={{
                 paddingVertical: spacing.sm,
@@ -361,15 +383,17 @@ export const ThreadModal: React.FC<ThreadModalProps> = ({
               disabled={!replyText.trim() || isSending}
             >
               {isSending ? (
-                <ActivityIndicator size="small" color={colors.white} />
+                <ActivityIndicator size='small' color={colors.base.white} />
               ) : (
                 <Text
-                  style={{
-                    ...typography.body.medium,
-                    color: colors.white,
-                    fontWeight: '600',
-                    textAlign: 'center',
-                  }}
+                  style={[
+                    typography.body.m.regular as any,
+                    {
+                      color: colors.base.white,
+                      fontWeight: '600',
+                      textAlign: 'center',
+                    },
+                  ]}
                 >
                   Send
                 </Text>

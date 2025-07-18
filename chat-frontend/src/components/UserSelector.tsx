@@ -13,20 +13,15 @@ interface UserSelectorProps {
 
 export const UserSelector: React.FC<UserSelectorProps> = (props) => {
   console.log('UserSelector - component called with props:', props)
-  
+
   // Early return if props are invalid
   if (!props) {
     console.error('UserSelector - props are undefined')
     return null
   }
-  
+
   // Safe destructuring with defaults
-  const {
-    currentUserId = '',
-    onUserSelect = () => {},
-    onClose = () => {},
-    visible = false
-  } = props
+  const { currentUserId = '', onUserSelect = () => {}, onClose = () => {}, visible = false } = props
 
   const { colors, spacing, typography } = useTheme()
   const { users, isLoading, error, loadUsers, clearError } = usePrivateMessaging()
@@ -45,7 +40,7 @@ export const UserSelector: React.FC<UserSelectorProps> = (props) => {
 
   const renderUserItem = ({ item }: { item: UserListResponse }) => {
     const isOnline = item.status === 'online'
-    
+
     return (
       <TouchableOpacity
         style={{
@@ -71,29 +66,33 @@ export const UserSelector: React.FC<UserSelectorProps> = (props) => {
         >
           <Text
             style={{
-              color: colors.white,
+              color: colors.base.white,
               fontWeight: 'bold',
             }}
           >
             {item.username.charAt(0).toUpperCase()}
           </Text>
         </View>
-        
+
         <View style={{ flex: 1 }}>
           <Text
-            style={{
-              ...typography.body.large,
-              color: colors.semantic.text.primary,
-              fontWeight: '600',
-            }}
+            style={[
+              typography.body.l.regular as any,
+              {
+                color: colors.semantic.text.primary,
+                fontWeight: '600',
+              },
+            ]}
           >
             {item.username}
           </Text>
           <Text
-            style={{
-              ...typography.body.small,
-              color: isOnline ? colors.green[600] : colors.gray[500],
-            }}
+            style={[
+              typography.body.s.regular as any,
+              {
+                color: isOnline ? colors.success?.[600] || colors.primary[600] : colors.gray[500],
+              },
+            ]}
           >
             {isOnline ? 'Online' : 'Offline'}
           </Text>
@@ -104,7 +103,9 @@ export const UserSelector: React.FC<UserSelectorProps> = (props) => {
             width: 8,
             height: 8,
             borderRadius: 4,
-            backgroundColor: isOnline ? colors.green[500] : colors.gray[400],
+            backgroundColor: isOnline
+              ? colors.success?.[500] || colors.primary[500]
+              : colors.gray[400],
           }}
         />
       </TouchableOpacity>
@@ -149,20 +150,24 @@ export const UserSelector: React.FC<UserSelectorProps> = (props) => {
           }}
         >
           <Text
-            style={{
-              ...typography.heading.h3,
-              color: colors.semantic.text.primary,
-            }}
+            style={[
+              typography.heading[3] as any,
+              {
+                color: colors.semantic.text.primary,
+              },
+            ]}
           >
             Select User
           </Text>
           <TouchableOpacity onPress={onClose}>
             <Text
-              style={{
-                ...typography.body.large,
-                color: colors.primary[500],
-                fontWeight: '600',
-              }}
+              style={[
+                typography.body.l.regular as any,
+                {
+                  color: colors.primary[500],
+                  fontWeight: '600',
+                },
+              ]}
             >
               Cancel
             </Text>
@@ -177,13 +182,15 @@ export const UserSelector: React.FC<UserSelectorProps> = (props) => {
               justifyContent: 'center',
             }}
           >
-            <ActivityIndicator size="large" color={colors.primary[500]} />
+            <ActivityIndicator size='large' color={colors.primary[500]} />
             <Text
-              style={{
-                ...typography.body.medium,
-                color: colors.semantic.text.secondary,
-                marginTop: spacing.md,
-              }}
+              style={[
+                typography.body.m.regular as any,
+                {
+                  color: colors.semantic.text.secondary,
+                  marginTop: spacing.md,
+                },
+              ]}
             >
               Loading users...
             </Text>
@@ -197,11 +204,13 @@ export const UserSelector: React.FC<UserSelectorProps> = (props) => {
             }}
           >
             <Text
-              style={{
-                ...typography.body.medium,
-                color: colors.semantic.text.error,
-                textAlign: 'center',
-              }}
+              style={[
+                typography.body.m.regular as any,
+                {
+                  color: colors.error[500],
+                  textAlign: 'center',
+                },
+              ]}
             >
               Error loading users: {error}
             </Text>
@@ -216,10 +225,12 @@ export const UserSelector: React.FC<UserSelectorProps> = (props) => {
               }}
             >
               <Text
-                style={{
-                  color: colors.white,
-                  fontWeight: '600',
-                }}
+                style={[
+                  {
+                    color: colors.base.white,
+                    fontWeight: '600',
+                  },
+                ]}
               >
                 Retry
               </Text>
@@ -234,11 +245,13 @@ export const UserSelector: React.FC<UserSelectorProps> = (props) => {
             }}
           >
             <Text
-              style={{
-                ...typography.body.medium,
-                color: colors.semantic.text.secondary,
-                textAlign: 'center',
-              }}
+              style={[
+                typography.body.m.regular as any,
+                {
+                  color: colors.semantic.text.secondary,
+                  textAlign: 'center',
+                },
+              ]}
             >
               No users available for messaging
             </Text>

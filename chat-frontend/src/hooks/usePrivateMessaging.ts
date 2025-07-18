@@ -26,10 +26,10 @@ export const usePrivateMessaging = (): UsePrivateMessagingReturn => {
   const loadUsers = useCallback(async (currentUserId: string) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const response = await chatApi.getAllUsers(currentUserId)
-      
+
       if (response.success) {
         setUsers(response.data)
       } else {
@@ -45,10 +45,10 @@ export const usePrivateMessaging = (): UsePrivateMessagingReturn => {
   const loadDirectConversations = useCallback(async (userId: string) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const response = await chatApi.getDirectConversations(userId)
-      
+
       if (response.success) {
         setDirectConversations(response.data)
       } else {
@@ -61,32 +61,32 @@ export const usePrivateMessaging = (): UsePrivateMessagingReturn => {
     }
   }, [])
 
-  const createDirectConversation = useCallback(async (
-    user1Id: string, 
-    user2Id: string
-  ): Promise<Conversation | null> => {
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      const request: DirectConversationRequest = { user1Id, user2Id }
-      const response = await chatApi.createDirectConversation(request)
-      
-      if (response.success) {
-        // Add the new conversation to the list
-        setDirectConversations(prev => [response.data, ...prev])
-        return response.data
-      } else {
-        setError(response.error || 'Failed to create direct conversation')
+  const createDirectConversation = useCallback(
+    async (user1Id: string, user2Id: string): Promise<Conversation | null> => {
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const request: DirectConversationRequest = { user1Id, user2Id }
+        const response = await chatApi.createDirectConversation(request)
+
+        if (response.success) {
+          // Add the new conversation to the list
+          setDirectConversations((prev) => [response.data, ...prev])
+          return response.data
+        } else {
+          setError(response.error || 'Failed to create direct conversation')
+          return null
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error occurred')
         return null
+      } finally {
+        setIsLoading(false)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred')
-      return null
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+    },
+    [],
+  )
 
   return {
     users,

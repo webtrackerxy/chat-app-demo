@@ -15,7 +15,7 @@ const createTestApp = () => {
     getMessages: jest.fn(),
     saveMessage: jest.fn(),
     connect: jest.fn(),
-    disconnect: jest.fn()
+    disconnect: jest.fn(),
   }
 
   // User management endpoints
@@ -26,7 +26,7 @@ const createTestApp = () => {
       if (!username) {
         return res.status(400).json({
           success: false,
-          error: 'Username is required'
+          error: 'Username is required',
         })
       }
 
@@ -35,25 +35,25 @@ const createTestApp = () => {
       if (existingUser) {
         return res.json({
           success: true,
-          data: existingUser
+          data: existingUser,
         })
       }
 
       // Create new user
       const newUser = await mockDb.createUser({
         username,
-        status: 'online'
+        status: 'online',
       })
 
       res.json({
         success: true,
-        data: newUser
+        data: newUser,
       })
     } catch (error) {
       console.error('Error creating user:', error)
       res.status(500).json({
         success: false,
-        error: 'Failed to create user'
+        error: 'Failed to create user',
       })
     }
   })
@@ -66,19 +66,19 @@ const createTestApp = () => {
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: 'User not found'
+          error: 'User not found',
         })
       }
 
       res.json({
         success: true,
-        data: user
+        data: user,
       })
     } catch (error) {
       console.error('Error fetching user:', error)
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch user'
+        error: 'Failed to fetch user',
       })
     }
   })
@@ -92,7 +92,7 @@ const createTestApp = () => {
         // Fallback response for backward compatibility
         return res.json({
           success: true,
-          data: []
+          data: [],
         })
       }
 
@@ -111,8 +111,8 @@ const createTestApp = () => {
           text: conv.messages[0].text,
           senderId: conv.messages[0].senderId,
           senderName: conv.messages[0].sender.username,
-          timestamp: conv.messages[0].timestamp
-        } : null
+          timestamp: conv.messages[0].timestamp,
+        } : null,
       }))
 
       res.json({
@@ -148,17 +148,17 @@ const createTestApp = () => {
           name: msg.files[0].filename,
           path: msg.files[0].path,
           type: msg.files[0].type,
-          size: msg.files[0].size
+          size: msg.files[0].size,
         } : null,
         reactions: msg.reactions.map(r => ({
           emoji: r.emoji,
-          userId: r.userId
+          userId: r.userId,
         })),
         readBy: msg.readReceipts.map(r => ({
           userId: r.userId,
           userName: r.userName,
-          readAt: r.readAt
-        }))
+          readAt: r.readAt,
+        })),
       })).reverse() // Reverse to match expected order
 
       return res.json({
@@ -167,14 +167,14 @@ const createTestApp = () => {
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
-          hasMore: messages.length === parseInt(limit)
-        }
+          hasMore: messages.length === parseInt(limit),
+        },
       })
     } catch (error) {
       console.error('Error fetching messages:', error)
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch messages'
+        error: 'Failed to fetch messages',
       })
     }
   })
@@ -203,7 +203,14 @@ describe('Database API Endpoints', () => {
         username: 'testuser',
         status: 'online',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+      }
+      
+      // Expected response should have date strings, not Date objects
+      const expectedResponse = {
+        ...createdUser,
+        createdAt: createdUser.createdAt.toISOString(),
+        updatedAt: createdUser.updatedAt.toISOString(),
       }
 
       mockDb.getUserByUsername.mockResolvedValue(null) // User doesn't exist
@@ -216,12 +223,12 @@ describe('Database API Endpoints', () => {
 
       expect(response.body).toEqual({
         success: true,
-        data: createdUser
+        data: expectedResponse,
       })
       expect(mockDb.getUserByUsername).toHaveBeenCalledWith('testuser')
       expect(mockDb.createUser).toHaveBeenCalledWith({
         username: 'testuser',
-        status: 'online'
+        status: 'online',
       })
     })
 
@@ -230,7 +237,7 @@ describe('Database API Endpoints', () => {
       const existingUser = {
         id: 'user1',
         username: 'existinguser',
-        status: 'online'
+        status: 'online',
       }
 
       mockDb.getUserByUsername.mockResolvedValue(existingUser)
@@ -242,7 +249,7 @@ describe('Database API Endpoints', () => {
 
       expect(response.body).toEqual({
         success: true,
-        data: existingUser
+        data: existingUser,
       })
       expect(mockDb.getUserByUsername).toHaveBeenCalledWith('existinguser')
       expect(mockDb.createUser).not.toHaveBeenCalled()
@@ -256,7 +263,7 @@ describe('Database API Endpoints', () => {
 
       expect(response.body).toEqual({
         success: false,
-        error: 'Username is required'
+        error: 'Username is required',
       })
     })
 
@@ -272,7 +279,7 @@ describe('Database API Endpoints', () => {
 
       expect(response.body).toEqual({
         success: false,
-        error: 'Failed to create user'
+        error: 'Failed to create user',
       })
     })
   })
@@ -282,7 +289,7 @@ describe('Database API Endpoints', () => {
       const user = {
         id: 'user1',
         username: 'testuser',
-        status: 'online'
+        status: 'online',
       }
 
       mockDb.getUserByUsername.mockResolvedValue(user)
@@ -293,7 +300,7 @@ describe('Database API Endpoints', () => {
 
       expect(response.body).toEqual({
         success: true,
-        data: user
+        data: user,
       })
       expect(mockDb.getUserByUsername).toHaveBeenCalledWith('testuser')
     })
@@ -307,7 +314,7 @@ describe('Database API Endpoints', () => {
 
       expect(response.body).toEqual({
         success: false,
-        error: 'User not found'
+        error: 'User not found',
       })
     })
 
@@ -320,7 +327,7 @@ describe('Database API Endpoints', () => {
 
       expect(response.body).toEqual({
         success: false,
-        error: 'Failed to fetch user'
+        error: 'Failed to fetch user',
       })
     })
   })
@@ -336,7 +343,7 @@ describe('Database API Endpoints', () => {
           updatedAt: new Date(),
           participants: [
             { user: { username: 'user1' } },
-            { user: { username: 'user2' } }
+            { user: { username: 'user2' } },
           ],
           messages: [
             {
@@ -344,10 +351,10 @@ describe('Database API Endpoints', () => {
               text: 'Hello',
               senderId: 'user1',
               sender: { username: 'user1' },
-              timestamp: new Date()
-            }
-          ]
-        }
+              timestamp: new Date(),
+            },
+          ],
+        },
       ]
 
       mockDb.getConversationsForUser.mockResolvedValue(dbConversations)
@@ -366,8 +373,8 @@ describe('Database API Endpoints', () => {
           id: 'msg1',
           text: 'Hello',
           senderId: 'user1',
-          senderName: 'user1'
-        }
+          senderName: 'user1',
+        },
       })
       expect(mockDb.getConversationsForUser).toHaveBeenCalledWith(userId)
     })
@@ -379,7 +386,7 @@ describe('Database API Endpoints', () => {
 
       expect(response.body).toEqual({
         success: true,
-        data: []
+        data: [],
       })
       expect(mockDb.getConversationsForUser).not.toHaveBeenCalled()
     })
@@ -393,7 +400,7 @@ describe('Database API Endpoints', () => {
 
       expect(response.body).toEqual({
         success: false,
-        error: 'Failed to fetch conversations'
+        error: 'Failed to fetch conversations',
       })
     })
   })
@@ -411,9 +418,9 @@ describe('Database API Endpoints', () => {
           files: [],
           reactions: [{ emoji: '👍', userId: 'user2' }],
           readReceipts: [
-            { userId: 'user2', userName: 'user2', readAt: new Date() }
-          ]
-        }
+            { userId: 'user2', userName: 'user2', readAt: new Date() },
+          ],
+        },
       ]
 
       mockDb.getMessages.mockResolvedValue(dbMessages)
@@ -430,12 +437,12 @@ describe('Database API Endpoints', () => {
         senderId: 'user1',
         senderName: 'user1',
         reactions: [{ emoji: '👍', userId: 'user2' }],
-        readBy: [{ userId: 'user2', userName: 'user2' }]
+        readBy: [{ userId: 'user2', userName: 'user2' }],
       })
       expect(response.body.pagination).toEqual({
         page: 1,
         limit: 50,
-        hasMore: false // Only 1 message, less than limit
+        hasMore: false, // Only 1 message, less than limit
       })
       expect(mockDb.getMessages).toHaveBeenCalledWith(conversationId, 1, 50)
     })
@@ -462,7 +469,7 @@ describe('Database API Endpoints', () => {
         timestamp: new Date(),
         files: [],
         reactions: [],
-        readReceipts: []
+        readReceipts: [],
       }))
 
       mockDb.getMessages.mockResolvedValue(dbMessages)
@@ -483,7 +490,7 @@ describe('Database API Endpoints', () => {
 
       expect(response.body).toEqual({
         success: false,
-        error: 'Failed to fetch messages'
+        error: 'Failed to fetch messages',
       })
     })
   })
@@ -504,12 +511,12 @@ describe('Database API Endpoints', () => {
               filename: 'test.jpg',
               path: '/uploads/test.jpg',
               type: 'image/jpeg',
-              size: 1024
-            }
+              size: 1024,
+            },
           ],
           reactions: [],
-          readReceipts: []
-        }
+          readReceipts: [],
+        },
       ]
 
       mockDb.getMessages.mockResolvedValue(dbMessages)
@@ -523,7 +530,7 @@ describe('Database API Endpoints', () => {
         name: 'test.jpg',
         path: '/uploads/test.jpg',
         type: 'image/jpeg',
-        size: 1024
+        size: 1024,
       })
     })
 
@@ -538,8 +545,8 @@ describe('Database API Endpoints', () => {
           timestamp: new Date(),
           files: [],
           reactions: [],
-          readReceipts: []
-        }
+          readReceipts: [],
+        },
       ]
 
       mockDb.getMessages.mockResolvedValue(dbMessages)

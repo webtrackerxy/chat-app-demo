@@ -12,18 +12,20 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  publicKey String?
-  lastSeen  DateTime @default(now())
-  status    String   @default("offline")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  username   String   @unique
+  publicKey  String?
+  privateKey String?  // Encrypted private key
+  lastSeen   DateTime @default(now())
+  status     String   @default("offline")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
   sentMessages         Message[]              @relation("MessageSender")
   conversations        ConversationParticipant[]
   createdConversations Conversation[]         @relation("ConversationCreator")
+  conversationKeys     ConversationKey[]
 
   @@map("users")
 }
@@ -40,6 +42,7 @@ model Conversation {
   creator      User?                    @relation("ConversationCreator", fields: [createdBy], references: [id])
   participants ConversationParticipant[]
   messages     Message[]
+  keys         ConversationKey[]
 
   @@map("conversations")
 }
@@ -126,4 +129,21 @@ model ReadReceipt {
 
   @@unique([messageId, userId])
   @@map("read_receipts")
+}
+
+model ConversationKey {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  keyId          String   @unique
+  encryptedKey   String   // Conversation key encrypted with user's public key
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_keys")
 }

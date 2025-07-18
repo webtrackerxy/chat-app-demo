@@ -6,8 +6,8 @@ import { Message, PaginatedResponse } from '@chat-types'
 // Mock the chatApi
 jest.mock('@api/chatApi', () => ({
   chatApi: {
-    getMessageHistory: jest.fn()
-  }
+    getMessageHistory: jest.fn(),
+  },
 }))
 
 const mockChatApi = chatApi as jest.Mocked<typeof chatApi>
@@ -20,7 +20,7 @@ describe('useMessageHistory', () => {
   const createMockResponse = (
     messages: Message[],
     page: number = 1,
-    hasMore: boolean = false
+    hasMore: boolean = false,
   ): { success: true; data: PaginatedResponse<Message> } => ({
     success: true,
     data: {
@@ -28,9 +28,9 @@ describe('useMessageHistory', () => {
       pagination: {
         page,
         limit: 50,
-        hasMore
-      }
-    }
+        hasMore,
+      },
+    },
   })
 
   const createMockMessage = (id: string, text: string): Message => ({
@@ -39,7 +39,7 @@ describe('useMessageHistory', () => {
     senderId: 'user1',
     senderName: 'User1',
     timestamp: new Date(),
-    type: 'text'
+    type: 'text',
   })
 
   test('should initialize with empty state', () => {
@@ -53,14 +53,9 @@ describe('useMessageHistory', () => {
   })
 
   test('should load initial messages successfully', async () => {
-    const mockMessages = [
-      createMockMessage('msg1', 'Hello'),
-      createMockMessage('msg2', 'World')
-    ]
-    
-    mockChatApi.getMessageHistory.mockResolvedValue(
-      createMockResponse(mockMessages, 1, true)
-    )
+    const mockMessages = [createMockMessage('msg1', 'Hello'), createMockMessage('msg2', 'World')]
+
+    mockChatApi.getMessageHistory.mockResolvedValue(createMockResponse(mockMessages, 1, true))
 
     const { result } = renderHook(() => useMessageHistory())
 
@@ -73,11 +68,11 @@ describe('useMessageHistory', () => {
     expect(result.current.error).toBe(null)
     expect(result.current.hasMore).toBe(true)
     expect(result.current.currentPage).toBe(1)
-    
+
     expect(mockChatApi.getMessageHistory).toHaveBeenCalledWith({
       conversationId: 'conv1',
       page: 1,
-      limit: 50
+      limit: 50,
     })
   })
 
@@ -86,7 +81,7 @@ describe('useMessageHistory', () => {
     const promise = new Promise((resolve) => {
       resolvePromise = resolve
     })
-    
+
     mockChatApi.getMessageHistory.mockReturnValue(promise as any)
 
     const { result } = renderHook(() => useMessageHistory())
@@ -110,9 +105,9 @@ describe('useMessageHistory', () => {
     const errorResponse = {
       success: false,
       error: 'Failed to load messages',
-      data: null as any
+      data: null as any,
     }
-    
+
     mockChatApi.getMessageHistory.mockResolvedValue(errorResponse)
 
     const { result } = renderHook(() => useMessageHistory())
@@ -142,7 +137,7 @@ describe('useMessageHistory', () => {
   test('should load more messages and append to existing list', async () => {
     const initialMessages = [createMockMessage('msg1', 'Hello')]
     const newMessages = [createMockMessage('msg2', 'World')]
-    
+
     // First call for initial messages
     mockChatApi.getMessageHistory
       .mockResolvedValueOnce(createMockResponse(initialMessages, 1, true))
@@ -171,16 +166,14 @@ describe('useMessageHistory', () => {
     expect(mockChatApi.getMessageHistory).toHaveBeenNthCalledWith(2, {
       conversationId: 'conv1',
       page: 2,
-      limit: 50
+      limit: 50,
     })
   })
 
   test('should not load more when hasMore is false', async () => {
     const mockMessages = [createMockMessage('msg1', 'Hello')]
-    
-    mockChatApi.getMessageHistory.mockResolvedValue(
-      createMockResponse(mockMessages, 1, false)
-    )
+
+    mockChatApi.getMessageHistory.mockResolvedValue(createMockResponse(mockMessages, 1, false))
 
     const { result } = renderHook(() => useMessageHistory())
 
@@ -201,12 +194,12 @@ describe('useMessageHistory', () => {
 
   test('should not load more when already loading', async () => {
     const mockMessages = [createMockMessage('msg1', 'Hello')]
-    
+
     let resolvePromise: (value: any) => void
     const promise = new Promise((resolve) => {
       resolvePromise = resolve
     })
-    
+
     mockChatApi.getMessageHistory
       .mockResolvedValueOnce(createMockResponse(mockMessages, 1, true))
       .mockReturnValueOnce(promise as any)
@@ -253,9 +246,9 @@ describe('useMessageHistory', () => {
     const initialMessages = [createMockMessage('msg1', 'Hello')]
     const refreshedMessages = [
       createMockMessage('msg1', 'Hello'),
-      createMockMessage('msg2', 'New message')
+      createMockMessage('msg2', 'New message'),
     ]
-    
+
     mockChatApi.getMessageHistory
       .mockResolvedValueOnce(createMockResponse(initialMessages, 1, true))
       .mockResolvedValueOnce(createMockResponse(refreshedMessages, 1, false))
@@ -283,7 +276,7 @@ describe('useMessageHistory', () => {
     expect(mockChatApi.getMessageHistory).toHaveBeenNthCalledWith(2, {
       conversationId: 'conv1',
       page: 1,
-      limit: 50
+      limit: 50,
     })
   })
 
@@ -300,7 +293,7 @@ describe('useMessageHistory', () => {
   test('should reset state when loading initial messages for different conversation', async () => {
     const conv1Messages = [createMockMessage('msg1', 'Conv1 message')]
     const conv2Messages = [createMockMessage('msg2', 'Conv2 message')]
-    
+
     mockChatApi.getMessageHistory
       .mockResolvedValueOnce(createMockResponse(conv1Messages, 1, false))
       .mockResolvedValueOnce(createMockResponse(conv2Messages, 1, false))
@@ -327,12 +320,12 @@ describe('useMessageHistory', () => {
     expect(mockChatApi.getMessageHistory).toHaveBeenNthCalledWith(1, {
       conversationId: 'conv1',
       page: 1,
-      limit: 50
+      limit: 50,
     })
     expect(mockChatApi.getMessageHistory).toHaveBeenNthCalledWith(2, {
       conversationId: 'conv2',
       page: 1,
-      limit: 50
+      limit: 50,
     })
   })
 
@@ -343,11 +336,11 @@ describe('useMessageHistory', () => {
         pagination: {
           page: 1,
           limit: 50,
-          hasMore: false
-        }
-      } as any // Missing data property
+          hasMore: false,
+        },
+      } as any, // Missing data property
     }
-    
+
     mockChatApi.getMessageHistory.mockResolvedValue(responseWithoutData)
 
     const { result } = renderHook(() => useMessageHistory())

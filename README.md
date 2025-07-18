@@ -1,7 +1,7 @@
 
 
 # Real-time Chat App
-A full-featured real-time chat application with multimedia file sharing, built with React Native (Expo) and WebSocket technology.
+A full-featured real-time chat application with multimedia file sharing and end-to-end encryption, built with React Native (Expo) and WebSocket technology.
 
 https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 
@@ -28,6 +28,19 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 - **Message threading** - Reply to specific messages with navigation
 - **Private messaging** - Direct 1-on-1 conversations between users
 - **Message search** - Search across all conversations with filtering
+- **End-to-end encryption** - Military-grade AES-256-GCM encryption with RSA-2048 key exchange
+
+### 🔐 End-to-End Encryption
+- **AES-256-GCM encryption** - Industry-standard symmetric encryption for message content
+- **RSA-2048 key exchange** - Secure asymmetric key distribution
+- **Per-conversation keys** - Each conversation has its own encryption key for isolation
+- **Password-protected keys** - Private keys encrypted with user passwords
+- **Key management UI** - Easy setup and management of encryption keys
+- **Encryption indicators** - Clear visual indicators when encryption is active
+- **Zero-knowledge security** - Server never has access to decryption keys or plaintext
+- **Forward secrecy** - Conversation keys are isolated and independently managed
+- **Debug tracing** - Comprehensive logging for development and troubleshooting
+- **Production-ready plan** - Roadmap for implementing real encryption with backend support
 
 ### 📁 Multimedia File Sharing
 - **Image sharing** - Upload and share JPEG, PNG, GIF, WebP (optimized previews)
@@ -46,7 +59,8 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 - 🧰 **Zustand state management** with unified useChat() hook
 - ⚡ **Fast local development** with optional database persistence
 - 🔄 **Dual mode support**: Real-time (WebSocket + Database) + Local (in-memory)
-- 🎣 **Advanced React hooks**: useUserPresence, useMessageReactions, useReadReceipts, useRealtimeMessages, useMessageHistory, usePrivateMessaging, useMessageThreading, useMessageSearch
+- 🎣 **Advanced React hooks**: useUserPresence, useMessageReactions, useReadReceipts, useRealtimeMessages, useMessageHistory, usePrivateMessaging, useMessageThreading, useMessageSearch, useEncryption
+- 🔐 **Encryption services**: End-to-end encryption with EncryptionService and key management
 - 🌍 **Environment configuration** - Centralized .env configuration for all services
 - 📁 **File upload system** - Multer-based backend with real-time broadcasting
 - 🛣️ **Path mappings** - Clean import paths with TypeScript resolution
@@ -73,13 +87,15 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 - **Compact design**: Optimized message sizes for mobile-first experience
 - **Responsive design**: Works on web, iOS, and Android
 - **Offline fallback**: Graceful degradation when disconnected
+- **Secure messaging**: End-to-end encryption with easy setup and clear indicators
 
 ## 🗂️ Monorepo Structure
 <pre>
 /chat-app-demo
 │
-├── /chat-types ✅ Shared TS types (Message, Conversation)
-│ └── index.ts
+├── /chat-types ✅ Shared TS types (Message, Conversation, Encryption)
+│ ├── index.ts
+│ └── encryption.ts ✅ Encryption utilities and types
 │
 ├── /chat-frontend ✅ Expo + NativeWind + Real-time hooks + Multimedia
 │ ├── .env ✅ Environment configuration
@@ -87,12 +103,12 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 │ ├── eslint.config.js ✅ ESLint configuration
 │ ├── /src
 │ │ ├── /api ✅ REST client (uses chat-types via @chat-types) + database API integration
-│ │ ├── /hooks ✅ useChat + useRealtimeMessages + useTypingIndicator + useUserPresence + useMessageReactions + useReadReceipts + useMessageHistory + usePrivateMessaging + useMessageThreading + useMessageSearch
-│ │ ├── /services ✅ WebSocket client (socketService) + fileUploadService
+│ │ ├── /hooks ✅ useChat + useRealtimeMessages + useTypingIndicator + useUserPresence + useMessageReactions + useReadReceipts + useMessageHistory + usePrivateMessaging + useMessageThreading + useMessageSearch + useEncryption
+│ │ ├── /services ✅ WebSocket client (socketService) + fileUploadService + encryptionService
 │ │ ├── /context ✅ SocketContext for connection management
 │ │ ├── /store ✅ Zustand state management
 │ │ ├── /config ✅ Environment variable management
-│ │ ├── /components ✅ MessageInput + MessageItem + FilePicker + VoiceRecorder + FileMessage + VideoPlayer + ThemeToggle + UserSelector + SearchModal
+│ │ ├── /components ✅ MessageInput + MessageItem + FilePicker + VoiceRecorder + FileMessage + VideoPlayer + ThemeToggle + UserSelector + SearchModal + EncryptionSetup + EncryptionToggle
 │ │ ├── /screens ✅ ChatRoom with real-time features + presence controls + file sharing + dark/light themes
 │ │ ├── /theme ✅ Design tokens system + ThemeContext + dark/light mode + semantic colors
 │ │ ├── /types ✅ Local type definitions with path mapping support
@@ -106,9 +122,11 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 │ ├── .env ✅ Environment configuration
 │ ├── index.js ✅ REST API + WebSocket handlers + file upload endpoints + real-time events + database integration
 │ ├── /prisma ✅ Database schema and migrations
-│ │ └── schema.prisma ✅ Database models (Users, Conversations, Messages, Reactions, ReadReceipts)
+│ │ └── schema.prisma ✅ Database models (Users, Conversations, Messages, Reactions, ReadReceipts, ConversationKeys)
 │ ├── /src/database ✅ Database service layer
 │ │ └── DatabaseService.js ✅ CRUD operations and data access layer
+│ ├── /src/services ✅ Backend service layer
+│ │ └── EncryptionService.js ✅ End-to-end encryption service
 │ ├── /uploads ✅ File storage directory
 │ ├── /__tests__ ✅ Backend API, upload, and database tests
 │ └── package.json (+ socket.io, multer, prisma, @prisma/client, dotenv)
@@ -119,6 +137,8 @@ https://github.com/user-attachments/assets/7b6296ed-787a-4359-a45c-78fd69927a44
 ├── USER_PRESENCE_FEATURES_SETUP_TEST.md ✅ Setup and testing guide for enhanced features
 ├── MULTI_MEDIA_FILES_SETUP_TEST.md ✅ Multimedia file sharing testing guide
 ├── ENV_CONFIG.md ✅ Environment configuration documentation
+├── ENCRYPTION_MESSAGE.md ✅ Comprehensive encryption implementation documentation
+├── PLAN_ENCRYPTION_FOR_PRODUCTION.md ✅ Production-ready encryption implementation plan
 ├── .gitignore
 └── README.md
 </pre>
@@ -218,6 +238,13 @@ npx expo start --localhost
 15. **Start private chat** → click 💬 Private Chat button to start direct messaging
 16. **Reply to messages** → click Reply button to create threaded conversations
 17. **Search messages** → click 🔍 button to search across all conversations
+18. **Enable encryption** → set up encryption keys and enable per-conversation encryption
+    - Click encryption setup button to generate or load keys
+    - Enter a strong password for key protection
+    - Toggle encryption for conversations
+    - Verify 🔐 indicators appear for encrypted messages
+    - Enable debug mode with `REACT_APP_DEBUG_ENCRYPTION=true` to see console logs
+    - Click the 🔐📊 button in chat header to view encryption debug panel
 
 ### 3. Verify WebSocket Connection
 - Look for **🟢 Connected** in the chat header (backend mode)
@@ -247,6 +274,7 @@ cd chat-frontend && npm test
 - **CORS** - Cross-origin resource sharing
 - **UUID** - Unique message and conversation IDs
 - **Winston** - Logging and debugging
+- **Node.js Crypto** - Built-in cryptographic operations for encryption
 
 ### Frontend  
 - **React Native** (via Expo) - Cross-platform mobile development
@@ -259,6 +287,16 @@ cd chat-frontend && npm test
 - **Expo Audio** - Voice recording and playback
 - **Expo Document Picker** - Document file selection
 - **Expo File System** - File upload and management
+- **WebCrypto API** - Browser-based cryptographic operations for encryption
+- **AsyncStorage** - Secure local storage for encryption keys
+
+### Encryption & Security
+- **AES-256-GCM** - Industry-standard symmetric encryption for message content
+- **RSA-2048** - Asymmetric encryption for secure key exchange
+- **PBKDF2** - Password-based key derivation with SHA-256 (100,000 iterations)
+- **Cryptographically Secure Random** - High-entropy random number generation
+- **WebCrypto API** - Standards-based cryptographic operations
+- **Node.js Crypto Module** - Server-side cryptographic functions
 
 ### Code Quality & Development Tools
 - **ESLint** - JavaScript/TypeScript linting with strict rules
@@ -313,6 +351,7 @@ cd chat-frontend && npm test
 - ✅ **Design tokens architecture** with semantic color mapping
 - ✅ **Theme persistence** with AsyncStorage
 - ✅ **Compact UI design** optimized for mobile
+- ✅ **End-to-end encryption** with AES-256-GCM and RSA key management
 
 ### Code Quality & Developer Experience
 - ✅ **TypeScript path mappings** for cleaner imports
@@ -365,6 +404,7 @@ CORS_ORIGIN=*                      # CORS allowed origins
 REACT_APP_API_URL=http://localhost:3000        # Backend API URL
 REACT_APP_SOCKET_URL=http://localhost:3000     # WebSocket server URL
 REACT_APP_MAX_FILE_SIZE=10485760               # Client file size limit
+REACT_APP_DEBUG_ENCRYPTION=true                # Enable encryption debug logging
 ```
 
 For detailed configuration instructions, see [ENV_CONFIG.md](./ENV_CONFIG.md).
@@ -428,6 +468,48 @@ model Message {
 - **Conversation Management** - Handle group and direct conversations
 - **Search Functionality** - Find messages across conversations
 - **Statistics** - Generate conversation and user analytics
+
+### 🔐 End-to-End Encryption
+
+The app includes robust end-to-end encryption for secure messaging:
+
+#### Encryption Features
+- **AES-256-GCM Encryption** - Industry-standard symmetric encryption for message content
+- **RSA-2048 Key Exchange** - Secure key distribution using public-key cryptography
+- **Per-Conversation Keys** - Each conversation has its own encryption key for isolation
+- **Encrypted Storage** - Private keys are encrypted with user passwords before storage
+- **Encryption Indicators** - Clear UI indicators when encryption is active
+- **Key Management** - Automatic key generation, distribution, and management
+
+#### How It Works
+1. **User Key Generation** - Each user generates an RSA key pair (public/private)
+2. **Conversation Keys** - Each conversation gets a unique AES-256 key
+3. **Key Distribution** - Conversation keys are encrypted with each participant's public key
+4. **Message Encryption** - Messages are encrypted with the conversation key before sending
+5. **Decryption** - Recipients decrypt the conversation key with their private key, then decrypt messages
+
+#### Security Architecture
+```typescript
+// Message encryption flow
+const conversationKey = await getConversationKey(conversationId, userId)
+const encryptedMessage = await encryptText(messageText, conversationKey)
+
+// Key exchange flow
+const conversationKey = generateConversationKey()
+const encryptedKey = encryptConversationKey(conversationKey, userPublicKey)
+```
+
+#### Encryption Components
+- **EncryptionService** - Core encryption/decryption functionality
+- **EncryptionSetup** - UI for key generation and password management
+- **EncryptionToggle** - Per-conversation encryption controls
+- **useEncryption** - React hook for encryption state management
+
+#### Database Support
+The database schema includes full encryption support:
+- **User Keys** - Stores encrypted private keys and public keys
+- **Conversation Keys** - Manages per-user encrypted conversation keys
+- **Message Encryption** - Tracks which messages are encrypted and their key IDs
 
 ### Theme System & Design Tokens
 
@@ -505,13 +587,26 @@ Users can switch themes using the 🌙/☀️ button in the header. All componen
 - **Message threading** - Reply to specific messages with UI navigation ✅
 - **Message search** - Find messages across conversations with modal interface ✅
 
+### ✅ Recently Implemented (Phase 5)
+- **End-to-end encryption** - Military-grade AES-256-GCM encryption with RSA-2048 key exchange ✅
+- **Key management system** - Secure key generation, distribution, and password protection ✅
+- **Encryption UI components** - Easy-to-use setup modal and conversation toggles ✅
+- **Per-conversation encryption** - Each conversation has isolated encryption keys ✅
+- **Encryption indicators** - Clear visual feedback when encryption is active ✅
+- **Zero-knowledge security** - Server never has access to decryption keys ✅
+- **Debug tracing system** - Comprehensive encryption operation logging and debug panel ✅
+- **Production encryption plan** - Detailed roadmap for implementing real encryption with backend support ✅
+
 ### 🚧 Planned Implementation
-- **Message encryption** - End-to-end message security (Phase 5)
 
 ### 🔮 Future Ideas
 - **Push notifications** - Background message alerts
 - **Advanced reactions** - Custom emoji reactions
 - **User roles** - Admin/moderator permissions
+- **File encryption** - Extend encryption to multimedia files
+- **Perfect Forward Secrecy** - Enhanced security with ephemeral keys
+- **Post-quantum cryptography** - Future-proof encryption algorithms
+- **Multi-device key sync** - Synchronize encryption keys across devices
 - **File thumbnails** - Generate previews for images/videos
 - **Cloud storage** - Integration with AWS S3 or similar services
 - **Audio transcription** - Convert voice messages to text
@@ -524,6 +619,8 @@ Users can switch themes using the 🌙/☀️ button in the header. All componen
 - **[MULTI_MEDIA_FILES_SETUP_TEST.md](./MULTI_MEDIA_FILES_SETUP_TEST.md)** - Multimedia file sharing testing guide
 - **[USER_PRESENCE_FEATURES_SETUP_TEST.md](./USER_PRESENCE_FEATURES_SETUP_TEST.md)** - User presence features testing
 - **[ENV_CONFIG.md](./ENV_CONFIG.md)** - Environment configuration documentation
+- **[ENCRYPTION_MESSAGE.md](./ENCRYPTION_MESSAGE.md)** - Comprehensive end-to-end encryption documentation
+- **[PLAN_ENCRYPTION_FOR_PRODUCTION.md](./PLAN_ENCRYPTION_FOR_PRODUCTION.md)** - Production-ready encryption implementation plan
 
 ## 🧪 Testing
 

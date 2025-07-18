@@ -1,5 +1,5 @@
 import React, { useRef } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, Text } from 'react-native'
 import { Button } from './Button'
 import { FilePicker } from './FilePicker'
 import { VoiceRecorder } from './VoiceRecorder'
@@ -23,6 +23,8 @@ interface MessageInputProps {
   // Voice recording props
   onVoiceRecorded?: (fileData: FileAttachment) => void
   showVoiceRecorder?: boolean
+  // Encryption props
+  encryptionEnabled?: boolean
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -39,6 +41,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   showFilePicker = false,
   onVoiceRecorded,
   showVoiceRecorder = false,
+  encryptionEnabled = false,
 }) => {
   const { colors, spacing, borderRadius, typography } = useTheme()
   const styles = createStyles(colors, spacing, borderRadius, typography)
@@ -84,38 +87,45 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.attachmentButtons}>
-        {showFilePicker && onFileSelected && (
-          <FilePicker
-            onFileSelected={onFileSelected}
-            disabled={disabled}
-            onError={(error) => console.error('File picker error:', error)}
-          />
-        )}
-        {showVoiceRecorder && onVoiceRecorded && (
-          <VoiceRecorder
-            onVoiceRecorded={onVoiceRecorded}
-            disabled={disabled}
-            onError={(error) => console.error('Voice recorder error:', error)}
-          />
-        )}
+      {encryptionEnabled && (
+        <View style={styles.encryptionIndicator}>
+          <Text style={styles.encryptionText}>🔐 Encrypted</Text>
+        </View>
+      )}
+      <View style={styles.inputRow}>
+        <View style={styles.attachmentButtons}>
+          {showFilePicker && onFileSelected && (
+            <FilePicker
+              onFileSelected={onFileSelected}
+              disabled={disabled}
+              onError={(error) => console.error('File picker error:', error)}
+            />
+          )}
+          {showVoiceRecorder && onVoiceRecorded && (
+            <VoiceRecorder
+              onVoiceRecorded={onVoiceRecorded}
+              disabled={disabled}
+              onError={(error) => console.error('Voice recorder error:', error)}
+            />
+          )}
+        </View>
+        <TextInput
+          style={styles.input}
+          value={value}
+          onChangeText={handleTextChange}
+          placeholder={placeholder}
+          placeholderTextColor={colors.semantic.text.tertiary}
+          multiline
+          maxLength={500}
+        />
+        <Button
+          title='Send'
+          onPress={handleSend}
+          disabled={!canSend}
+          style={styles.sendButton}
+          size='medium'
+        />
       </View>
-      <TextInput
-        style={styles.input}
-        value={value}
-        onChangeText={handleTextChange}
-        placeholder={placeholder}
-        placeholderTextColor={colors.semantic.text.tertiary}
-        multiline
-        maxLength={500}
-      />
-      <Button
-        title='Send'
-        onPress={handleSend}
-        disabled={!canSend}
-        style={styles.sendButton}
-        size='medium'
-      />
     </View>
   )
 }
@@ -123,12 +133,28 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 const createStyles = (colors: any, spacing: any, borderRadius: any, typography: any) =>
   StyleSheet.create({
     container: {
-      flexDirection: 'row',
+      flexDirection: 'column',
       padding: spacing.lg,
       borderTopWidth: 1,
       borderTopColor: colors.semantic.border.secondary,
-      alignItems: 'flex-end',
       backgroundColor: colors.semantic.surface.primary,
+    },
+    encryptionIndicator: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.success?.[500] || colors.primary[500],
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      borderRadius: borderRadius.md,
+      marginBottom: spacing.sm,
+    },
+    encryptionText: {
+      ...typography.body.small,
+      color: colors.white,
+      fontSize: 12,
+    },
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
     },
     attachmentButtons: {
       flexDirection: 'row',

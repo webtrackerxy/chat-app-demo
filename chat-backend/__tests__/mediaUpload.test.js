@@ -106,7 +106,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 })
 
 // Error handler for the test app
-app.use((error, req, res) => {
+app.use((error, req, res, next) => {
   // Handle multer errors specifically
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
@@ -144,13 +144,17 @@ app.use((error, req, res) => {
 
 // File download endpoint
 app.get('/uploads/:filename', (req, res) => {
-  const filename = req.params.filename
-  const filePath = path.join(__dirname, '..', 'test-uploads', filename)
+  try {
+    const filename = req.params.filename
+    const filePath = path.join(__dirname, '..', 'test-uploads', filename)
 
-  if (fs.existsSync(filePath)) {
-    res.sendFile(filePath)
-  } else {
-    res.status(404).json({ error: 'File not found' })
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath)
+    } else {
+      res.status(404).json({ error: 'File not found' })
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 

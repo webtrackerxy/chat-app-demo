@@ -1,8 +1,8 @@
 const { PrismaClient } = require('../../generated/prisma')
 
 class DatabaseService {
-  constructor() {
-    this.prisma = new PrismaClient()
+  constructor(prisma) {
+    this.prisma = prisma || new PrismaClient()
   }
 
   async connect() {
@@ -23,26 +23,26 @@ class DatabaseService {
   // User operations
   async createUser(userData) {
     return await this.prisma.user.create({
-      data: userData
+      data: userData,
     })
   }
 
   async getUserByUsername(username) {
     return await this.prisma.user.findUnique({
-      where: { username }
+      where: { username },
     })
   }
 
   async getUserById(id) {
     return await this.prisma.user.findUnique({
-      where: { id }
+      where: { id },
     })
   }
 
   async updateUserStatus(userId, status, lastSeen = new Date()) {
     return await this.prisma.user.update({
       where: { id: userId },
-      data: { status, lastSeen }
+      data: { status, lastSeen },
     })
   }
 
@@ -51,7 +51,7 @@ class DatabaseService {
     return await this.prisma.$transaction(async (prisma) => {
       // Create conversation
       const conversation = await prisma.conversation.create({
-        data: conversationData
+        data: conversationData,
       })
 
       // Add participants
@@ -59,8 +59,8 @@ class DatabaseService {
         await prisma.conversationParticipant.createMany({
           data: participantUserIds.map(userId => ({
             conversationId: conversation.id,
-            userId
-          }))
+            userId,
+          })),
         })
       }
 
@@ -68,17 +68,17 @@ class DatabaseService {
         where: { id: conversation.id },
         include: {
           participants: {
-            include: { user: true }
+            include: { user: true },
           },
           messages: {
             orderBy: { timestamp: 'desc' },
             take: 1,
             include: {
               sender: true,
-              files: true
-            }
-          }
-        }
+              files: true,
+            },
+          },
+        },
       })
     })
   }
@@ -89,24 +89,24 @@ class DatabaseService {
         participants: {
           some: {
             userId,
-            leftAt: null
-          }
-        }
+            leftAt: null,
+          },
+        },
       },
       include: {
         participants: {
-          include: { user: true }
+          include: { user: true },
         },
         messages: {
           orderBy: { timestamp: 'desc' },
           take: 1,
           include: {
             sender: true,
-            files: true
-          }
-        }
+            files: true,
+          },
+        },
       },
-      orderBy: { updatedAt: 'desc' }
+      orderBy: { updatedAt: 'desc' },
     })
   }
 
@@ -115,9 +115,9 @@ class DatabaseService {
       where: { id: conversationId },
       include: {
         participants: {
-          include: { user: true }
-        }
-      }
+          include: { user: true },
+        },
+      },
     })
   }
 
@@ -126,20 +126,20 @@ class DatabaseService {
     const message = await this.prisma.message.create({
       data: {
         ...messageData,
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       include: {
         sender: true,
         files: true,
         reactions: true,
-        readReceipts: true
-      }
+        readReceipts: true,
+      },
     })
 
     // Update conversation timestamp
     await this.prisma.conversation.update({
       where: { id: messageData.conversationId },
-      data: { updatedAt: new Date() }
+      data: { updatedAt: new Date() },
     })
 
     return message
@@ -156,12 +156,12 @@ class DatabaseService {
         reactions: true,
         readReceipts: true,
         replyTo: {
-          include: { sender: true }
-        }
+          include: { sender: true },
+        },
       },
       orderBy: { timestamp: 'desc' },
       skip,
-      take: limit
+      take: limit,
     })
   }
 
@@ -174,28 +174,28 @@ class DatabaseService {
         reactions: true,
         readReceipts: true,
         replyTo: {
-          include: { sender: true }
-        }
-      }
+          include: { sender: true },
+        },
+      },
     })
   }
 
   async deleteMessage(messageId) {
     return await this.prisma.message.delete({
-      where: { id: messageId }
+      where: { id: messageId },
     })
   }
 
   // File operations
   async saveMessageFile(fileData) {
     return await this.prisma.messageFile.create({
-      data: fileData
+      data: fileData,
     })
   }
 
   async getMessageFiles(messageId) {
     return await this.prisma.messageFile.findMany({
-      where: { messageId }
+      where: { messageId },
     })
   }
 
@@ -205,30 +205,30 @@ class DatabaseService {
       where: {
         messageId_userId: {
           messageId,
-          userId
-        }
-      }
+          userId,
+        },
+      },
     })
 
     if (existingReaction) {
       if (existingReaction.emoji === emoji) {
         // Remove reaction if it's the same emoji
         await this.prisma.messageReaction.delete({
-          where: { id: existingReaction.id }
+          where: { id: existingReaction.id },
         })
         return { action: 'removed', emoji }
       } else {
         // Update to new emoji
         const updated = await this.prisma.messageReaction.update({
           where: { id: existingReaction.id },
-          data: { emoji }
+          data: { emoji },
         })
         return { action: 'updated', emoji: updated.emoji }
       }
     } else {
       // Create new reaction
       await this.prisma.messageReaction.create({
-        data: { messageId, userId, emoji }
+        data: { messageId, userId, emoji },
       })
       return { action: 'added', emoji }
     }
@@ -236,7 +236,7 @@ class DatabaseService {
 
   async getMessageReactions(messageId) {
     return await this.prisma.messageReaction.findMany({
-      where: { messageId }
+      where: { messageId },
     })
   }
 
@@ -246,22 +246,22 @@ class DatabaseService {
       where: {
         messageId_userId: {
           messageId,
-          userId
-        }
+          userId,
+        },
       },
       update: { readAt: new Date() },
       create: {
         messageId,
         userId,
         userName,
-        readAt: new Date()
-      }
+        readAt: new Date(),
+      },
     })
   }
 
   async getReadReceipts(messageId) {
     return await this.prisma.readReceipt.findMany({
-      where: { messageId }
+      where: { messageId },
     })
   }
 
@@ -269,8 +269,8 @@ class DatabaseService {
   async searchMessages(query, conversationId = null, limit = 50) {
     const where = {
       text: {
-        contains: query
-      }
+        contains: query,
+      },
     }
 
     if (conversationId) {
@@ -281,10 +281,10 @@ class DatabaseService {
       where,
       include: {
         sender: true,
-        conversation: true
+        conversation: true,
       },
       orderBy: { timestamp: 'desc' },
-      take: limit
+      take: limit,
     })
   }
 
@@ -302,7 +302,7 @@ class DatabaseService {
     return await this.saveMessage({
       ...replyMessageData,
       threadId,
-      replyToId: parentMessageId
+      replyToId: parentMessageId,
     })
   }
 
@@ -311,16 +311,16 @@ class DatabaseService {
       where: {
         OR: [
           { id: threadId },
-          { threadId }
-        ]
+          { threadId },
+        ],
       },
       include: {
         sender: true,
         files: true,
         reactions: true,
-        readReceipts: true
+        readReceipts: true,
       },
-      orderBy: { timestamp: 'asc' }
+      orderBy: { timestamp: 'asc' },
     })
   }
 
@@ -329,9 +329,9 @@ class DatabaseService {
     return await this.prisma.conversationParticipant.findMany({
       where: {
         conversationId,
-        leftAt: null
+        leftAt: null,
       },
-      include: { user: true }
+      include: { user: true },
     })
   }
 
@@ -339,8 +339,8 @@ class DatabaseService {
     return await this.prisma.conversationParticipant.create({
       data: {
         conversationId,
-        userId
-      }
+        userId,
+      },
     })
   }
 
@@ -349,21 +349,21 @@ class DatabaseService {
       where: {
         conversationId_userId: {
           conversationId,
-          userId
-        }
+          userId,
+        },
       },
-      data: { leftAt: new Date() }
+      data: { leftAt: new Date() },
     })
   }
 
   // Get conversation statistics
   async getConversationStats(conversationId) {
     const messageCount = await this.prisma.message.count({
-      where: { conversationId }
+      where: { conversationId },
     })
 
     const participantCount = await this.prisma.conversationParticipant.count({
-      where: { conversationId, leftAt: null }
+      where: { conversationId, leftAt: null },
     })
 
     return { messageCount, participantCount }
@@ -382,25 +382,25 @@ class DatabaseService {
       const conversation = await prisma.conversation.create({
         data: {
           type: 'direct',
-          createdBy: user1Id
-        }
+          createdBy: user1Id,
+        },
       })
 
       // Add both participants
       await prisma.conversationParticipant.createMany({
         data: [
           { conversationId: conversation.id, userId: user1Id },
-          { conversationId: conversation.id, userId: user2Id }
-        ]
+          { conversationId: conversation.id, userId: user2Id },
+        ],
       })
 
       return await prisma.conversation.findUnique({
         where: { id: conversation.id },
         include: {
           participants: {
-            include: { user: true }
-          }
-        }
+            include: { user: true },
+          },
+        },
       })
     })
   }
@@ -412,37 +412,37 @@ class DatabaseService {
         participants: {
           every: {
             userId: { in: [user1Id, user2Id] },
-            leftAt: null
-          }
-        }
+            leftAt: null,
+          },
+        },
       },
       include: {
         participants: {
-          include: { user: true }
-        }
-      }
+          include: { user: true },
+        },
+      },
     })
 
     // Filter to ensure exactly 2 participants
     return conversations.find(conv => 
       conv.participants.length === 2 &&
       conv.participants.some(p => p.userId === user1Id) &&
-      conv.participants.some(p => p.userId === user2Id)
+      conv.participants.some(p => p.userId === user2Id),
     )
   }
 
   async getAllUsersForDirectMessages(currentUserId) {
     return await this.prisma.user.findMany({
       where: {
-        id: { not: currentUserId }
+        id: { not: currentUserId },
       },
       select: {
         id: true,
         username: true,
         status: true,
-        lastSeen: true
+        lastSeen: true,
       },
-      orderBy: { username: 'asc' }
+      orderBy: { username: 'asc' },
     })
   }
 
@@ -453,23 +453,23 @@ class DatabaseService {
         participants: {
           some: {
             userId,
-            leftAt: null
-          }
-        }
+            leftAt: null,
+          },
+        },
       },
       include: {
         participants: {
-          include: { user: true }
+          include: { user: true },
         },
         messages: {
           orderBy: { timestamp: 'desc' },
           take: 1,
           include: {
-            sender: true
-          }
-        }
+            sender: true,
+          },
+        },
       },
-      orderBy: { updatedAt: 'desc' }
+      orderBy: { updatedAt: 'desc' },
     })
   }
 }

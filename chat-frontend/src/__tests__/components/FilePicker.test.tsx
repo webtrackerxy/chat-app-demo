@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, fireEvent, waitFor } from '@testing-library/react'
+import { render, fireEvent, waitFor } from '@testing-library/react-native'
 import { Alert } from 'react-native'
 import { FilePicker } from '@components/FilePicker'
 import * as ImagePicker from 'expo-image-picker'
@@ -282,7 +282,7 @@ describe('FilePicker Component', () => {
 
   it('handles user cancellation', async () => {
     mockImagePicker.requestMediaLibraryPermissionsAsync.mockResolvedValue({
-      status: 'granted' as const,
+      status: ImagePicker.PermissionStatus.GRANTED,
       canAskAgain: true,
       granted: true,
       expires: 'never' as const,

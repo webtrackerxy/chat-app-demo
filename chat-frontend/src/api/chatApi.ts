@@ -66,13 +66,17 @@ class ChatApi {
     return this.request<Message[]>(`/conversations/${conversationId}/messages`)
   }
 
-  async getMessageHistory(params: MessageHistoryRequest): Promise<ApiResponse<PaginatedResponse<Message>>> {
+  async getMessageHistory(
+    params: MessageHistoryRequest,
+  ): Promise<ApiResponse<PaginatedResponse<Message>>> {
     const { conversationId, page = 1, limit = 50 } = params
     const queryParams = new URLSearchParams({
       page: page.toString(),
-      limit: limit.toString()
+      limit: limit.toString(),
     })
-    return this.request<PaginatedResponse<Message>>(`/conversations/${conversationId}/messages?${queryParams}`)
+    return this.request<PaginatedResponse<Message>>(
+      `/conversations/${conversationId}/messages?${queryParams}`,
+    )
   }
 
   async createConversation(data: CreateConversationRequest): Promise<ApiResponse<Conversation>> {
@@ -127,7 +131,7 @@ class ChatApi {
   async searchMessages(params: SearchMessagesRequest): Promise<ApiResponse<SearchResult[]>> {
     const queryParams = new URLSearchParams({
       query: params.query,
-      limit: (params.limit || 50).toString()
+      limit: (params.limit || 50).toString(),
     })
     if (params.conversationId) {
       queryParams.append('conversationId', params.conversationId)
@@ -138,12 +142,14 @@ class ChatApi {
   // Phase 2: Private Messaging API methods
   async getAllUsers(currentUserId: string): Promise<ApiResponse<UserListResponse[]>> {
     const queryParams = new URLSearchParams({
-      currentUserId
+      currentUserId,
     })
     return this.request<UserListResponse[]>(`/users?${queryParams}`)
   }
 
-  async createDirectConversation(data: DirectConversationRequest): Promise<ApiResponse<Conversation>> {
+  async createDirectConversation(
+    data: DirectConversationRequest,
+  ): Promise<ApiResponse<Conversation>> {
     return this.request<Conversation>('/conversations/direct', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -152,13 +158,16 @@ class ChatApi {
 
   async getDirectConversations(userId: string): Promise<ApiResponse<Conversation[]>> {
     const queryParams = new URLSearchParams({
-      userId
+      userId,
     })
     return this.request<Conversation[]>(`/conversations/direct?${queryParams}`)
   }
 
   // Phase 3: Message Threading API methods
-  async createThreadReply(messageId: string, data: ThreadReplyRequest): Promise<ApiResponse<Message>> {
+  async createThreadReply(
+    messageId: string,
+    data: ThreadReplyRequest,
+  ): Promise<ApiResponse<Message>> {
     return this.request<Message>(`/messages/${messageId}/reply`, {
       method: 'POST',
       body: JSON.stringify(data),
@@ -170,10 +179,12 @@ class ChatApi {
   }
 
   // Phase 4: Message Search API methods
-  async searchMessagesAdvanced(params: MessageSearchRequest): Promise<ApiResponse<SearchResponse<MessageSearchResult>>> {
+  async searchMessagesAdvanced(
+    params: MessageSearchRequest,
+  ): Promise<ApiResponse<SearchResponse<MessageSearchResult>>> {
     const queryParams = new URLSearchParams({
       query: params.query,
-      limit: (params.limit || 50).toString()
+      limit: (params.limit || 50).toString(),
     })
     if (params.conversationId) {
       queryParams.append('conversationId', params.conversationId)
@@ -181,12 +192,55 @@ class ChatApi {
     return this.request<SearchResponse<MessageSearchResult>>(`/search/messages?${queryParams}`)
   }
 
-  async searchConversations(params: ConversationSearchRequest): Promise<ApiResponse<SearchResponse<Conversation>>> {
+  async searchConversations(
+    params: ConversationSearchRequest,
+  ): Promise<ApiResponse<SearchResponse<Conversation>>> {
     const queryParams = new URLSearchParams({
       query: params.query,
-      userId: params.userId
+      userId: params.userId,
     })
     return this.request<SearchResponse<Conversation>>(`/search/conversations?${queryParams}`)
+  }
+
+  // Encryption API methods
+  async generateUserKeys(
+    userId: string,
+    password: string,
+  ): Promise<ApiResponse<{ publicKey: string; encryptedPrivateKey: string }>> {
+    return this.request<{ publicKey: string; encryptedPrivateKey: string }>(
+      `/users/${userId}/keys`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ password }),
+      },
+    )
+  }
+
+  async getUserPublicKey(userId: string): Promise<ApiResponse<{ publicKey: string }>> {
+    return this.request<{ publicKey: string }>(`/users/${userId}/public-key`)
+  }
+
+  async getConversationKey(
+    conversationId: string,
+    userId: string,
+  ): Promise<ApiResponse<{ keyId: string; encryptedKey: string; conversationId: string }>> {
+    return this.request<{ keyId: string; encryptedKey: string; conversationId: string }>(
+      `/conversations/${conversationId}/keys`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ userId }),
+      },
+    )
+  }
+
+  async checkUserKeys(userId: string): Promise<ApiResponse<{ hasKeys: boolean }>> {
+    return this.request<{ hasKeys: boolean }>(`/users/${userId}/has-keys`)
+  }
+
+  async distributeConversationKey(conversationId: string): Promise<ApiResponse<{ keyId: string }>> {
+    return this.request<{ keyId: string }>(`/conversations/${conversationId}/distribute-key`, {
+      method: 'POST',
+    })
   }
 }
 

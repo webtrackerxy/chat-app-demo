@@ -76,7 +76,13 @@ export const ActionModal: React.FC<ActionModalProps> = ({
   )
 }
 
-const createStyles = (colors: any, spacing: any, borderRadius: any, typography: any, shadows: any) =>
+const createStyles = (
+  colors: any,
+  spacing: any,
+  borderRadius: any,
+  typography: any,
+  shadows: any,
+) =>
   StyleSheet.create({
     overlay: {
       flex: 1,

@@ -8,6 +8,8 @@
     "dev": "nodemon index.js",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:encryption": "jest __tests__/EncryptionService.test.js",
+    "test:encryption-api": "jest __tests__/encryption-api.test.js",
     "logs": "node analyze-logs.js",
     "logs:watch": "watch -n 5 'node analyze-logs.js'",
     "logs:tail": "tail -f logs/combined.log",
