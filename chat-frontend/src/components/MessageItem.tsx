@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
 import { Message } from '@chat-types'
 import { FileMessage } from './FileMessage'
 import { useTheme } from '@theme'
+import { useEncryption } from '@hooks/useEncryption'
 
 interface MessageItemProps {
   message: Message
@@ -35,6 +36,81 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   showReplyButton = false,
   onReplyIndicatorPress,
 }) => {
+  const { decryptMessage } = useEncryption()
+  const [decryptedText, setDecryptedText] = useState<string>(message.text)
+  const [isDecrypting, setIsDecrypting] = useState(false)
+  const [decryptionError, setDecryptionError] = useState<string | null>(null)
+
+  // Check if message text looks like encrypted JSON
+  const isEncryptedMessage = (text: string): boolean => {
+    try {
+      const parsed = JSON.parse(text)
+      return parsed && typeof parsed === 'object' && 
+             ('encryptedText' in parsed || 'ciphertext' in parsed) &&
+             ('iv' in parsed || 'nonce' in parsed) &&
+             ('tag' in parsed) &&
+             ('keyId' in parsed)
+    } catch {
+      return false
+    }
+  }
+
+  // Decrypt message if needed
+  useEffect(() => {
+    const decryptIfNeeded = async () => {
+      if (!isEncryptedMessage(message.text)) {
+        setDecryptedText(message.text)
+        return
+      }
+
+      console.log('🔓 MessageItem: Decrypting message:', message.id)
+      setIsDecrypting(true)
+      setDecryptionError(null)
+
+      try {
+        const conversationId = 'general' // TODO: Get from props or context
+        const userId = currentUserId || 'user_mike' // TODO: Get from props or context
+        
+        const plaintext = await decryptMessage(message.text, conversationId, userId)
+        setDecryptedText(plaintext)
+        console.log('✅ MessageItem: Message decrypted successfully')
+      } catch (error) {
+        console.error('❌ MessageItem: Decryption failed:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Decryption failed'
+        setDecryptionError(errorMessage)
+        
+        // Provide user-friendly error messages and retry for initialization errors
+        if (errorMessage.includes('Initialize ratchet first') || errorMessage.includes('Ratchet state not found')) {
+          setDecryptedText('[Setting up encryption...]')
+          // Retry after 2 seconds for initialization issues
+          setTimeout(() => {
+            setDecryptionError(null)
+            setIsDecrypting(true)
+          }, 2000)
+        } else if (errorMessage.includes('Encryption keys not available')) {
+          setDecryptedText('[Waiting for encryption keys...]')
+          // Retry after 3 seconds for key issues
+          setTimeout(() => {
+            setDecryptionError(null)
+            setIsDecrypting(true)
+          }, 3000)
+        } else if (errorMessage.includes('Key generation already in progress')) {
+          setDecryptedText('[Initializing security...]')
+          // Retry after 5 seconds for key generation
+          setTimeout(() => {
+            setDecryptionError(null)
+            setIsDecrypting(true)
+          }, 5000)
+        } else {
+          setDecryptedText('[Message encrypted]')
+        }
+      } finally {
+        setIsDecrypting(false)
+      }
+    }
+
+    decryptIfNeeded()
+  }, [message.text, message.id, currentUserId, decryptMessage])
   // Helper function to get read receipts text
   const getReadReceiptsText = () => {
     if (!message.readBy || message.readBy.length === 0) return ''
@@ -122,9 +198,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               style={[
                 styles.messageText,
                 isMyMessage ? styles.ownMessageText : styles.otherMessageText,
+                isDecrypting && { opacity: 0.6 },
+                decryptionError && { color: '#ff6b6b' }
               ]}
             >
-              {message.text}
+              {isDecrypting ? 'Decrypting...' : decryptedText}
             </Text>
           )}
           <Text style={styles.messageTime}>{new Date(message.timestamp).toLocaleTimeString()}</Text>

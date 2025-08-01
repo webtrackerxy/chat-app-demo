@@ -123,17 +123,35 @@ export const useRealtimeMessages = ({
   // Send message function
   const sendMessage = useCallback(
     (text: string, senderId: string, senderName: string) => {
+      console.log('🌐 useRealtimeMessages.sendMessage called')
+      console.log('🌐 Text to send (first 100 chars):', text.substring(0, 100) + (text.length > 100 ? '...' : ''))
+      console.log('🌐 Text length:', text.length)
+      console.log('🌐 Sender ID:', senderId)
+      console.log('🌐 Conversation ID:', conversationId)
+      console.log('🌐 Is connected:', isConnected)
+      
       if (!isConnected) {
+        console.error('🌐 ERROR: Not connected to server')
         setError('Not connected to server')
         return
       }
 
-      socketService.sendMessage({
+      const messageData = {
         text,
         senderId,
         senderName,
         conversationId,
+      }
+      
+      console.log('🌐 Calling socketService.sendMessage with:', {
+        textLength: messageData.text.length,
+        senderId: messageData.senderId,
+        conversationId: messageData.conversationId,
+        textPreview: messageData.text.substring(0, 50) + '...'
       })
+      
+      socketService.sendMessage(messageData)
+      console.log('🌐 Message sent to socket service')
     },
     [conversationId, isConnected],
   )

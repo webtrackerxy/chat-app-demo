@@ -3,7 +3,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -26,6 +25,7 @@ model User {
   conversations        ConversationParticipant[]
   createdConversations Conversation[]         @relation("ConversationCreator")
   conversationKeys     ConversationKey[]
+  devices              DeviceIdentity[]       // Multi-device support
 
   @@map("users")
 }
@@ -72,6 +72,29 @@ model Message {
   replyToId      String?   // For threading support
   encrypted      Boolean   @default(false)
   encryptionKey  String?
+  
+  // Perfect Forward Secrecy fields
+  ratchetEncrypted     Boolean @default(false)
+  ephemeralPublicKey   String?
+  messageNumber        Int?
+  chainLength          Int?
+  previousChainLength  Int?
+  ratchetHeader        String? // JSON metadata for ratchet protocol
+  
+  // Post-Quantum Cryptography fields
+  cryptoVersion        String  @default("1.0") // Track crypto version
+  algorithm            String  @default("classical") // "classical", "hybrid", "post-quantum"
+  securityLevel        Int     @default(1) // NIST security level achieved
+  
+  // Quantum-resistant fields
+  pqcEncrypted         Boolean @default(false)
+  kyberCiphertext      String? // Kyber KEM ciphertext (base64)
+  dilithiumSignature   String? // Dilithium signature (base64)
+  hybridMetadata       String? // JSON metadata for hybrid mode
+  
+  // Algorithm negotiation reference
+  negotiationId        String? // Reference to AlgorithmNegotiation
+  
   timestamp      DateTime  @default(now())
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -85,6 +108,8 @@ model Message {
   replyTo      Message?       @relation("MessageThread", fields: [replyToId], references: [id])
   replies      Message[]      @relation("MessageThread")
 
+  @@index([algorithm, pqcEncrypted])
+  @@index([securityLevel])
   @@map("messages")
 }
 
@@ -147,3 +172,498 @@ model ConversationKey {
   @@unique([conversationId, userId])
   @@map("conversation_keys")
 }
+
+// Perfect Forward Secrecy - Double Ratchet State Storage
+model ConversationRatchetState {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  
+  // Encrypted ratchet keys (base64 encoded)
+  rootKeyEncrypted           String
+  sendingChainKeyEncrypted   String
+  receivingChainKeyEncrypted String
+  
+  // Message counters
+  sendingMessageNumber     Int @default(0)
+  receivingMessageNumber   Int @default(0)
+  sendingChainLength       Int @default(0)
+  receivingChainLength     Int @default(0)
+  
+  // Ephemeral keys (base64 encoded)
+  sendingEphemeralPrivateKey  String?
+  sendingEphemeralPublicKey   String?
+  receivingEphemeralPublicKey String?
+  
+  // Post-Quantum Cryptography fields
+  cryptoVersion    String  @default("1.0") // Track crypto version for migration
+  algorithm        String  @default("classical") // "classical", "hybrid", "post-quantum"
+  securityLevel    Int     @default(1) // NIST security level
+  
+  // Hybrid mode fields
+  pqcEnabled       Boolean @default(false)
+  hybridMode       Boolean @default(false)
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  skippedMessageKeys SkippedMessageKey[]
+  postQuantumKeys    PostQuantumKey[]
+
+  @@unique([conversationId, userId])
+  @@map("conversation_ratchet_states")
+}
+
+// Storage for skipped message keys (out-of-order message handling)
+model SkippedMessageKey {
+  id             String   @id @default(cuid())
+  ratchetStateId String
+  messageKeyId   String
+  encryptedKey   String
+  chainLength    Int
+  messageNumber  Int
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime // Keys expire after 7 days
+  
+  // Relations
+  ratchetState ConversationRatchetState @relation(fields: [ratchetStateId], references: [id], onDelete: Cascade)
+  
+  @@unique([ratchetStateId, messageKeyId])
+  @@map("skipped_message_keys")
+}
+
+// Post-Quantum Cryptography Key Storage
+model PostQuantumKey {
+  id             String   @id @default(cuid())
+  ratchetStateId String
+  keyType        String   // "kyber768_public", "kyber768_private", "dilithium3_public", "dilithium3_private", "hybrid_combined"
+  
+  // Key data (base64 encoded)
+  keyData        String
+  keyVersion     String   @default("1.0")
+  algorithm      String   // "kyber768", "dilithium3", "hybrid"
+  
+  // Key metadata
+  purpose        String   // "key_exchange", "signature", "combined"
+  securityLevel  Int      // NIST security level (1, 3, 5)
+  isActive       Boolean  @default(true)
+  
+  // Lifecycle management
+  generatedAt    DateTime @default(now())
+  activatedAt    DateTime @default(now())
+  expiresAt      DateTime? // Optional key expiration
+  revokedAt      DateTime? // Key revocation timestamp
+  
+  // Key derivation info
+  derivationInfo String?  // JSON metadata for key derivation
+  parentKeyId    String?  // Reference to parent key for derived keys
+  
+  // Metadata
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relations
+  ratchetState   ConversationRatchetState @relation(fields: [ratchetStateId], references: [id], onDelete: Cascade)
+  
+  @@unique([ratchetStateId, keyType, isActive])
+  @@index([algorithm, isActive])
+  @@index([expiresAt])
+  @@map("post_quantum_keys")
+}
+
+// Algorithm Negotiation History
+model AlgorithmNegotiation {
+  id                    String   @id @default(cuid())
+  conversationId        String
+  initiatorId           String
+  responderId           String
+  
+  // Negotiation result
+  negotiationId         String   @unique
+  selectedKeyExchange   String   // "x25519", "kyber768", "hybrid"
+  selectedSignature     String?  // "dilithium3", "ed25519", null
+  selectedEncryption    String   // "chacha20poly1305", "aes256gcm"
+  
+  // Security properties
+  achievedSecurityLevel Int      // Final NIST security level
+  quantumResistant      Boolean  // Whether negotiated algorithms are quantum-resistant
+  hybridMode            Boolean  // Whether hybrid mode was negotiated
+  
+  // Protocol details
+  protocolVersion       String   // Negotiated protocol version
+  supportsPFS           Boolean  // Perfect Forward Secrecy support
+  supportsDoubleRatchet Boolean  // Double Ratchet support
+  
+  // Capabilities
+  localCapabilities     String   // JSON of local capabilities
+  remoteCapabilities    String   // JSON of remote capabilities
+  
+  // Metadata
+  negotiatedAt          DateTime @default(now())
+  expiresAt             DateTime // Negotiation validity period
+  isActive              Boolean  @default(true)
+  
+  @@index([conversationId, isActive])
+  @@index([negotiatedAt])
+  @@map("algorithm_negotiations")
+}
+
+// Migration tracking for crypto upgrades
+model CryptoMigration {
+  id                String   @id @default(cuid())
+  fromVersion       String   // Previous crypto version
+  toVersion         String   // New crypto version
+  
+  // Migration scope
+  affectedUsers     Int      // Number of users affected
+  affectedConversations Int  // Number of conversations migrated
+  affectedMessages  Int      // Number of messages re-encrypted
+  
+  // Migration status
+  status            String   // "pending", "in_progress", "completed", "failed"
+  startedAt         DateTime?
+  completedAt       DateTime?
+  failedAt          DateTime?
+  errorMessage      String?
+  
+  // Migration details
+  migrationPlan     String   // JSON of migration plan
+  progressLog       String?  // JSON of progress updates
+  rollbackPlan      String?  // JSON of rollback procedures
+  
+  // Metadata
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([status, startedAt])
+  @@map("crypto_migrations")
+}
+
+// Multi-Device Support - Device Identity Management
+model DeviceIdentity {
+  id        String   @id @default(cuid())
+  deviceId  String   @unique
+  userId    String
+  
+  // Device information
+  deviceName String
+  deviceType String   // "mobile", "desktop", "web", "tablet"
+  platform   String
+  version    String
+  
+  // Cryptographic identity keys (base64 encoded)
+  signingPublicKey     String
+  signingPrivateKey    String   // Encrypted with user's master key
+  encryptionPublicKey  String
+  encryptionPrivateKey String   // Encrypted with user's master key
+  
+  // Trust information
+  isVerified   Boolean  @default(false)
+  trustLevel   String   @default("unverified") // "unverified", "self-verified", "cross-verified", "revoked"
+  verifiedBy   String?  // JSON array of device IDs that verified this device
+  trustScore   Int      @default(0) // 0-100 trust score
+  
+  // Device lifecycle
+  registeredAt DateTime @default(now())
+  lastSeen     DateTime @default(now())
+  revokedAt    DateTime?
+  revokedBy    String?  // Device ID that revoked this device
+  revocationReason String?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verifications        DeviceVerification[]  @relation("VerifyingDevice")
+  receivedVerifications DeviceVerification[] @relation("TargetDevice")
+  keySyncPackages      KeySyncPackage[]      @relation("SenderDevice")
+  receivedKeySyncPackages KeySyncPackage[]   @relation("ReceiverDevice")
+  authenticationSessions AuthenticationSession[] @relation("InitiatorDevice")
+  respondedSessions    AuthenticationSession[] @relation("ResponderDevice")
+  offlineSyncQueues    OfflineSyncQueue[]
+  
+  @@index([userId, isVerified])
+  @@index([trustLevel, lastSeen])
+  @@map("device_identities")
+}
+
+// Device verification records
+model DeviceVerification {
+  id                String   @id @default(cuid())
+  verifyingDeviceId String
+  targetDeviceId    String
+  
+  // Verification details
+  verificationCode   String
+  verificationMethod String   // "manual", "qr_code", "numeric_code", "biometric"
+  signature          String   // Digital signature of verification
+  
+  // Metadata
+  timestamp DateTime @default(now())
+  expiresAt DateTime
+  isActive  Boolean  @default(true)
+  
+  // Relations
+  verifyingDevice DeviceIdentity @relation("VerifyingDevice", fields: [verifyingDeviceId], references: [deviceId], onDelete: Cascade)
+  targetDevice    DeviceIdentity @relation("TargetDevice", fields: [targetDeviceId], references: [deviceId], onDelete: Cascade)
+  
+  @@unique([verifyingDeviceId, targetDeviceId])
+  @@index([expiresAt, isActive])
+  @@map("device_verifications")
+}
+
+// Cross-device key synchronization packages
+model KeySyncPackage {
+  id           String   @id @default(cuid())
+  packageId    String   @unique
+  fromDeviceId String
+  toDeviceId   String
+  
+  // Key information
+  keyType      String   // "ratchet_state", "conversation_key", "device_key", "hybrid_key"
+  conversationId String?
+  
+  // Encrypted key data (base64 encoded)
+  encryptedKeyData String
+  integrityHash    String
+  signature        String
+  
+  // Key metadata (JSON)
+  keyMetadata      String
+  
+  // Sync metadata
+  encryptionMethod String   // "hybrid", "device_key"
+  syncPriority     String   @default("medium") // "critical", "high", "medium", "low"
+  attempts         Int      @default(0)
+  maxAttempts      Int      @default(5)
+  expiresAt        DateTime
+  
+  // Status tracking
+  status           String   @default("pending") // "pending", "sent", "delivered", "processed", "failed"
+  processedAt      DateTime?
+  errorMessage     String?
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  senderDevice   DeviceIdentity @relation("SenderDevice", fields: [fromDeviceId], references: [deviceId], onDelete: Cascade)
+  receiverDevice DeviceIdentity @relation("ReceiverDevice", fields: [toDeviceId], references: [deviceId], onDelete: Cascade)
+  
+  @@index([fromDeviceId, toDeviceId, status])
+  @@index([keyType, conversationId])
+  @@index([expiresAt])
+  @@map("key_sync_packages")
+}
+
+// Device authentication sessions
+model AuthenticationSession {
+  id                String   @id @default(cuid())
+  sessionId         String   @unique
+  initiatorDeviceId String
+  responderDeviceId String
+  
+  // Authentication method and challenge
+  method           String   // "qr_code", "numeric_code", "biometric", "mutual_verification"
+  challenge        String   // Base64 encoded challenge
+  response         String?  // Base64 encoded response
+  verificationCode String?
+  
+  // Session status
+  status      String   @default("pending") // "pending", "challenged", "responded", "verified", "failed", "expired"
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  verifiedAt DateTime?
+  
+  // Relations
+  initiatorDevice DeviceIdentity @relation("InitiatorDevice", fields: [initiatorDeviceId], references: [deviceId], onDelete: Cascade)
+  responderDevice DeviceIdentity @relation("ResponderDevice", fields: [responderDeviceId], references: [deviceId], onDelete: Cascade)
+  
+  @@index([status, expiresAt])
+  @@index([initiatorDeviceId, responderDeviceId])
+  @@map("authentication_sessions")
+}
+
+// Key conflict tracking and resolution
+model KeyConflict {
+  id             String   @id @default(cuid())
+  conflictId     String   @unique
+  conversationId String
+  keyType        String
+  
+  // Conflict details
+  severity        String   @default("medium") // "low", "medium", "high", "critical"
+  status          String   @default("detected") // "detected", "analyzing", "resolving", "resolved", "failed"
+  
+  // Resolution information
+  resolutionStrategy String? // "latest_wins", "highest_trust", "consensus", "manual", "authoritative_device", "merge"
+  resolvedVersion    Int?
+  resolvedBy         String? // Device ID that resolved the conflict
+  
+  // Timestamps
+  detectedAt DateTime @default(now())
+  resolvedAt DateTime?
+  
+  // Conflict data (JSON)
+  conflictingVersions String  // JSON array of conflicting versions
+  resolutionMetadata  String? // JSON metadata about resolution
+  
+  // Relations
+  conflictResolutions ConflictResolution[]
+  
+  @@index([conversationId, keyType, status])
+  @@index([severity, detectedAt])
+  @@map("key_conflicts")
+}
+
+// Detailed conflict resolution records
+model ConflictResolution {
+  id         String   @id @default(cuid())
+  conflictId String
+  deviceId   String
+  
+  // Resolution vote/decision
+  preferredVersion Int
+  reasoning        String
+  signature        String   // Digital signature of the resolution
+  
+  // Metadata
+  timestamp DateTime @default(now())
+  isActive  Boolean  @default(true)
+  
+  // Relations
+  conflict KeyConflict @relation(fields: [conflictId], references: [conflictId], onDelete: Cascade)
+  
+  @@unique([conflictId, deviceId])
+  @@map("conflict_resolutions")
+}
+
+// Offline sync queue management
+model OfflineSyncQueue {
+  id       String   @id @default(cuid())
+  queueId  String   @unique
+  deviceId String
+  
+  // Queue metadata
+  totalItems    Int      @default(0)
+  totalSize     Int      @default(0) // Total size in bytes
+  syncPriority  String   @default("medium") // "critical", "high", "medium", "low"
+  maxRetries    Int      @default(5)
+  retryDelay    Int      @default(5000) // Milliseconds
+  
+  // Queue status
+  lastModified DateTime @default(now())
+  lastSynced   DateTime?
+  syncStatus   String   @default("pending") // "pending", "syncing", "synced", "failed"
+  
+  // Relations
+  device    DeviceIdentity    @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+  syncItems OfflineSyncItem[]
+  
+  @@index([deviceId, syncStatus])
+  @@map("offline_sync_queues")
+}
+
+// Individual items in offline sync queues
+model OfflineSyncItem {
+  id      String   @id @default(cuid())
+  itemId  String   @unique
+  queueId String
+  
+  // Item type and content
+  itemType       String   // "key_update", "key_creation", "key_deletion", "device_verification", "conflict_resolution"
+  conversationId String?
+  keyType        String?
+  
+  // Item data (base64 encoded)
+  data     String
+  metadata String   // JSON metadata
+  
+  // Sync status
+  syncStatus   String   @default("pending") // "pending", "syncing", "synced", "failed", "conflicted"
+  attempts     Int      @default(0)
+  lastAttempt  DateTime?
+  error        String?
+  
+  // Priority and timing
+  priority  String   @default("medium") // "critical", "high", "medium", "low"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  queue OfflineSyncQueue @relation(fields: [queueId], references: [queueId], onDelete: Cascade)
+  
+  @@index([queueId, syncStatus])
+  @@index([priority, createdAt])
+  @@map("offline_sync_items")
+}
+
+// Delta sync checkpoints for efficient sync
+model DeltaSyncCheckpoint {
+  id           String   @id @default(cuid())
+  checkpointId String   @unique
+  deviceId     String
+  conversationId String
+  keyType      String
+  
+  // Checkpoint data
+  version   Int
+  keyHash   String
+  signature String   // Digital signature of checkpoint
+  
+  // Metadata
+  timestamp DateTime @default(now())
+  isActive  Boolean  @default(true)
+  
+  // Relations - using deviceId string reference to avoid circular dependency
+  @@unique([deviceId, conversationId, keyType, isActive])
+  @@index([timestamp, isActive])
+  @@map("delta_sync_checkpoints")
+}
+
+// Key Exchange Coordination (Backend-managed)
+model KeyExchange {
+  id           String   @id @default(cuid())
+  initiatorId  String
+  recipientId  String
+  conversationId String
+  
+  // Exchange details
+  exchangeType String   // "initial_setup", "ratchet_update", "pqc_upgrade", "device_addition"
+  status       String   @default("pending") // "pending", "responded", "completed", "expired", "failed"
+  
+  // Key data (encrypted for recipient)
+  publicKeyBundle      String  // JSON of public keys
+  encryptedKeyData     String  // Encrypted key data for recipient
+  responseData         String? // Encrypted response from recipient
+  recipientPublicKeys  String? // JSON of recipient's public keys
+  
+  // Security metadata
+  securityLevel    Int     @default(1)
+  algorithm        String  @default("hybrid")
+  quantumResistant Boolean @default(false)
+  
+  // Confirmation
+  confirmationSignature String?
+  
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  respondedAt DateTime?
+  completedAt DateTime?
+  expiresAt   DateTime
+  
+  @@index([initiatorId, recipientId, status])
+  @@index([conversationId, status])
+  @@index([expiresAt])
+  @@map("key_exchanges")
+}
+

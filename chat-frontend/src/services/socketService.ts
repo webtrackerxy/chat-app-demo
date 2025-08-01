@@ -61,8 +61,21 @@ class SocketService {
     senderName: string
     conversationId: string
   }): void {
+    console.log('📡 SocketService.sendMessage called')
+    console.log('📡 Message data:', {
+      textLength: message.text.length,
+      senderId: message.senderId,
+      conversationId: message.conversationId,
+      textPreview: message.text.substring(0, 100) + (message.text.length > 100 ? '...' : '')
+    })
+    console.log('📡 Socket connected:', !!this.socket)
+    
     if (this.socket) {
+      console.log('📡 Emitting send_message event to server...')
       this.socket.emit('send_message', message)
+      console.log('📡 Message emitted to server via WebSocket')
+    } else {
+      console.error('📡 ERROR: Socket not connected, cannot send message')
     }
   }
 

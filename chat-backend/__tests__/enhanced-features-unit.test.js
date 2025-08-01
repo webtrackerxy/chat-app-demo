@@ -300,7 +300,8 @@ describe('Enhanced Messaging Features - Database Methods', () => {
       expect(mockPrisma.message.findMany).toHaveBeenCalledWith({
         where: {
           text: {
-            contains: 'hello'
+            contains: 'hello',
+            mode: 'insensitive'
           }
         },
         include: {
@@ -330,7 +331,8 @@ describe('Enhanced Messaging Features - Database Methods', () => {
       expect(mockPrisma.message.findMany).toHaveBeenCalledWith({
         where: {
           text: {
-            contains: 'hello'
+            contains: 'hello',
+            mode: 'insensitive'
           },
           conversationId: 'conv1'
         },

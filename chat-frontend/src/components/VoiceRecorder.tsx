@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native'
 import { useAudioRecorder, useAudioPlayer, RecordingPresets } from 'expo-audio'
+import { Audio } from 'expo-av'
 import * as FileSystem from 'expo-file-system'
 import { FileUploadService } from '@services/fileUploadService'
 import { FileAttachment } from '@chat-types'
@@ -33,6 +34,13 @@ export const VoiceRecorderModal: React.FC<VoiceRecorderModalProps> = ({
   const startRecording = async () => {
     try {
       console.log('Starting recording...')
+
+      // Check and request permissions first
+      console.log('Requesting audio permission...')
+      const permission = await Audio.requestPermissionsAsync()
+      if (!permission.granted) {
+        throw new Error('Audio recording permission not granted')
+      }
 
       // Start recording with expo-audio
       await audioRecorder.prepareToRecordAsync()

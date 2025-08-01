@@ -460,5 +460,8 @@ export class EncryptionService {
   }
 }
 
-// Export singleton instance
-export const encryptionService = EncryptionService.getInstance()
+// Import adaptive encryption service
+import { adaptiveEncryptionService } from './adaptiveEncryptionService'
+
+// Export adaptive service that can switch between encryption modes
+export const encryptionService = adaptiveEncryptionService
