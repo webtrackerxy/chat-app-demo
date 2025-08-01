@@ -13,18 +13,30 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.chat-frontend"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-audio"]
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow app to access microphone for voice recording"
+        }
+      ]
+    ]
   }
 }

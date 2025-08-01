@@ -1606,6 +1606,18 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@noble/hashes@1.8.0":
+  version "1.8.0"
+  resolved "https://registry.npmjs.org/@noble/hashes/-/hashes-1.8.0.tgz"
+  integrity sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==
+
+"@noble/post-quantum@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.npmjs.org/@noble/post-quantum/-/post-quantum-0.4.1.tgz"
+  integrity sha512-TRXjvnY9jAFNWbxOx+pKt21BNsCEWKFjMbIKwdx9CQXBudDanpY20EfOcooV7DIsRS/+Mf8D8utpUPjfGrQ8fA==
+  dependencies:
+    "@noble/hashes" "1.8.0"
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz"
@@ -2005,10 +2017,10 @@
   resolved "https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz"
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
 
-"@types/node@*":
-  version "24.0.7"
-  resolved "https://registry.npmjs.org/@types/node/-/node-24.0.7.tgz"
-  integrity sha512-YIEUUr4yf8q8oQoXPpSlnvKNVKDQlPMWrmOcgzoduo7kvA2UF0/BwJ/eMKFTiTtkNL17I0M6Xe2tvwFU7be6iw==
+"@types/node@*", "@types/node@^24.1.0":
+  version "24.1.0"
+  resolved "https://registry.npmjs.org/@types/node/-/node-24.1.0.tgz"
+  integrity sha512-ut5FthK5moxFKH2T1CUOC6ctR67rQRvvHdFLCD2Ql6KXmMuCrjsSsRI9UsLCm9M18BMwClv4pn327UvB7eeO1w==
   dependencies:
     undici-types "~7.8.0"
 
@@ -3596,6 +3608,11 @@ expo-modules-core@2.4.0:
   dependencies:
     invariant "^2.2.4"
 
+expo-secure-store@^14.2.3:
+  version "14.2.3"
+  resolved "https://registry.npmjs.org/expo-secure-store/-/expo-secure-store-14.2.3.tgz"
+  integrity sha512-hYBbaAD70asKTFd/eZBKVu+9RTo9OSTMMLqXtzDF8ndUGjpc6tmRCoZtrMHlUo7qLtwL5jm+vpYVBWI8hxh/1Q==
+
 expo-status-bar@~2.2.3:
   version "2.2.3"
   resolved "https://registry.npmjs.org/expo-status-bar/-/expo-status-bar-2.2.3.tgz"
@@ -3631,6 +3648,11 @@ exponential-backoff@^3.1.1:
   version "3.1.2"
   resolved "https://registry.npmjs.org/exponential-backoff/-/exponential-backoff-3.1.2.tgz"
   integrity sha512-8QxYTVXUkuy7fIIoitQkPwGonB8F3Zj8eEO8Sqg9Zv/bkI7RJAzowee4gr81Hak/dUTpA2Z7VfQgoijjPNlUZA==
+
+fast-base64-decode@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/fast-base64-decode/-/fast-base64-decode-1.0.0.tgz"
+  integrity sha512-qwaScUgUGBYeDNRnbc/KyllVU88Jk1pRHPStuF/lO7B0/RTRLj7U0lkdTAutlBblY08rwZDff6tNU9cjv6j//Q==
 
 fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
   version "3.1.3"
@@ -5061,6 +5083,18 @@ levn@^0.4.1:
     prelude-ls "^1.2.1"
     type-check "~0.4.0"
 
+libsodium-wrappers@^0.7.15:
+  version "0.7.15"
+  resolved "https://registry.npmjs.org/libsodium-wrappers/-/libsodium-wrappers-0.7.15.tgz"
+  integrity sha512-E4anqJQwcfiC6+Yrl01C1m8p99wEhLmJSs0VQqST66SbQXXBoaJY0pF4BNjRYa/sOQAxx6lXAaAFIlx+15tXJQ==
+  dependencies:
+    libsodium "^0.7.15"
+
+libsodium@^0.7.15:
+  version "0.7.15"
+  resolved "https://registry.npmjs.org/libsodium/-/libsodium-0.7.15.tgz"
+  integrity sha512-sZwRknt/tUpE2AwzHq3jEyUU5uvIZHtSssktXq7owd++3CSgn8RGrv6UZJJBpP7+iBghBqe7Z06/2M31rI2NKw==
+
 lighthouse-logger@^1.0.0:
   version "1.4.2"
   resolved "https://registry.npmjs.org/lighthouse-logger/-/lighthouse-logger-1.4.2.tgz"
@@ -6257,6 +6291,13 @@ react-native-gesture-handler@^2.27.1, "react-native-gesture-handler@>= 2.0.0":
     hoist-non-react-statics "^3.3.0"
     invariant "^2.2.4"
 
+react-native-get-random-values@^1.11.0:
+  version "1.11.0"
+  resolved "https://registry.npmjs.org/react-native-get-random-values/-/react-native-get-random-values-1.11.0.tgz"
+  integrity sha512-4BTbDbRmS7iPdhYLRcz3PGFIpFJBwNZg9g42iwa2P6FOv9vZj/xJc678RZXnLNZzd0qd7Q3CCF6Yd+CU2eoXKQ==
+  dependencies:
+    fast-base64-decode "^1.0.0"
+
 react-native-is-edge-to-edge@^1.1.6, react-native-is-edge-to-edge@^1.1.7, react-native-is-edge-to-edge@1.1.7:
   version "1.1.7"
   resolved "https://registry.npmjs.org/react-native-is-edge-to-edge/-/react-native-is-edge-to-edge-1.1.7.tgz"
@@ -6267,10 +6308,10 @@ react-native-quick-base64@^2.0.5:
   resolved "https://registry.npmjs.org/react-native-quick-base64/-/react-native-quick-base64-2.2.0.tgz"
   integrity sha512-r7/BRsRl8QKEhS0JsHW6QX9+8LrC6NNWlwNnBnZ69h2kbcfABYsUILT71obrs9fqElEIMzuYSI5aHID955akyQ==
 
-react-native-quick-crypto@^0.7.15:
-  version "0.7.15"
-  resolved "https://registry.npmjs.org/react-native-quick-crypto/-/react-native-quick-crypto-0.7.15.tgz"
-  integrity sha512-7xtGusZr/5OYeiSJ/o1v52LhwlKNhK3E2/orS4UxIpowxE5//CC6BBlRZvkbpWGlx9/fSKukIhhZRQmAVBEjag==
+react-native-quick-crypto@^0.7.16:
+  version "0.7.16"
+  resolved "https://registry.npmjs.org/react-native-quick-crypto/-/react-native-quick-crypto-0.7.16.tgz"
+  integrity sha512-R6MYxj2Em7/72C2fc42guG5WO9SFsR3VB74o8I/pSOb7yGDWqylC9YreCHlFvhZgtFY4Ssab80I2TVGc68TLbg==
   dependencies:
     "@craftzdog/react-native-buffer" "^6.0.5"
     events "^3.3.0"
@@ -6324,7 +6365,7 @@ react-native-web@*, react-native-web@^0.20.0:
     postcss-value-parser "^4.2.0"
     styleq "^0.1.3"
 
-react-native@*, "react-native@^0.0.0-0 || >=0.65 <1.0", react-native@>=0.59, react-native@>=0.71, react-native@0.79.4:
+react-native@*, "react-native@^0.0.0-0 || >=0.65 <1.0", react-native@>=0.56, react-native@>=0.59, react-native@>=0.71, react-native@0.79.4:
   version "0.79.4"
   resolved "https://registry.npmjs.org/react-native/-/react-native-0.79.4.tgz"
   integrity sha512-CfxYMuszvnO/33Q5rB//7cU1u9P8rSOvzhE2053Phdb8+6bof9NLayCllU2nmPrm8n9o6RU1Fz5H0yquLQ0DAw==

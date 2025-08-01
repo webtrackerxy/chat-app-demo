@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, Switch } from 'react-native'
 import { useTheme } from '@theme'
 import { useEncryption } from '@hooks/useEncryption'
-import { EncryptionSetup } from './EncryptionSetup'
+import { EncryptionModeSelector } from './EncryptionModeSelector'
+import { EncryptionMode, ENCRYPTION_CONFIGS } from '@config/encryptionConfig'
+import { adaptiveEncryptionService } from '@services/adaptiveEncryptionService'
 
 interface EncryptionToggleProps {
   conversationId: string
@@ -18,67 +20,84 @@ export const EncryptionToggle: React.FC<EncryptionToggleProps> = ({
   console.log('EncryptionToggle')
 
   const { colors, spacing, typography } = useTheme()
-  const { isEncryptionEnabled, enableEncryption, hasKeys, keysLoaded } = useEncryption()
+  const { enableEncryption, hasKeys, keysLoaded, autoInitializeEncryption } = useEncryption()
 
-  const [encryptionActive, setEncryptionActive] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [showSetupModal, setShowSetupModal] = useState(false)
+  const [encryptionActive, setEncryptionActive] = useState(true) // Always active
+  const [showModeSelector, setShowModeSelector] = useState(false)
+  const [currentMode, setCurrentMode] = useState<EncryptionMode>(EncryptionMode.PFS)
 
   useEffect(() => {
     const checkEncryptionStatus = async () => {
-      if (hasKeys && keysLoaded) {
-        const enabled = await isEncryptionEnabled(conversationId, userId)
-        setEncryptionActive(enabled)
-        onEncryptionChange(enabled)
+      console.log('🔐 EncryptionToggle: Checking status:', {
+        hasKeys,
+        keysLoaded,
+        userId,
+        conversationId
+      })
+      
+      // Auto-initialize encryption if no keys exist
+      if (!hasKeys && userId) {
+        console.log('🔐 Auto-initializing end-to-end encryption...')
+        const success = await autoInitializeEncryption(userId)
+        if (success) {
+          console.log('✅ End-to-end encryption enabled by default')
+        }
       }
+      
+      // For always-on encryption, enable if we have keys
+      if (hasKeys && keysLoaded) {
+        setEncryptionActive(true)
+        onEncryptionChange(true)
+        console.log('✅ Encryption enabled - keys are available')
+        
+        // Initialize conversation encryption if needed
+        try {
+          await enableEncryption(conversationId)
+          console.log('✅ Conversation encryption initialized')
+        } catch (error) {
+          console.log('⚠️ Conversation encryption init failed:', error instanceof Error ? error.message : 'Unknown error')
+        }
+      } else {
+        // No keys yet, disable for now
+        setEncryptionActive(false)
+        onEncryptionChange(false)
+        console.log('⚠️ Encryption disabled - waiting for keys')
+      }
+      
+      // Load current encryption mode
+      const mode = adaptiveEncryptionService.getCurrentMode()
+      setCurrentMode(mode)
     }
 
     checkEncryptionStatus()
-  }, [conversationId, userId, hasKeys, keysLoaded, isEncryptionEnabled, onEncryptionChange])
+  }, [conversationId, userId, hasKeys, keysLoaded, onEncryptionChange, autoInitializeEncryption, enableEncryption])
 
   const handleToggleEncryption = async () => {
-    if (showSetupPrompt) {
-      // Open setup modal when keys are needed
-      setShowSetupModal(true)
-      return
-    }
+    // Encryption is always enabled by default, this is just for mode settings
+    handleModeSettingsPress()
+  }
 
-    if (!hasKeys || !keysLoaded) {
-      return
-    }
 
-    setIsLoading(true)
-    try {
-      if (!encryptionActive) {
-        await enableEncryption(conversationId)
-        setEncryptionActive(true)
-        onEncryptionChange(true)
-      }
-      // Note: Disabling encryption is not implemented for security reasons
-    } catch (error) {
-      console.error('Failed to toggle encryption:', error)
-    } finally {
-      setIsLoading(false)
+
+  const handleModeChange = (mode: EncryptionMode) => {
+    setCurrentMode(mode)
+    // For always-on encryption, keep it enabled when mode changes
+    if (hasKeys && keysLoaded) {
+      setEncryptionActive(true)
+      onEncryptionChange(true)
+      console.log('✅ Encryption remains enabled after mode change to:', mode)
     }
   }
 
-  // Show the component even if no keys are available, but indicate setup is needed
-  const showSetupPrompt = !hasKeys || !keysLoaded
-
-  const handleSetupComplete = () => {
-    setShowSetupModal(false)
-    // Keys should be loaded now, so the component will re-render
-  }
-
-  const handleSetupCancel = () => {
-    setShowSetupModal(false)
+  const handleModeSettingsPress = () => {
+    setShowModeSelector(true)
   }
 
   return (
     <>
       <TouchableOpacity
-        onPress={showSetupPrompt ? handleToggleEncryption : undefined}
-        activeOpacity={showSetupPrompt ? 0.7 : 1}
+        onPress={handleToggleEncryption}
+        activeOpacity={0.7}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -109,50 +128,26 @@ export const EncryptionToggle: React.FC<EncryptionToggleProps> = ({
             >
               🔐 End-to-End Encryption
             </Text>
-            {encryptionActive && !showSetupPrompt && (
-              <View
-                style={{
-                  backgroundColor: colors.success?.[500] || colors.primary[500],
-                  paddingHorizontal: spacing.xs,
-                  paddingVertical: 2,
-                  borderRadius: 4,
-                }}
+            <View
+              style={{
+                backgroundColor: colors.success?.[500] || colors.primary[500],
+                paddingHorizontal: spacing.xs,
+                paddingVertical: 2,
+                borderRadius: 4,
+              }}
+            >
+              <Text
+                style={[
+                  typography.body.xs.regular as any,
+                  {
+                    color: colors.base.white,
+                    fontSize: 10,
+                  },
+                ]}
               >
-                <Text
-                  style={[
-                    typography.body.xs.regular as any,
-                    {
-                      color: colors.base.white,
-                      fontSize: 10,
-                    },
-                  ]}
-                >
-                  ACTIVE
-                </Text>
-              </View>
-            )}
-            {showSetupPrompt && (
-              <View
-                style={{
-                  backgroundColor: colors.warning?.[500] || colors.primary[500],
-                  paddingHorizontal: spacing.xs,
-                  paddingVertical: 2,
-                  borderRadius: 4,
-                }}
-              >
-                <Text
-                  style={[
-                    typography.body.xs.regular as any,
-                    {
-                      color: colors.base.white,
-                      fontSize: 10,
-                    },
-                  ]}
-                >
-                  SETUP NEEDED
-                </Text>
-              </View>
-            )}
+                {currentMode} ACTIVE
+              </Text>
+            </View>
           </View>
 
           <Text
@@ -164,31 +159,50 @@ export const EncryptionToggle: React.FC<EncryptionToggleProps> = ({
               },
             ]}
           >
-            {showSetupPrompt
-              ? 'Encryption keys needed - tap to set up encryption'
-              : encryptionActive
-                ? 'Messages are protected with end-to-end encryption (Demo Mode)'
-                : 'Enable to secure messages with encryption (Demo Mode)'}
+{`All messages are automatically protected with ${ENCRYPTION_CONFIGS[currentMode].displayName}. Tap ⚙️ to change mode.`}
           </Text>
         </View>
 
-        <Switch
-          value={encryptionActive && !showSetupPrompt}
-          onValueChange={handleToggleEncryption}
-          disabled={isLoading || encryptionActive || showSetupPrompt} // Disabled if setup needed
-          trackColor={{
-            false: colors.semantic.border.primary,
-            true: colors.success?.[500] || colors.primary[500],
-          }}
-          thumbColor={colors.base.white}
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+          <TouchableOpacity
+            onPress={handleModeSettingsPress}
+            style={{
+              padding: spacing.xs,
+              borderRadius: 6,
+              backgroundColor: colors.semantic.surface.tertiary,
+            }}
+          >
+            <Text
+              style={[
+                typography.body.s.regular as any,
+                {
+                  color: colors.semantic.text.secondary,
+                  fontSize: 12,
+                },
+              ]}
+            >
+              ⚙️
+            </Text>
+          </TouchableOpacity>
+
+          <Switch
+            value={true} // Always enabled
+            onValueChange={handleToggleEncryption}
+            disabled={false} // Can tap to open settings
+            trackColor={{
+              false: colors.semantic.border.primary,
+              true: colors.success?.[500] || colors.primary[500],
+            }}
+            thumbColor={colors.base.white}
+          />
+        </View>
       </TouchableOpacity>
 
-      <EncryptionSetup
-        visible={showSetupModal}
-        userId={userId}
-        onComplete={handleSetupComplete}
-        onClose={handleSetupCancel}
+
+      <EncryptionModeSelector
+        visible={showModeSelector}
+        onClose={() => setShowModeSelector(false)}
+        onModeSelected={handleModeChange}
       />
     </>
   )

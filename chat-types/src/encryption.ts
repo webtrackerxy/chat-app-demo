@@ -19,6 +19,14 @@ export interface EncryptedPayload {
   iv: string; // Base64 encoded initialization vector
   tag: string; // Base64 encoded authentication tag
   keyId: string; // Identifier for the key used
+  metadata?: {
+    mode: string;
+    ephemeralPublicKey?: string;
+    messageNumber?: number;
+    chainLength?: number;
+    previousChainLength?: number;
+    [key: string]: any; // Allow additional metadata fields
+  }; // Optional metadata for decryption
 }
 
 /**

@@ -21,6 +21,7 @@ import { useReadReceipts } from '@hooks/useReadReceipts'
 import { useUserPresence } from '@hooks/useUserPresence'
 import { useMessageReactions } from '@hooks/useMessageReactions'
 import { useMessageThreading } from '@hooks/useMessageThreading'
+import { useEncryption } from '@hooks/useEncryption'
 import { Message, FileAttachment } from '@chat-types'
 import {
   Header,
@@ -62,6 +63,14 @@ export const ChatRoomScreen: React.FC = () => {
   const [isEncryptionEnabled, setIsEncryptionEnabled] = useState(false)
   const [showDebugPanel, setShowDebugPanel] = useState(false)
   const flatListRef = useRef<FlatList>(null)
+
+  // Set up encryption
+  const {
+    hasKeys,
+    keysLoaded,
+    encryptMessage,
+    autoInitializeEncryption,
+  } = useEncryption()
 
   // Generate a simple userId from userName for demo purposes
   const userId = `user_${userName.toLowerCase().replace(/\s+/g, '_')}`
@@ -229,25 +238,104 @@ export const ChatRoomScreen: React.FC = () => {
     }
   }, [messages, initializeReactions])
 
+  // Auto-initialize encryption when needed
+  useEffect(() => {
+    const initializeEncryption = async () => {
+      console.log('🔐 ChatRoom encryption initialization check:', {
+        hasKeys,
+        keysLoaded,
+        isEncryptionEnabled,
+        userId
+      })
+      
+      if (!hasKeys && !keysLoaded) {
+        console.log('🔐 Auto-initializing encryption for ChatRoom...')
+        const success = await autoInitializeEncryption(userId)
+        if (success) {
+          setIsEncryptionEnabled(true)
+          console.log('✅ Encryption enabled for ChatRoom')
+        } else {
+          console.error('❌ Failed to auto-initialize encryption')
+        }
+      } else if (hasKeys && keysLoaded) {
+        setIsEncryptionEnabled(true)
+        console.log('✅ Existing encryption keys loaded for ChatRoom')
+      } else {
+        console.log('⚠️ Encryption not ready yet:', { hasKeys, keysLoaded })
+      }
+      
+      console.log('🔐 Final encryption state:', {
+        hasKeys,
+        keysLoaded,
+        isEncryptionEnabled: isEncryptionEnabled || (hasKeys && keysLoaded)
+      })
+    }
+
+    initializeEncryption()
+  }, [hasKeys, keysLoaded, userId, autoInitializeEncryption])
+
   const handleSendMessage = async () => {
     if (inputText.trim()) {
-      if (isDebugEncryption()) {
-        console.log('🔐 DEBUG: Sending message:', {
-          text: inputText.trim(),
-          userId,
-          conversationId,
-          isEncrypted: isEncryptionEnabled,
-          storageMode,
+      const originalMessage = inputText.trim()
+      let messageToSend = originalMessage
+      
+      console.log('📝 === MESSAGE SEND FLOW DEBUG ===')
+      console.log('1️⃣ Original user input:', originalMessage)
+      console.log('2️⃣ User ID:', userId)
+      console.log('3️⃣ Conversation ID:', conversationId)
+      console.log('4️⃣ Storage mode:', storageMode)
+      console.log('5️⃣ Is connected:', isConnected)
+      
+      // Debug encryption state
+      console.log('🔐 Encryption state check:', {
+        isEncryptionEnabled,
+        hasKeys,
+        keysLoaded,
+        allConditionsMet: isEncryptionEnabled && hasKeys && keysLoaded
+      })
+
+      // Encrypt message if encryption is enabled
+      console.log('🔐 Preparing to encrypt  check --:', {isEncryptionEnabled, hasKeys, keysLoaded, messageToSend})
+      if (isEncryptionEnabled && hasKeys && keysLoaded) {
+        try {
+          console.log('🔐 ENCRYPTING: Starting encryption process...')
+          console.log('🔐 ENCRYPTING: Input message:', originalMessage)
+          messageToSend = await encryptMessage(originalMessage, conversationId, userId)
+          console.log('✅ ENCRYPTED: Message encrypted successfully')
+          console.log('✅ ENCRYPTED: Encrypted length:', messageToSend.length)
+          console.log('✅ ENCRYPTED: First 100 chars:', messageToSend.substring(0, 100) + '...')
+        } catch (error) {
+          console.error('❌ ENCRYPTION FAILED:', error)
+          Alert.alert('Encryption Error', 'Failed to encrypt message. Please try again.')
+          return
+        }
+      } else {
+        console.log('⚠️ ENCRYPTION SKIPPED - conditions not met:', {
+          isEncryptionEnabled,
+          hasKeys,
+          keysLoaded
         })
+        console.log('⚠️ SENDING PLAINTEXT MESSAGE')
       }
 
+      // Final message debug
+      console.log('📤 FINAL MESSAGE TO SEND:')
+      console.log('📤 Message length:', messageToSend.length)
+      console.log('📤 Is encrypted?', messageToSend !== originalMessage)
+      console.log('📤 First 200 chars:', messageToSend.substring(0, 200))
+
+      // Send message through appropriate channel
       if (storageMode === 'backend' && isConnected) {
-        // Use real-time messaging for backend mode
-        sendRealtimeMessage(inputText.trim(), userId, userName)
+        console.log('🌐 SENDING via WebSocket (realtime)')
+        sendRealtimeMessage(messageToSend, userId, userName)
       } else {
-        // Fall back to traditional API call for local mode or when not connected
-        await sendMessage(inputText.trim(), conversationId)
+        console.log('🌐 SENDING via API call (local/offline)')
+        await sendMessage(messageToSend, conversationId)
       }
+      
+      console.log('✅ MESSAGE SENT TO SERVER')
+      console.log('📝 === END MESSAGE FLOW DEBUG ===')
+      
       setInputText('')
 
       // Auto-scroll to latest message after sending

@@ -11,6 +11,9 @@ const http = require('http')
 const multer = require('multer')
 const DatabaseService = require('./src/database/DatabaseService')
 const EncryptionService = require('./src/services/EncryptionService')
+const ratchetRoutes = require('./routes/ratchet')
+const encryptionRoutes = require('./routes/encryption')
+const productionEncryptionRoutes = require('./routes/production-encryption')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -1734,6 +1737,11 @@ app.post('/api/conversations/:conversationId/distribute-key', async (req, res) =
     })
   }
 })
+
+// Perfect Forward Secrecy - Ratchet API routes
+app.use('/api/ratchet', ratchetRoutes)
+app.use('/api/encryption', encryptionRoutes)
+app.use('/api/encryption', productionEncryptionRoutes)
 
 // Initialize database and start server
 async function startServer() {
