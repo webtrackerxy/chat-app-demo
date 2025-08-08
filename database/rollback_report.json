@@ -1,0 +1,33 @@
+{
+  "rollbackDate": "2025-08-07T16:55:52.592Z",
+  "rollbackReason": "Migration failed: Command failed with code 1: Error: Prisma schema validation - (get-config wasm)\nError code: P1012\nerror: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.\n  -->  prisma/schema.prisma:10\n   | \n 9 |   provider = \"postgresql\"\n10 |   url      = env(\"DATABASE_URL\")\n   | \n\nValidation Error Count: 1\n[Context: getConfig]\n\nPrisma CLI Version : 6.12.0\n",
+  "rollbackSteps": {
+    "postgresqlBackup": true,
+    "sqliteRestore": true,
+    "configurationUpdate": true,
+    "prismaRegeneration": true,
+    "verification": true
+  },
+  "rollbackDuration": 1073,
+  "dataIntegrity": {
+    "backupCreated": true,
+    "dataRestored": true,
+    "verificationspassed": false,
+    "verificationsPressed": true
+  },
+  "recommendations": [
+    "Review rollback reason and address issues before attempting migration again",
+    "Ensure all application processes are restarted after rollback",
+    "Run comprehensive tests to verify application functionality",
+    "Consider incremental migration approach if full migration failed",
+    "Update documentation with lessons learned"
+  ],
+  "nextSteps": [
+    "1. Restart application services",
+    "2. Run backend tests: npm test",
+    "3. Run frontend tests: npm test",
+    "4. Verify real-time functionality",
+    "5. Check encryption services",
+    "6. Monitor application performance"
+  ]
+}

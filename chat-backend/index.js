@@ -365,24 +365,48 @@ app.get('/api/conversations/:id/messages', async (req, res) => {
 })
 
 // Add conversation endpoint
-app.post('/api/conversations', (req, res) => {
+app.post('/api/conversations', async (req, res) => {
   try {
-    const { title, participants } = req.body
+    const { name, type = 'group', createdBy, participants = [] } = req.body
 
-    const newConversation = {
-      id: uuidv4(),
-      title,
-      participants,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      messages: [], // Initialize empty messages array
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Conversation name is required'
+      })
     }
 
-    conversations.push(newConversation)
+    // Create conversation in database
+    const conversationData = {
+      name,
+      type,
+      createdBy: createdBy || null
+    }
+
+    const conversation = await db.createConversation(conversationData, participants)
+    
+    // Also add to in-memory for backward compatibility
+    const memoryConversation = {
+      id: conversation.id,
+      title: conversation.name,
+      participants: conversation.participants?.map(p => p.user.username) || [],
+      createdAt: conversation.createdAt,
+      updatedAt: conversation.updatedAt,
+      messages: []
+    }
+    conversations.push(memoryConversation)
 
     res.json({
       success: true,
-      data: newConversation,
+      data: {
+        id: conversation.id,
+        name: conversation.name,
+        type: conversation.type,
+        participants: conversation.participants?.map(p => p.user.username) || [],
+        createdAt: conversation.createdAt,
+        updatedAt: conversation.updatedAt,
+        messages: []
+      }
     })
   } catch (error) {
     console.error('Error creating conversation:', error)
@@ -397,10 +421,17 @@ app.post('/api/messages', async (req, res) => {
   try {
     const { text, senderId, senderName, conversationId, encrypted = false, encryptionKeyId } = req.body
 
-    // Find the conversation
-    const conversation = conversations.find((conv) => conv.id === conversationId)
+    // Validate required fields
+    if (!text || !senderId || !conversationId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Text, senderId, and conversationId are required',
+      })
+    }
 
-    if (!conversation) {
+    // Check if conversation exists in database
+    const dbConversation = await db.getConversationById(conversationId)
+    if (!dbConversation) {
       return res.status(404).json({
         success: false,
         error: 'Conversation not found',
@@ -419,35 +450,59 @@ app.post('/api/messages', async (req, res) => {
       encryptionKeyId: encryptionKeyId || null
     }
 
-    // Add message to conversation's messages array
-    conversation.messages.push(newMessage)
+    try {
+      // Save message to database first
+      const savedMessage = await db.saveMessage({
+        id: newMessage.id,
+        text: text,
+        senderId: senderId,
+        conversationId: conversationId,
+        encrypted: encrypted,
+        encryptionKey: encryptionKeyId || null
+      })
 
-    // Update conversation's updatedAt timestamp
-    conversation.updatedAt = new Date()
+      console.log('Message saved to database:', savedMessage.id)
+      
+      // Also keep in memory for backward compatibility with existing hardcoded conversations
+      const conversation = conversations.find((conv) => conv.id === conversationId)
+      if (conversation) {
+        conversation.messages.push(newMessage)
+        conversation.updatedAt = new Date()
+      }
 
-    // If using database persistence and encryption is enabled, store encrypted message
-    if (encrypted && encryptionKeyId) {
-      try {
-        // Store encrypted message in database
-        await db.createMessage({
-          id: newMessage.id,
-          text: text, // This should be encrypted text
-          senderId: senderId,
-          conversationId: conversationId,
-          timestamp: newMessage.timestamp,
-          encrypted: true,
-          encryptionKey: encryptionKeyId
+      // Return formatted message
+      res.json({
+        success: true,
+        data: {
+          id: savedMessage.id,
+          text: savedMessage.text,
+          senderId: savedMessage.senderId,
+          senderName: savedMessage.sender.username,
+          timestamp: savedMessage.timestamp,
+          encrypted: savedMessage.encrypted,
+          encryptionKeyId: savedMessage.encryptionKey
+        },
+      })
+    } catch (dbError) {
+      console.error('Error storing message in database:', dbError)
+      
+      // Fallback to in-memory only if database fails
+      const conversation = conversations.find((conv) => conv.id === conversationId)
+      if (conversation) {
+        conversation.messages.push(newMessage)
+        conversation.updatedAt = new Date()
+        
+        res.json({
+          success: true,
+          data: newMessage,
         })
-      } catch (dbError) {
-        console.error('Error storing encrypted message:', dbError)
-        // Continue with in-memory storage even if database fails
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to save message',
+        })
       }
     }
-
-    res.json({
-      success: true,
-      data: newMessage,
-    })
   } catch (error) {
     console.error('Error sending message:', error)
 
@@ -750,24 +805,30 @@ io.on('connection', (socket) => {
     try {
       const { senderId, senderName, conversationId, fileData } = data
 
-      // Find the conversation
-      const conversation = conversations.find((conv) => conv.id === conversationId)
+      // Validate required fields
+      if (!senderId || !conversationId || !fileData) {
+        socket.emit('error', { message: 'SenderId, conversationId, and fileData are required' })
+        return
+      }
 
-      if (!conversation) {
+      // Check if conversation exists in database
+      const dbConversation = await db.getConversationById(conversationId)
+      if (!dbConversation) {
         socket.emit('error', { message: 'Conversation not found' })
         return
       }
 
+      const messageText = fileData.type === 'image'
+        ? 'Image'
+        : fileData.type === 'audio'
+          ? 'Voice message'
+          : fileData.type === 'video'
+            ? 'Video'
+            : fileData.originalName
+
       const newMessage = {
         id: uuidv4(),
-        text:
-          fileData.type === 'image'
-            ? 'Image'
-            : fileData.type === 'audio'
-              ? 'Voice message'
-              : fileData.type === 'video'
-                ? 'Video'
-                : fileData.originalName,
+        text: messageText,
         senderId,
         senderName,
         timestamp: new Date(),
@@ -777,19 +838,70 @@ io.on('connection', (socket) => {
         reactions: [],
       }
 
-      // Add message to conversation's messages array
-      conversation.messages.push(newMessage)
+      try {
+        // Save message to database first
+        const savedMessage = await db.saveMessage({
+          id: newMessage.id,
+          text: messageText,
+          senderId: senderId,
+          conversationId: conversationId
+        })
 
-      // Update conversation's updatedAt timestamp
-      conversation.updatedAt = new Date()
+        // Save file attachment
+        if (fileData) {
+          await db.saveMessageFile({
+            messageId: savedMessage.id,
+            filename: fileData.originalName,
+            path: fileData.url,
+            type: fileData.mimeType,
+            size: fileData.size
+          })
+        }
 
-      // Broadcast to conversation room
-      io.to(conversationId).emit('new_message', newMessage)
+        console.log('File message saved to database:', savedMessage.id)
+        
+        // Also keep in memory for backward compatibility
+        const conversation = conversations.find((conv) => conv.id === conversationId)
+        if (conversation) {
+          conversation.messages.push(newMessage)
+          conversation.updatedAt = new Date()
+        }
 
-      console.log(`File message sent to conversation ${conversationId}:`, newMessage)
-      logToFile(
-        `File message sent to conversation ${conversationId}: ${JSON.stringify(newMessage)}`,
-      )
+        // Broadcast to conversation room
+        const broadcastMessage = {
+          id: savedMessage.id,
+          text: savedMessage.text,
+          senderId: savedMessage.senderId,
+          senderName: savedMessage.sender.username,
+          timestamp: savedMessage.timestamp,
+          type: fileData.type,
+          file: fileData,
+          readBy: [],
+          reactions: []
+        }
+        
+        io.to(conversationId).emit('new_message', broadcastMessage)
+
+        console.log(`File message sent to conversation ${conversationId}:`, broadcastMessage)
+        logToFile(`File message sent to conversation ${conversationId}: ${JSON.stringify(broadcastMessage)}`)
+      } catch (dbError) {
+        console.error('Error storing file message in database:', dbError)
+        
+        // Fallback to in-memory only
+        const conversation = conversations.find((conv) => conv.id === conversationId)
+        if (conversation) {
+          conversation.messages.push(newMessage)
+          conversation.updatedAt = new Date()
+          
+          // Broadcast to conversation room
+          io.to(conversationId).emit('new_message', newMessage)
+
+          console.log(`File message sent to conversation ${conversationId} (fallback):`, newMessage)
+          logToFile(`File message sent to conversation ${conversationId} (fallback): ${JSON.stringify(newMessage)}`)
+        } else {
+          socket.emit('error', { message: 'Failed to send file message' })
+        }
+      }
     } catch (error) {
       console.error('Error sending file message via socket:', error)
       socket.emit('error', { message: 'Failed to send file message' })
@@ -799,12 +911,19 @@ io.on('connection', (socket) => {
   // Handle new messages
   socket.on('send_message', async (data) => {
     try {
-      const { text, senderId, senderName, conversationId } = data
+      const { text, senderId, senderName, conversationId, encrypted = false, encryptionKeyId } = data
 
-      // Find the conversation
-      const conversation = conversations.find((conv) => conv.id === conversationId)
+      // Validate required fields
+      if (!text || !senderId || !conversationId) {
+        socket.emit('error', { message: 'Text, senderId, and conversationId are required' })
+        return
+      }
 
-      if (!conversation) {
+      // Check if conversation exists in database or in-memory (for backward compatibility)
+      const dbConversation = await db.getConversationById(conversationId)
+      const memoryConversation = conversations.find((conv) => conv.id === conversationId)
+      
+      if (!dbConversation && !memoryConversation) {
         socket.emit('error', { message: 'Conversation not found' })
         return
       }
@@ -819,19 +938,86 @@ io.on('connection', (socket) => {
         file: null, // File attachment (if any)
         readBy: [],
         reactions: [],
+        encrypted: encrypted,
+        encryptionKeyId: encryptionKeyId || null
       }
 
-      // Add message to conversation's messages array
-      conversation.messages.push(newMessage)
+      let savedMessage = null
+      
+      try {
+        // Only save to database if conversation exists in database
+        if (dbConversation) {
+          savedMessage = await db.saveMessage({
+            id: newMessage.id,
+            text: text,
+            senderId: senderId,
+            conversationId: conversationId,
+            encrypted: encrypted,
+            encryptionKey: encryptionKeyId || null
+          })
+          console.log('WebSocket message saved to database:', savedMessage.id)
+        } else {
+          console.log('Skipping database save for in-memory conversation:', conversationId)
+        }
+        
+        // Always keep in memory for real-time functionality
+        const conversation = conversations.find((conv) => conv.id === conversationId)
+        if (conversation) {
+          conversation.messages.push(newMessage)
+          conversation.updatedAt = new Date()
+        }
 
-      // Update conversation's updatedAt timestamp
-      conversation.updatedAt = new Date()
+        // Broadcast formatted message to conversation room
+        const broadcastMessage = savedMessage ? {
+          // Database message format
+          id: savedMessage.id,
+          text: savedMessage.text,
+          senderId: savedMessage.senderId,
+          senderName: savedMessage.sender.username,
+          timestamp: savedMessage.timestamp,
+          type: 'text',
+          file: null,
+          readBy: [],
+          reactions: [],
+          encrypted: savedMessage.encrypted,
+          encryptionKeyId: savedMessage.encryptionKey
+        } : {
+          // In-memory message format
+          id: newMessage.id,
+          text: newMessage.text,
+          senderId: newMessage.senderId,
+          senderName: newMessage.senderName,
+          timestamp: newMessage.timestamp,
+          type: 'text',
+          file: null,
+          readBy: [],
+          reactions: [],
+          encrypted: newMessage.encrypted,
+          encryptionKeyId: newMessage.encryptionKeyId
+        }
+        
+        io.to(conversationId).emit('new_message', broadcastMessage)
 
-      // Broadcast to conversation room
-      io.to(conversationId).emit('new_message', newMessage)
+        console.log(`Message sent to conversation ${conversationId}:`, broadcastMessage)
+        logToFile(`Message sent to conversation ${conversationId}: ${JSON.stringify(broadcastMessage)}`)
+      } catch (dbError) {
+        console.error('Error storing WebSocket message in database:', dbError)
+        
+        // Fallback to in-memory only
+        const conversation = conversations.find((conv) => conv.id === conversationId)
+        if (conversation) {
+          conversation.messages.push(newMessage)
+          conversation.updatedAt = new Date()
+          
+          // Broadcast to conversation room
+          io.to(conversationId).emit('new_message', newMessage)
 
-      console.log(`Message sent to conversation ${conversationId}:`, newMessage)
-      logToFile(`Message sent to conversation ${conversationId}: ${JSON.stringify(newMessage)}`)
+          console.log(`Message sent to conversation ${conversationId} (fallback):`, newMessage)
+          logToFile(`Message sent to conversation ${conversationId} (fallback): ${JSON.stringify(newMessage)}`)
+        } else {
+          socket.emit('error', { message: 'Failed to send message' })
+        }
+      }
     } catch (error) {
       console.error('Error sending message via socket:', error)
       socket.emit('error', { message: 'Failed to send message' })
@@ -882,42 +1068,57 @@ io.on('connection', (socket) => {
   })
 
   // Handle read receipts
-  socket.on('mark_message_read', (data) => {
+  socket.on('mark_message_read', async (data) => {
     try {
       const { messageId, conversationId, userId, userName } = data
 
-      // Find the conversation and message
+      if (!messageId || !userId || !userName) {
+        socket.emit('error', { message: 'MessageId, userId, and userName are required' })
+        return
+      }
+
+      // Store read receipt in database first (only for database messages)
+      try {
+        // Check if message exists in database before creating read receipt
+        const dbMessage = await db.getMessageById(messageId)
+        if (dbMessage) {
+          await db.markMessageAsRead(messageId, userId, userName)
+          console.log('Read receipt saved to database:', messageId, userId)
+        } else {
+          console.log('Skipping database read receipt for in-memory message:', messageId)
+        }
+      } catch (dbError) {
+        console.log('Read receipt not saved to database (likely in-memory message):', messageId)
+        // Continue with in-memory storage for hardcoded demo messages
+      }
+
+      // Also handle in-memory for backward compatibility
       const conversation = conversations.find((conv) => conv.id === conversationId)
-      if (!conversation) {
-        socket.emit('error', { message: 'Conversation not found' })
-        return
+      if (conversation) {
+        const message = conversation.messages.find((msg) => msg.id === messageId)
+        if (message) {
+          // Check if user already read this message
+          const existingReadReceipt = message.readBy.find((receipt) => receipt.userId === userId)
+          if (!existingReadReceipt) {
+            // Add read receipt to in-memory message
+            const readReceipt = {
+              userId,
+              userName,
+              readAt: new Date(),
+            }
+            message.readBy.push(readReceipt)
+          }
+        }
       }
-
-      const message = conversation.messages.find((msg) => msg.id === messageId)
-      if (!message) {
-        socket.emit('error', { message: 'Message not found' })
-        return
-      }
-
-      // Check if user already read this message
-      const existingReadReceipt = message.readBy.find((receipt) => receipt.userId === userId)
-      if (existingReadReceipt) {
-        return // User already read this message
-      }
-
-      // Add read receipt
-      const readReceipt = {
-        userId,
-        userName,
-        readAt: new Date(),
-      }
-
-      message.readBy.push(readReceipt)
 
       // Broadcast read receipt to conversation room
       io.to(conversationId).emit('message_read', {
         messageId,
-        readReceipt,
+        readReceipt: {
+          userId,
+          userName,
+          readAt: new Date()
+        }
       })
 
       console.log(`Message ${messageId} marked as read by ${userName}`)
@@ -929,66 +1130,96 @@ io.on('connection', (socket) => {
   })
 
   // Handle message reactions
-  socket.on('add_reaction', (data) => {
+  socket.on('add_reaction', async (data) => {
     try {
       const { messageId, conversationId, userId, userName, emoji } = data
 
-      // Find the conversation and message
-      const conversation = conversations.find((conv) => conv.id === conversationId)
-      if (!conversation) {
-        socket.emit('error', { message: 'Conversation not found' })
+      if (!messageId || !userId || !emoji) {
+        socket.emit('error', { message: 'MessageId, userId, and emoji are required' })
         return
       }
 
-      const message = conversation.messages.find((msg) => msg.id === messageId)
-      if (!message) {
-        socket.emit('error', { message: 'Message not found' })
-        return
-      }
-
-      // Check if user already has any reaction (only one emoji allowed per user)
-      const existingUserReaction = message.reactions.find((reaction) => reaction.userId === userId)
-
-      if (existingUserReaction) {
-        // If user is trying to react with the same emoji, remove it (toggle)
-        if (existingUserReaction.emoji === emoji) {
-          message.reactions = message.reactions.filter((r) => r.id !== existingUserReaction.id)
-
-          // Broadcast reaction removal
-          io.to(conversationId).emit('reaction_removed', {
-            messageId,
-            reactionId: existingUserReaction.id,
-            userId,
-          })
-          return
+      // Handle reaction in database first (only for database messages)
+      try {
+        // Check if message exists in database before creating reaction
+        const dbMessage = await db.getMessageById(messageId)
+        if (dbMessage) {
+          const reactionResult = await db.toggleReaction(messageId, userId, emoji)
+          console.log('Reaction processed in database:', reactionResult)
+          
+          if (reactionResult.action === 'removed') {
+            // Broadcast reaction removal
+            io.to(conversationId).emit('reaction_removed', {
+              messageId,
+              userId,
+              emoji: reactionResult.emoji
+            })
+            console.log(`Reaction ${emoji} removed from message ${messageId} by ${userName}`)
+            return
+          }
         } else {
-          // If user is trying to react with a different emoji, replace the existing one
-          message.reactions = message.reactions.filter((r) => r.id !== existingUserReaction.id)
+          console.log('Skipping database reaction for in-memory message:', messageId)
+        }
+      } catch (dbError) {
+        console.log('Reaction not saved to database (likely in-memory message):', messageId)
+        // Continue with in-memory processing for hardcoded demo messages
+      }
 
-          // Broadcast old reaction removal
-          io.to(conversationId).emit('reaction_removed', {
-            messageId,
-            reactionId: existingUserReaction.id,
+      // Also handle in-memory for backward compatibility
+      const conversation = conversations.find((conv) => conv.id === conversationId)
+      if (conversation) {
+        const message = conversation.messages.find((msg) => msg.id === messageId)
+        if (message) {
+          // Check if user already has any reaction (only one emoji allowed per user)
+          const existingUserReaction = message.reactions.find((reaction) => reaction.userId === userId)
+
+          if (existingUserReaction) {
+            // If user is trying to react with the same emoji, remove it (toggle)
+            if (existingUserReaction.emoji === emoji) {
+              message.reactions = message.reactions.filter((r) => r.id !== existingUserReaction.id)
+
+              // Broadcast reaction removal
+              io.to(conversationId).emit('reaction_removed', {
+                messageId,
+                reactionId: existingUserReaction.id,
+                userId,
+              })
+              return
+            } else {
+              // If user is trying to react with a different emoji, replace the existing one
+              message.reactions = message.reactions.filter((r) => r.id !== existingUserReaction.id)
+
+              // Broadcast old reaction removal
+              io.to(conversationId).emit('reaction_removed', {
+                messageId,
+                reactionId: existingUserReaction.id,
+                userId,
+              })
+            }
+          }
+
+          // Add reaction to in-memory message
+          const reaction = {
+            id: uuidv4(),
             userId,
-          })
+            userName,
+            emoji,
+            timestamp: new Date(),
+          }
+          message.reactions.push(reaction)
         }
       }
 
-      // Add reaction
-      const reaction = {
-        id: uuidv4(),
-        userId,
-        userName,
-        emoji,
-        timestamp: new Date(),
-      }
-
-      message.reactions.push(reaction)
-
-      // Broadcast reaction to conversation room
+      // Broadcast reaction addition to conversation room
       io.to(conversationId).emit('reaction_added', {
         messageId,
-        reaction,
+        reaction: {
+          id: uuidv4(),
+          userId,
+          userName,
+          emoji,
+          timestamp: new Date()
+        }
       })
 
       console.log(`Reaction ${emoji} added to message ${messageId} by ${userName}`)
@@ -1054,58 +1285,61 @@ io.on('connection', (socket) => {
       const { messageId, conversationId, userId } = data
       console.log('Attempting to delete message:', { messageId, conversationId, userId })
 
-      // Find the conversation
-      const conversation = conversations.find((conv) => conv.id === conversationId)
-      if (!conversation) {
-        console.log('Conversation not found:', conversationId)
-        socket.emit('error', { message: 'Conversation not found' })
+      if (!messageId || !conversationId || !userId) {
+        socket.emit('error', { message: 'MessageId, conversationId, and userId are required' })
         return
       }
-      console.log('Found conversation:', conversation.id)
 
-      // Find the message
-      const messageIndex = conversation.messages.findIndex((msg) => msg.id === messageId)
-      if (messageIndex === -1) {
-        console.log('Message not found:', messageId)
-        console.log(
-          'Available messages:',
-          conversation.messages.map((m) => m.id),
-        )
+      // Check message in database first
+      let dbMessage = null
+      try {
+        dbMessage = await db.getMessageById(messageId)
+        if (dbMessage) {
+          // Check permissions in database
+          if (dbMessage.senderId !== userId) {
+            socket.emit('error', { message: 'You can only delete your own messages' })
+            return
+          }
+          
+          // Delete from database
+          await db.deleteMessage(messageId)
+          console.log('Message deleted from database:', messageId)
+        } else {
+          console.log('Message not found in database, checking in-memory:', messageId)
+        }
+      } catch (dbError) {
+        console.log('Database deletion failed (likely in-memory message):', messageId)
+        // Continue with in-memory deletion for hardcoded demo messages
+      }
+
+      // Also handle in-memory deletion for backward compatibility
+      const conversation = conversations.find((conv) => conv.id === conversationId)
+      if (conversation) {
+        const messageIndex = conversation.messages.findIndex((msg) => msg.id === messageId)
+        if (messageIndex !== -1) {
+          const message = conversation.messages[messageIndex]
+          
+          // Check permissions for in-memory message if database check wasn't performed
+          if (!dbMessage && message.senderId !== userId) {
+            socket.emit('error', { message: 'You can only delete your own messages' })
+            return
+          }
+          
+          // Remove message from conversation
+          const deletedMessage = conversation.messages.splice(messageIndex, 1)[0]
+          console.log('Message removed from in-memory conversation:', deletedMessage.id)
+        }
+      }
+
+      // If neither database nor memory had the message, it doesn't exist
+      if (!dbMessage && (!conversation || conversation.messages.findIndex((msg) => msg.id === messageId) === -1)) {
         socket.emit('error', { message: 'Message not found' })
         return
       }
-      console.log('Found message at index:', messageIndex)
-
-      const message = conversation.messages[messageIndex]
-      console.log('Message details:', {
-        id: message.id,
-        senderId: message.senderId,
-        text: message.text,
-      })
-
-      // Check if user has permission to delete (only sender can delete their own messages)
-      if (message.senderId !== userId) {
-        console.log(
-          'Permission denied - message senderId:',
-          message.senderId,
-          'requesting userId:',
-          userId,
-        )
-        socket.emit('error', { message: 'You can only delete your own messages' })
-        return
-      }
-      console.log('Permission granted - user can delete message')
-
-      // Remove message from conversation
-      const deletedMessage = conversation.messages.splice(messageIndex, 1)[0]
-      console.log(
-        'Message removed from conversation. Remaining messages:',
-        conversation.messages.length,
-      )
 
       // Broadcast deletion to all clients in the conversation room
       const broadcastData = {
-        messageId: deletedMessage.id,
+        messageId: messageId,
         conversationId: conversationId,
       }
       console.log('Broadcasting message_deleted event:', broadcastData)

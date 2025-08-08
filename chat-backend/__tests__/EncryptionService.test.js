@@ -1,8 +1,8 @@
 const EncryptionService = require('../src/services/EncryptionService')
-const { PrismaClient } = require('../generated/prisma')
+const { PrismaClient } = require('@prisma/client')
 
 // Mock Prisma Client
-jest.mock('../generated/prisma', () => ({
+jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn().mockImplementation(() => ({
     user: {
       update: jest.fn(),
