@@ -1,0 +1,31 @@
+{
+  "startTime": 1754585605431,
+  "currentPhase": "export",
+  "completedPhases": [
+    {
+      "phase": "preparation",
+      "completedAt": 1754585605436
+    },
+    {
+      "phase": "setup",
+      "completedAt": 1754585606057
+    }
+  ],
+  "failedPhases": [
+    {
+      "phase": "export",
+      "failedAt": 1754585606066,
+      "error": "\nInvalid `model.findMany()` invocation in\n/Users/mike.li/working/test/chat-app-demo/database/export-sqlite-data.js:33:30\n\n  30 async function exportTable(tableName, model, filename = null) {\n  31   try {\n  32     console.log(`Exporting ${tableName}...`);\n→ 33     const data = await model.findMany(\nError querying the database: Error code 14: Unable to open the database file"
+    }
+  ],
+  "errors": [
+    {
+      "phase": "export",
+      "timestamp": 1754585606066,
+      "error": "\nInvalid `model.findMany()` invocation in\n/Users/mike.li/working/test/chat-app-demo/database/export-sqlite-data.js:33:30\n\n  30 async function exportTable(tableName, model, filename = null) {\n  31   try {\n  32     console.log(`Exporting ${tableName}...`);\n→ 33     const data = await model.findMany(\nError querying the database: Error code 14: Unable to open the database file"
+    }
+  ],
+  "warnings": [],
+  "rollbackAvailable": true,
+  "migrationId": "migration_1754585605431_8pqirakcr"
+}

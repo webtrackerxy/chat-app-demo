@@ -1,0 +1,62 @@
+[
+  {
+    "id": "cmd6bix8d0000vs4dochkxqom",
+    "username": "alice",
+    "publicKey": null,
+    "privateKey": null,
+    "lastSeen": "2025-07-16T18:52:16.189Z",
+    "status": "online",
+    "createdAt": "2025-07-16T18:52:16.189Z",
+    "updatedAt": "2025-07-16T18:52:16.189Z"
+  },
+  {
+    "id": "cmd6bj4x60001vs4d6n66yaka",
+    "username": "bob",
+    "publicKey": null,
+    "privateKey": null,
+    "lastSeen": "2025-07-16T18:52:26.155Z",
+    "status": "online",
+    "createdAt": "2025-07-16T18:52:26.155Z",
+    "updatedAt": "2025-07-16T18:52:26.155Z"
+  },
+  {
+    "id": "cmd6by83b0000vs0lryywx5vz",
+    "username": "Mike",
+    "publicKey": null,
+    "privateKey": null,
+    "lastSeen": "2025-07-16T19:04:10.103Z",
+    "status": "online",
+    "createdAt": "2025-07-16T19:04:10.103Z",
+    "updatedAt": "2025-07-16T19:04:10.103Z"
+  },
+  {
+    "id": "cmd6bybf10001vs0lyvhq7e7l",
+    "username": "John",
+    "publicKey": null,
+    "privateKey": null,
+    "lastSeen": "2025-07-16T19:04:14.413Z",
+    "status": "online",
+    "createdAt": "2025-07-16T19:04:14.413Z",
+    "updatedAt": "2025-07-16T19:04:14.413Z"
+  },
+  {
+    "id": "cmd6cvw3p0002vs0ldnlxv44o",
+    "username": "Mary",
+    "publicKey": null,
+    "privateKey": null,
+    "lastSeen": "2025-07-16T19:30:20.869Z",
+    "status": "online",
+    "createdAt": "2025-07-16T19:30:20.869Z",
+    "updatedAt": "2025-07-16T19:30:20.869Z"
+  },
+  {
+    "id": "cmd6d3c570003vs0lvm1sn4w5",
+    "username": "Jojhn",
+    "publicKey": null,
+    "privateKey": null,
+    "lastSeen": "2025-07-16T19:36:08.251Z",
+    "status": "online",
+    "createdAt": "2025-07-16T19:36:08.251Z",
+    "updatedAt": "2025-07-16T19:36:08.251Z"
+  }
+]

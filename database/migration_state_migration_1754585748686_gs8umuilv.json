@@ -1,0 +1,35 @@
+{
+  "startTime": 1754585748686,
+  "currentPhase": "schema_update",
+  "completedPhases": [
+    {
+      "phase": "preparation",
+      "completedAt": 1754585748689
+    },
+    {
+      "phase": "setup",
+      "completedAt": 1754585749259
+    },
+    {
+      "phase": "export",
+      "completedAt": 1754585749330
+    }
+  ],
+  "failedPhases": [
+    {
+      "phase": "schema_update",
+      "failedAt": 1754585751519,
+      "error": "Command failed with code 1: Error: Prisma schema validation - (get-config wasm)\nError code: P1012\nerror: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.\n  -->  prisma/schema.prisma:10\n   | \n 9 |   provider = \"postgresql\"\n10 |   url      = env(\"DATABASE_URL\")\n   | \n\nValidation Error Count: 1\n[Context: getConfig]\n\nPrisma CLI Version : 6.12.0\n"
+    }
+  ],
+  "errors": [
+    {
+      "phase": "schema_update",
+      "timestamp": 1754585751519,
+      "error": "Command failed with code 1: Error: Prisma schema validation - (get-config wasm)\nError code: P1012\nerror: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.\n  -->  prisma/schema.prisma:10\n   | \n 9 |   provider = \"postgresql\"\n10 |   url      = env(\"DATABASE_URL\")\n   | \n\nValidation Error Count: 1\n[Context: getConfig]\n\nPrisma CLI Version : 6.12.0\n"
+    }
+  ],
+  "warnings": [],
+  "rollbackAvailable": true,
+  "migrationId": "migration_1754585748686_gs8umuilv"
+}

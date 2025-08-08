@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 
 // Mock Prisma
-jest.mock('../generated/prisma', () => {
+jest.mock('@prisma/client', () => {
   const mockDb = {
     user: {
       findUnique: jest.fn(),
@@ -30,7 +30,7 @@ jest.mock('../generated/prisma', () => {
 });
 
 // Get access to the mock database
-const { PrismaClient } = require('../generated/prisma');
+const { PrismaClient } = require('@prisma/client');
 const mockDb = new PrismaClient();
 
 // Initialize encryption service

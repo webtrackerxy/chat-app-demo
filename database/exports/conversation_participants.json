@@ -1,0 +1,34 @@
+[
+  {
+    "id": "cmd6bjoe90004vs4dh5zi3nmt",
+    "conversationId": "cmd6bjoe60003vs4ddryeyf8l",
+    "userId": "cmd6bix8d0000vs4dochkxqom",
+    "joinedAt": "2025-07-16T18:52:51.394Z",
+    "role": "member",
+    "leftAt": null
+  },
+  {
+    "id": "cmd6bjoe90005vs4dj3wn5aky",
+    "conversationId": "cmd6bjoe60003vs4ddryeyf8l",
+    "userId": "cmd6bj4x60001vs4d6n66yaka",
+    "joinedAt": "2025-07-16T18:52:51.394Z",
+    "role": "member",
+    "leftAt": null
+  },
+  {
+    "id": "cmd6dhgbi0006vs0lqrwq814t",
+    "conversationId": "cmd6dhgbg0005vs0ll8whtp4d",
+    "userId": "cmd6by83b0000vs0lryywx5vz",
+    "joinedAt": "2025-07-16T19:47:06.847Z",
+    "role": "member",
+    "leftAt": null
+  },
+  {
+    "id": "cmd6dhgbi0007vs0ls8rrktom",
+    "conversationId": "cmd6dhgbg0005vs0ll8whtp4d",
+    "userId": "cmd6bybf10001vs0lyvhq7e7l",
+    "joinedAt": "2025-07-16T19:47:06.847Z",
+    "role": "member",
+    "leftAt": null
+  }
+]

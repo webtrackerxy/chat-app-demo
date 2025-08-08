@@ -1,5 +1,5 @@
 const crypto = require('crypto')
-const { PrismaClient } = require('../../generated/prisma')
+const { PrismaClient } = require('@prisma/client')
 
 class EncryptionService {
   constructor(prisma) {

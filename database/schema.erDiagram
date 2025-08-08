@@ -1,0 +1,502 @@
+erDiagram
+    %% Chat Application Database Schema - Entity Relationship Diagram
+    %% PostgreSQL 16.9 - 23 Tables Total
+    %% Generated: August 7, 2025
+
+    %% ========================================
+    %% CORE USER & AUTHENTICATION DOMAIN
+    %% ========================================
+    
+    users {
+        string id PK "UUID - Primary Key"
+        string username UK "Unique username"
+        string publicKey "RSA public key (base64)"
+        string privateKey "Encrypted private key"
+        datetime lastSeen "Last activity timestamp"
+        string status "online/offline/away"
+        datetime createdAt "Account creation"
+        datetime updatedAt "Last modification"
+    }
+
+    %% ========================================
+    %% MESSAGING CORE DOMAIN
+    %% ========================================
+    
+    conversations {
+        string id PK "UUID - Primary Key"
+        string type "group/direct"
+        string name "Group name (nullable)"
+        datetime createdAt "Creation timestamp"
+        datetime updatedAt "Last modification"
+        string createdBy FK "Creator user ID"
+    }
+
+    conversation_participants {
+        string id PK "UUID - Primary Key"
+        string conversationId FK "Conversation reference"
+        string userId FK "User reference"
+        datetime joinedAt "Join timestamp"
+        string role "admin/member"
+        datetime leftAt "Leave timestamp (nullable)"
+    }
+
+    messages {
+        string id PK "UUID - Primary Key"
+        string conversationId FK "Conversation reference"
+        string senderId FK "Sender user reference"
+        text text "Message content"
+        string threadId "Threading support"
+        string replyToId FK "Reply reference"
+        
+        %% Basic Encryption Fields
+        boolean encrypted "Basic encryption flag"
+        string encryptionKey "Conversation key reference"
+        
+        %% Perfect Forward Secrecy Fields
+        boolean ratchetEncrypted "PFS encryption flag"
+        string ephemeralPublicKey "Ephemeral key (base64)"
+        integer messageNumber "Message sequence number"
+        integer chainLength "Chain length counter"
+        integer previousChainLength "Previous chain length"
+        string ratchetHeader "JSON ratchet metadata"
+        
+        %% Post-Quantum Cryptography Fields
+        string cryptoVersion "Crypto version tracking"
+        string algorithm "classical/hybrid/post-quantum"
+        integer securityLevel "NIST security level"
+        boolean pqcEncrypted "Post-quantum encryption flag"
+        string kyberCiphertext "Kyber KEM ciphertext (base64)"
+        string dilithiumSignature "Dilithium signature (base64)"
+        string hybridMetadata "JSON hybrid mode data"
+        string negotiationId FK "Algorithm negotiation ref"
+        
+        datetime timestamp "Message timestamp"
+        datetime createdAt "Creation timestamp"
+        datetime updatedAt "Last modification"
+    }
+
+    %% ========================================
+    %% MEDIA & INTERACTIONS DOMAIN
+    %% ========================================
+    
+    message_files {
+        string id PK "UUID - Primary Key"
+        string messageId FK "Message reference"
+        string filename "Original filename"
+        string path "File storage path"
+        string type "MIME type"
+        integer size "File size in bytes"
+        datetime createdAt "Upload timestamp"
+    }
+
+    message_reactions {
+        string id PK "UUID - Primary Key"
+        string messageId FK "Message reference"
+        string userId FK "User reference"
+        string emoji "Reaction emoji"
+        datetime createdAt "Reaction timestamp"
+    }
+
+    read_receipts {
+        string id PK "UUID - Primary Key"
+        string messageId FK "Message reference"
+        string userId FK "User reference"
+        string userName "User display name"
+        datetime readAt "Read timestamp"
+    }
+
+    %% ========================================
+    %% ENCRYPTION INFRASTRUCTURE DOMAIN
+    %% ========================================
+    
+    conversation_keys {
+        string id PK "UUID - Primary Key"
+        string conversationId FK "Conversation reference"
+        string userId FK "User reference"
+        string keyId UK "Unique key identifier"
+        string encryptedKey "Conversation key encrypted with user public key"
+        datetime createdAt "Key creation"
+        datetime updatedAt "Last modification"
+    }
+
+    conversation_ratchet_states {
+        string id PK "UUID - Primary Key"
+        string conversationId FK "Conversation reference"
+        string userId FK "User reference"
+        
+        %% Encrypted Ratchet Keys
+        string rootKeyEncrypted "Root key (base64 encrypted)"
+        string sendingChainKeyEncrypted "Sending chain key (base64 encrypted)"
+        string receivingChainKeyEncrypted "Receiving chain key (base64 encrypted)"
+        
+        %% Message Counters
+        integer sendingMessageNumber "Send counter"
+        integer receivingMessageNumber "Receive counter"
+        integer sendingChainLength "Send chain length"
+        integer receivingChainLength "Receive chain length"
+        
+        %% Ephemeral Keys
+        string sendingEphemeralPrivateKey "Sending ephemeral private (base64)"
+        string sendingEphemeralPublicKey "Sending ephemeral public (base64)"
+        string receivingEphemeralPublicKey "Receiving ephemeral public (base64)"
+        
+        %% Post-Quantum Support
+        string cryptoVersion "Crypto version"
+        string algorithm "classical/hybrid/post-quantum"
+        integer securityLevel "NIST security level"
+        boolean pqcEnabled "Post-quantum enabled flag"
+        boolean hybridMode "Hybrid mode flag"
+        
+        datetime createdAt "State creation"
+        datetime updatedAt "Last state update"
+    }
+
+    skipped_message_keys {
+        string id PK "UUID - Primary Key"
+        string ratchetStateId FK "Ratchet state reference"
+        string messageKeyId "Message key identifier"
+        string encryptedKey "Encrypted message key"
+        integer chainLength "Chain length at skip"
+        integer messageNumber "Message number"
+        datetime createdAt "Key creation"
+        datetime expiresAt "Key expiration (7 days)"
+    }
+
+    post_quantum_keys {
+        string id PK "UUID - Primary Key"
+        string ratchetStateId FK "Ratchet state reference"
+        string keyType "kyber768_public/private, dilithium3_public/private"
+        string keyData "Key material (base64)"
+        string keyVersion "Key version"
+        string algorithm "kyber768/dilithium3/hybrid"
+        string purpose "key_exchange/signature/combined"
+        integer securityLevel "NIST security level 1/3/5"
+        boolean isActive "Active key flag"
+        datetime generatedAt "Key generation"
+        datetime activatedAt "Key activation"
+        datetime expiresAt "Key expiration (nullable)"
+        datetime revokedAt "Key revocation (nullable)"
+        string derivationInfo "JSON key derivation data"
+        string parentKeyId FK "Parent key reference"
+        datetime createdAt "Record creation"
+        datetime updatedAt "Last modification"
+    }
+
+    algorithm_negotiations {
+        string id PK "UUID - Primary Key"
+        string conversationId FK "Conversation reference"
+        string initiatorId FK "Initiator user reference"
+        string responderId FK "Responder user reference"
+        string negotiationId UK "Unique negotiation ID"
+        string selectedKeyExchange "x25519/kyber768/hybrid"
+        string selectedSignature "dilithium3/ed25519"
+        string selectedEncryption "chacha20poly1305/aes256gcm"
+        integer achievedSecurityLevel "Final NIST security level"
+        boolean quantumResistant "Quantum resistance flag"
+        boolean hybridMode "Hybrid mode negotiated"
+        string protocolVersion "Negotiated protocol version"
+        boolean supportsPFS "Perfect Forward Secrecy support"
+        boolean supportsDoubleRatchet "Double Ratchet support"
+        string localCapabilities "JSON local capabilities"
+        string remoteCapabilities "JSON remote capabilities"
+        datetime negotiatedAt "Negotiation completion"
+        datetime expiresAt "Negotiation expiry"
+        boolean isActive "Active negotiation flag"
+    }
+
+    crypto_migrations {
+        string id PK "UUID - Primary Key"
+        string fromVersion "Previous crypto version"
+        string toVersion "New crypto version"
+        integer affectedUsers "Number of users affected"
+        integer affectedConversations "Number of conversations migrated"
+        integer affectedMessages "Number of messages re-encrypted"
+        string status "pending/in_progress/completed/failed"
+        datetime startedAt "Migration start (nullable)"
+        datetime completedAt "Migration completion (nullable)"
+        datetime failedAt "Migration failure (nullable)"
+        string errorMessage "Failure reason (nullable)"
+        string migrationPlan "JSON migration plan"
+        string progressLog "JSON progress updates (nullable)"
+        string rollbackPlan "JSON rollback procedures (nullable)"
+        datetime createdAt "Record creation"
+        datetime updatedAt "Last modification"
+    }
+
+    %% ========================================
+    %% MULTI-DEVICE SUPPORT DOMAIN
+    %% ========================================
+    
+    device_identities {
+        string id PK "UUID - Primary Key"
+        string deviceId UK "Unique device identifier"
+        string userId FK "User reference"
+        string deviceName "Human-readable device name"
+        string deviceType "mobile/desktop/web/tablet"
+        string platform "iOS/Android/Windows/macOS/Linux/Web"
+        string version "Device/app version"
+        
+        %% Cryptographic Identity
+        string signingPublicKey "Signing public key (base64)"
+        string signingPrivateKey "Signing private key (encrypted)"
+        string encryptionPublicKey "Encryption public key (base64)"
+        string encryptionPrivateKey "Encryption private key (encrypted)"
+        
+        %% Trust Information
+        boolean isVerified "Verification status"
+        string trustLevel "unverified/self-verified/cross-verified/revoked"
+        string verifiedBy "JSON array of verifying device IDs"
+        integer trustScore "Trust score 0-100"
+        
+        %% Device Lifecycle
+        datetime registeredAt "Device registration"
+        datetime lastSeen "Last activity"
+        datetime revokedAt "Revocation timestamp (nullable)"
+        string revokedBy "Revoking device ID (nullable)"
+        string revocationReason "Revocation reason (nullable)"
+        
+        datetime createdAt "Record creation"
+        datetime updatedAt "Last modification"
+    }
+
+    device_verifications {
+        string id PK "UUID - Primary Key"
+        string verifyingDeviceId FK "Verifying device reference"
+        string targetDeviceId FK "Target device reference"
+        string verificationCode "Verification code"
+        string verificationMethod "manual/qr_code/numeric_code/biometric"
+        string signature "Digital signature of verification"
+        datetime timestamp "Verification timestamp"
+        datetime expiresAt "Verification expiry"
+        boolean isActive "Active verification flag"
+    }
+
+    key_sync_packages {
+        string id PK "UUID - Primary Key"
+        string packageId UK "Unique package identifier"
+        string fromDeviceId FK "Sender device reference"
+        string toDeviceId FK "Receiver device reference"
+        string keyType "ratchet_state/conversation_key/device_key/hybrid_key"
+        string conversationId FK "Conversation reference (nullable)"
+        string encryptedKeyData "Encrypted key data (base64)"
+        string integrityHash "Data integrity hash"
+        string signature "Package signature"
+        string keyMetadata "JSON key metadata"
+        string encryptionMethod "hybrid/device_key"
+        string syncPriority "critical/high/medium/low"
+        integer attempts "Sync attempt counter"
+        integer maxAttempts "Maximum retry attempts"
+        datetime expiresAt "Package expiration"
+        string status "pending/sent/delivered/processed/failed"
+        datetime processedAt "Processing timestamp (nullable)"
+        string errorMessage "Error description (nullable)"
+        datetime createdAt "Package creation"
+        datetime updatedAt "Last modification"
+    }
+
+    authentication_sessions {
+        string id PK "UUID - Primary Key"
+        string sessionId UK "Unique session identifier"
+        string initiatorDeviceId FK "Initiator device reference"
+        string responderDeviceId FK "Responder device reference"
+        string method "qr_code/numeric_code/biometric/mutual_verification"
+        string challenge "Base64 encoded challenge"
+        string response "Base64 encoded response (nullable)"
+        string verificationCode "Verification code (nullable)"
+        string status "pending/challenged/responded/verified/failed/expired"
+        integer attempts "Authentication attempt counter"
+        integer maxAttempts "Maximum attempts allowed"
+        datetime createdAt "Session creation"
+        datetime expiresAt "Session expiration"
+        datetime verifiedAt "Verification completion (nullable)"
+    }
+
+    %% ========================================
+    %% SYNCHRONIZATION & CONFLICT RESOLUTION DOMAIN
+    %% ========================================
+    
+    key_conflicts {
+        string id PK "UUID - Primary Key"
+        string conflictId UK "Unique conflict identifier"
+        string conversationId FK "Conversation reference"
+        string keyType "Type of conflicted key"
+        string severity "low/medium/high/critical"
+        string status "detected/analyzing/resolving/resolved/failed"
+        string resolutionStrategy "latest_wins/highest_trust/consensus/manual/authoritative_device/merge"
+        integer resolvedVersion "Winning version number (nullable)"
+        string resolvedBy "Resolving device ID (nullable)"
+        datetime detectedAt "Conflict detection"
+        datetime resolvedAt "Resolution completion (nullable)"
+        string conflictingVersions "JSON array of conflicting versions"
+        string resolutionMetadata "JSON resolution metadata (nullable)"
+    }
+
+    conflict_resolutions {
+        string id PK "UUID - Primary Key"
+        string conflictId FK "Conflict reference"
+        string deviceId FK "Resolving device reference"
+        integer preferredVersion "Preferred version number"
+        string reasoning "Resolution reasoning"
+        string signature "Digital signature of resolution"
+        datetime timestamp "Resolution timestamp"
+        boolean isActive "Active resolution flag"
+    }
+
+    offline_sync_queues {
+        string id PK "UUID - Primary Key"
+        string queueId UK "Unique queue identifier"
+        string deviceId FK "Device reference"
+        integer totalItems "Total queue items"
+        integer totalSize "Total queue size in bytes"
+        string syncPriority "critical/high/medium/low"
+        integer maxRetries "Maximum retry attempts"
+        integer retryDelay "Retry delay in milliseconds"
+        datetime lastModified "Last queue modification"
+        datetime lastSynced "Last successful sync (nullable)"
+        string syncStatus "pending/syncing/synced/failed"
+    }
+
+    offline_sync_items {
+        string id PK "UUID - Primary Key"
+        string itemId UK "Unique item identifier"
+        string queueId FK "Queue reference"
+        string itemType "key_update/key_creation/key_deletion/device_verification/conflict_resolution"
+        string conversationId FK "Conversation reference (nullable)"
+        string keyType "Key type (nullable)"
+        string data "Item data (base64 encoded)"
+        string metadata "JSON item metadata"
+        string syncStatus "pending/syncing/synced/failed/conflicted"
+        integer attempts "Sync attempt counter"
+        datetime lastAttempt "Last sync attempt (nullable)"
+        string error "Error description (nullable)"
+        string priority "critical/high/medium/low"
+        datetime createdAt "Item creation"
+        datetime updatedAt "Last modification"
+    }
+
+    delta_sync_checkpoints {
+        string id PK "UUID - Primary Key"
+        string checkpointId UK "Unique checkpoint identifier"
+        string deviceId FK "Device reference"
+        string conversationId FK "Conversation reference"
+        string keyType "Key type for checkpoint"
+        integer version "Checkpoint version"
+        string keyHash "Key hash for integrity"
+        string signature "Digital signature of checkpoint"
+        datetime timestamp "Checkpoint timestamp"
+        boolean isActive "Active checkpoint flag"
+    }
+
+    %% ========================================
+    %% KEY EXCHANGE & COORDINATION DOMAIN
+    %% ========================================
+    
+    key_exchanges {
+        string id PK "UUID - Primary Key"
+        string initiatorId FK "Initiator user reference"
+        string recipientId FK "Recipient user reference"
+        string conversationId FK "Conversation reference"
+        string exchangeType "initial_setup/ratchet_update/pqc_upgrade/device_addition"
+        string status "pending/responded/completed/expired/failed"
+        string publicKeyBundle "JSON of public keys"
+        string encryptedKeyData "Encrypted key data for recipient"
+        string responseData "Encrypted response from recipient (nullable)"
+        string recipientPublicKeys "JSON of recipient public keys (nullable)"
+        integer securityLevel "NIST security level"
+        string algorithm "Negotiated algorithm"
+        boolean quantumResistant "Quantum resistance flag"
+        string confirmationSignature "Confirmation signature (nullable)"
+        datetime createdAt "Exchange creation"
+        datetime respondedAt "Response timestamp (nullable)"
+        datetime completedAt "Completion timestamp (nullable)"
+        datetime expiresAt "Exchange expiration"
+    }
+
+    %% ========================================
+    %% PRIMARY RELATIONSHIPS
+    %% ========================================
+    
+    users ||--o{ conversation_participants : "participates in"
+    users ||--o{ messages : "sends"
+    users ||--o{ device_identities : "owns devices"
+    users ||--o{ conversation_keys : "has keys"
+    users ||--o{ message_reactions : "reacts to"
+    users ||--o{ read_receipts : "reads"
+    users ||--o{ key_exchanges : "initiates/receives"
+    users ||--o{ conversations : "creates"
+    
+    conversations ||--o{ conversation_participants : "has participants"
+    conversations ||--o{ messages : "contains"
+    conversations ||--o{ conversation_keys : "secured by"
+    conversations ||--o{ conversation_ratchet_states : "has ratchet states"
+    conversations ||--o{ algorithm_negotiations : "negotiates for"
+    conversations ||--o{ key_conflicts : "has conflicts in"
+    conversations ||--o{ key_exchanges : "exchanges keys for"
+    
+    messages ||--o{ message_files : "has attachments"
+    messages ||--o{ message_reactions : "receives reactions"
+    messages ||--o{ read_receipts : "tracked by"
+    messages ||--o{ messages : "replies to (threading)"
+    
+    %% ========================================
+    %% ENCRYPTION RELATIONSHIPS
+    %% ========================================
+    
+    conversation_ratchet_states ||--o{ skipped_message_keys : "stores skipped keys"
+    conversation_ratchet_states ||--o{ post_quantum_keys : "uses PQC keys"
+    
+    post_quantum_keys ||--o{ post_quantum_keys : "derived from (parent-child)"
+    
+    algorithm_negotiations ||--o{ messages : "referenced by"
+    
+    %% ========================================
+    %% MULTI-DEVICE RELATIONSHIPS
+    %% ========================================
+    
+    device_identities ||--o{ device_verifications : "verifies (as verifier)"
+    device_identities ||--o{ device_verifications : "verified by (as target)"
+    device_identities ||--o{ key_sync_packages : "sends keys"
+    device_identities ||--o{ key_sync_packages : "receives keys"
+    device_identities ||--o{ authentication_sessions : "initiates auth"
+    device_identities ||--o{ authentication_sessions : "responds to auth"
+    device_identities ||--o{ offline_sync_queues : "has sync queues"
+    
+    %% ========================================
+    %% SYNCHRONIZATION RELATIONSHIPS
+    %% ========================================
+    
+    key_conflicts ||--o{ conflict_resolutions : "resolved by"
+    
+    offline_sync_queues ||--o{ offline_sync_items : "contains items"
+    
+    %% ========================================
+    %% UNIQUE CONSTRAINTS & INDEXES
+    %% ========================================
+    
+    %% Key Performance Indexes:
+    %% - idx_messages_conversation_timestamp (conversationId, timestamp)
+    %% - idx_conversation_participants_user (userId, leftAt)
+    %% - idx_ratchet_states_conversation_user (conversationId, userId)
+    %% - idx_post_quantum_keys_ratchet_type_active (ratchetStateId, keyType, isActive)
+    %% - idx_device_identities_user_verified (userId, isVerified, lastSeen)
+    %% - idx_key_sync_packages_device_status (toDeviceId, status, expiresAt)
+    
+    %% Unique Constraints:
+    %% - users.username (UNIQUE)
+    %% - conversation_participants(conversationId, userId) (UNIQUE)
+    %% - conversation_keys.keyId (UNIQUE)
+    %% - conversation_ratchet_states(conversationId, userId) (UNIQUE)
+    %% - post_quantum_keys(ratchetStateId, keyType, isActive) (UNIQUE)
+    %% - device_identities.deviceId (UNIQUE)
+    %% - device_verifications(verifyingDeviceId, targetDeviceId) (UNIQUE)
+    %% - message_reactions(messageId, userId) (UNIQUE)
+    %% - read_receipts(messageId, userId) (UNIQUE)
+    %% - algorithm_negotiations.negotiationId (UNIQUE)
+    %% - key_conflicts.conflictId (UNIQUE)
+    %% - conflict_resolutions(conflictId, deviceId) (UNIQUE)
+    %% - key_sync_packages.packageId (UNIQUE)
+    %% - authentication_sessions.sessionId (UNIQUE)
+    %% - offline_sync_queues.queueId (UNIQUE)
+    %% - offline_sync_items.itemId (UNIQUE)
+    %% - delta_sync_checkpoints.checkpointId (UNIQUE)
+    %% - delta_sync_checkpoints(deviceId, conversationId, keyType, isActive) (UNIQUE)

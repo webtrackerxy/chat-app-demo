@@ -1,4 +1,4 @@
-const { PrismaClient } = require('../../generated/prisma')
+const { PrismaClient } = require('@prisma/client')
 
 class DatabaseService {
   constructor(prisma) {
@@ -322,6 +322,16 @@ class DatabaseService {
       },
       orderBy: { timestamp: 'asc' },
     })
+  }
+
+  // Helper method for backward compatibility
+  async createMessage(messageData) {
+    return this.saveMessage(messageData)
+  }
+
+  // Additional helper method for getting user by ID (for server compatibility)
+  async getUser(userId) {
+    return this.getUserById(userId)
   }
 
   // Utility methods

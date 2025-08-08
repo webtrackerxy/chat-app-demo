@@ -1,0 +1,10 @@
+{
+  "backupDate": "2025-08-07T16:55:51.522Z",
+  "tables": {
+    "users": 6,
+    "conversations": 2,
+    "messages": 0,
+    "conversationRatchetStates": 0,
+    "postQuantumKeys": 0
+  }
+}

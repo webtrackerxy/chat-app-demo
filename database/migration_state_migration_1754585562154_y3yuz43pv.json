@@ -1,0 +1,27 @@
+{
+  "startTime": 1754585562154,
+  "currentPhase": "setup",
+  "completedPhases": [
+    {
+      "phase": "preparation",
+      "completedAt": 1754585562157
+    }
+  ],
+  "failedPhases": [
+    {
+      "phase": "setup",
+      "failedAt": 1754585562965,
+      "error": "PostgreSQL setup failed"
+    }
+  ],
+  "errors": [
+    {
+      "phase": "setup",
+      "timestamp": 1754585562965,
+      "error": "PostgreSQL setup failed"
+    }
+  ],
+  "warnings": [],
+  "rollbackAvailable": true,
+  "migrationId": "migration_1754585562154_y3yuz43pv"
+}

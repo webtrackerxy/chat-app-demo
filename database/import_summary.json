@@ -1,0 +1,30 @@
+{
+  "importDate": "2025-08-07T16:57:46.467Z",
+  "totalRecords": 12,
+  "tableStats": {
+    "users": 6,
+    "conversations": 2,
+    "conversationParticipants": 4,
+    "messages": 0,
+    "messageFiles": 0,
+    "messageReactions": 0,
+    "readReceipts": 0,
+    "conversationKeys": 0,
+    "conversationRatchetStates": 0,
+    "skippedMessageKeys": 0,
+    "postQuantumKeys": 0,
+    "algorithmNegotiations": 0,
+    "cryptoMigrations": 0,
+    "deviceIdentities": 0,
+    "deviceVerifications": 0,
+    "keySyncPackages": 0,
+    "authenticationSessions": 0,
+    "keyConflicts": 0,
+    "conflictResolutions": 0,
+    "offlineSyncQueues": 0,
+    "offlineSyncItems": 0,
+    "deltaSyncCheckpoints": 0,
+    "keyExchanges": 0
+  },
+  "importDuration": 425
+}
